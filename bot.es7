@@ -11,11 +11,11 @@ var datetime = new Date();
 console.log('----- STARTING SERVER @ ' + datetime + ' -----');
 
 // Imports
-var irc          = require('irc');                // This uses the node-irc framework
-var fs           = require('fs');                 // For getting passwords
-var exec         = require('child_process').exec; // For diversity.py
-var async        = require('async');              // For performing API calls asynchronously
-var request      = require('request');            // For talking to the SRL API
+var irc     = require('irc');                // This uses the node-irc framework
+var fs      = require('fs');                 // For getting passwords
+var exec    = require('child_process').exec; // For diversity.py
+var async   = require('async');              // For performing API calls asynchronously
+var request = require('request');            // For talking to the SRL API
 
 // Configuration
 var botDirectory          = '/home/zamiel/zamiel-bot';
@@ -269,6 +269,17 @@ var raceStarter;
 };*/
 var PastebinDevKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-Dev.txt', 'utf8').trim();
 var PastebinUserKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-User.txt', 'utf8').trim();
+var characterArray = [
+    'Isaac',     // 0
+    'Magdalene', // 1
+    'Cain',      // 2
+    'Judas',     // 3
+    'Blue Baby', // 4
+    'Eve',       // 5
+    'Samson',    // 6
+    'Azazel',    // 7
+    'Lazarus'    // 8
+];
 
 // Initialize the player list
 for (var i = 0; i < playerList.length; i++) { // Go through the player list
@@ -725,7 +736,43 @@ async function makeLeaderboard(IRC, channel) {
 }
 
 function getRandomNumber(IRC, channel, minNumber, maxNumber) {
-    var randomNum = Math.floor((Math.random() * maxNumber)) + 1; // Get a random number between 1 and maxNumber
+    // Cast all input as an integer
+    minNumber = parseInt(minNumber);
+    //TwitchBot.say(channel, 'min number is ' + minNumber);
+    maxNumber = parseInt(maxNumber);
+    //TwitchBot.say(channel, 'max number is ' + maxNumber);
+
+    // Input validation
+    if (minNumber > 1000 || maxNumber > 1000) {
+        sayString = 'You don\'t need to roll a number that high, so get fucked.';
+        if (IRC === 'SRL') {
+            SRLBot.say(channel, sayString);
+        } else if (IRC === 'Twitch') {
+            TwitchBot.say(channel, sayString);
+        }
+        return;
+    }
+    if (minNumber < 0 || maxNumber < 0) {
+        sayString = 'Check out this retard trying to roll negative numbers.';
+        if (IRC === 'SRL') {
+            SRLBot.say(channel, sayString);
+        } else if (IRC === 'Twitch') {
+            TwitchBot.say(channel, sayString);
+        }
+        return;
+    }
+    if (minNumber === maxNumber) {
+        sayString = 'Yeah, that\'s a pretty stupid roll request, so go fuck yourself.';
+        if (IRC === 'SRL') {
+            SRLBot.say(channel, sayString);
+        } else if (IRC === 'Twitch') {
+            TwitchBot.say(channel, sayString);
+        }
+        return;
+    }
+
+    // Get the random number
+    var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
     var sayString = 'Random number between ' + minNumber + ' and ' + maxNumber + ': ' + randomNum;
     if (IRC === 'SRL') {
         SRLBot.say(channel, sayString);
@@ -1351,8 +1398,13 @@ SRLBot.addListener('message', function(user, channel, message) {
                 var randomMin = 1;
                 var randomMax = m[1];
             } else {
-               var randomMin = 1;
-               var randomMax = 20; 
+                if (message === '!roll' || message === '.roll') {
+                    var randomMin = 1;
+                    var randomMax = 19;
+                } else {
+                    TwitchBot.say(channel, 'Your random number request was in the wrong format.');
+                    return;
+                }
             }
         }
         getRandomNumber('SRL', channel, randomMin, randomMax);
@@ -1367,19 +1419,18 @@ SRLBot.addListener('message', function(user, channel, message) {
                 var randomMin = 1;
                 var randomMax = m[1];
             } else {
-               var randomMin = 1;
-               var randomMax = 20; 
+                if (message === '!roll' || message === '.roll') {
+                    var randomMin = 1;
+                    var randomMax = 19;
+                } else {
+                    TwitchBot.say(channel, 'Your random number request was in the wrong format.');
+                    return;
+                }
             }
         }
         getRandomNumber('SRL', channel, randomMin, randomMax);
     } else if (message === '.d20' || message === '!d20') {
         getRandomNumber('SRL', channel, 1, 20);
-    } else if (message === '.rnr' || message === '!rnr') {
-        if (instantStartRandomArray.length === 0) {
-            refillInstantStartRandomArray();
-        }
-        var randomNum = instantStartRandomArray.pop();
-        SRLBot.say(channel, 'Randomly selected no-reset mod start: ' + randomNum);
     }
 
     // Debug commands for SRL
@@ -1614,8 +1665,13 @@ TwitchBot.addListener('message', function(user, channel, message) {
                 var randomMin = 1;
                 var randomMax = m[1];
             } else {
-               var randomMin = 1;
-               var randomMax = 20; 
+                if (message === '!roll') {
+                    var randomMin = 1;
+                    var randomMax = 19;
+                } else {
+                    TwitchBot.say(channel, 'Your random number request was in the wrong format.');
+                    return;
+                }
             }
         }
         getRandomNumber('Twitch', channel, randomMin, randomMax);
@@ -1630,8 +1686,13 @@ TwitchBot.addListener('message', function(user, channel, message) {
                 var randomMin = 1;
                 var randomMax = m[1];
             } else {
-               var randomMin = 1;
-               var randomMax = 20; 
+                if (message === '!roll') {
+                    var randomMin = 1;
+                    var randomMax = 19;
+                } else {
+                    TwitchBot.say(channel, 'Your random number request was in the wrong format.');
+                    return;
+                }
             }
         }
         getRandomNumber('Twitch', channel, randomMin, randomMax);
@@ -1690,17 +1751,6 @@ SRLBot.addListener('names', function(channel, nicks) {
     if (channelsToJoin.indexOf(channel) === -1 && channel.match(/^#srl-.+$/)) {
         //var seed = channel.match(/^#srl-(.+)$/)[1];
         //var characterNum = Math.floor((Math.random() * 9)); // Get a random number between 0 and 8
-        /*var characterArray = [
-            'isaac',     // 0
-            'magdalene', // 1
-            'cain',      // 2
-            'judas',     // 3
-            'blue baby', // 4
-            'eve',       // 5
-            'samson',    // 6
-            'azazel',    // 7
-            'lazarus'    // 8
-        ];*/
         SRLBot.say(channel, goalList['set']);
     }
 
