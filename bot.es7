@@ -11,7 +11,8 @@ var datetime = new Date();
 console.log('----- STARTING SERVER @ ' + datetime + ' -----');
 
 // Imports
-var irc     = require('irc');                // This uses the node-irc framework
+var irc     = require('irc');                // The SRL side uses the node-irc library
+var tmi     = require('tmi.js');             // The Twitch side uses the tmi-js library
 var fs      = require('fs');                 // For getting passwords
 var exec    = require('child_process').exec; // For diversity.py
 var async   = require('async');              // For performing API calls asynchronously
@@ -19,12 +20,12 @@ var request = require('request');            // For talking to the SRL API
 
 // Configuration
 var botDirectory          = '/home/zamiel/zamiel-bot';
-var jud6sVersion          = 'v1.19';
+var jud6sVersion          = 'v1.20';
 var diversityVersion      = 'v2.2';
-var instantStartVersion   = 'v1.3';
-var numInstantStartBuilds = 34;
+var instantStartVersion   = 'v1.5';
+var numInstantStartBuilds = 28;
 var numAverageRacesToUse  = 50;
-var numRacesToAdvert      = 3;
+var numRacesToAdvert      = 9999999;
 var advertMessage         = 'Sign up for Isaac tournaments and leagues. See the list/schedule here: http://pastebin.com/q9Y3MRdT';
 var goalList = {
     'set':       '.setgoal Beat The Chest with Judas (Jud6s Mod ' + jud6sVersion + ', "BLCK CNDL" easter egg)',
@@ -76,20 +77,26 @@ var infoList = {
     'faq':             'ZamielBot FAQ: http://pastebin.com/8ysF8VgX',
     'help':            'ZamielBot FAQ: http://pastebin.com/8ysF8VgX',
     'commands':        'ZamielBot FAQ: http://pastebin.com/8ysF8VgX',
-    'os':              'Zamiel is using Windows 7 with Aero disabled because it looks much cleaner (and is faster).',
 };
 var SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
     debug: true,
     showErrors: true,
-    channels: ['#speedrunslive', '#lemonparty', '#isaac'],
-    autoConnect: true, // Set to "false" for debugging purposes
+    //channels: ['#speedrunslive', '#lemonparty', '#isaac'],
+    channels: ['#speedrunslive', '#lemonparty'], // Uncomment this when debugging because Hyphen-ated gets pissed
+    autoConnect: true,
+    //autoConnect: false, // Uncomment this for debugging purposes
 });
 var oauth = fs.readFileSync(botDirectory + '/passwords/Twitch.txt', 'utf8').trim();
 var TwitchBot = new irc.Client('irc.chat.twitch.tv', 'ZamielBot', {
     debug: true,
     showErrors: true,
     password: oauth,
-    autoConnect: true, // Set to "false" for debugging purposes
+    //autoConnect: true
+    autoConnect: false, // Uncomment this for debugging purposes
+});
+var TwitchBot2 = new tmi.client({
+    options: {debug: true},
+    channels: ['#zamiell'],
 });
 var playerList = [
     {
@@ -111,12 +118,6 @@ var playerList = [
     {
         'srl': 'DKlaww',
         'twitch': 'DKlaww',
-        'echoComments': false,
-        'delayTwitchOutput': 30000,
-    },
-    {
-        'srl': 'tyrannasauruslex',
-        'twitch': 'tyrannasauruslex',
         'echoComments': false,
         'delayTwitchOutput': 30000,
     },
@@ -180,11 +181,6 @@ var playerList = [
     {
         'srl': 'Erbear',
         'twitch': 'Erbear_',
-    },
-    {
-        'srl': 'Fisshy',
-        'twitch': 'Fisshy_',
-        'delayTwitchOutput': 15000,
     },
     {
         'srl': 'SlashSP',
@@ -252,6 +248,18 @@ var playerList = [
         'srl': 'thisguyisbarry',
         'twitch': 'thisguyisbarry',
     },
+    {
+        'srl': 'LexicalPedant',
+        'twitch': 'LexicalPedant',
+    },
+    {
+        'srl': 'SapphireHX',
+        'twitch': 'SapphireHX',
+    },
+    {
+        'srl': 'NeNeSSquick',
+        'twitch': 'NeNeSSquick',
+    },
 ];
 
 // Variables
@@ -262,6 +270,7 @@ var TwitchTimeoutTimer;
 var identified = false;
 var advertCounter = 0;
 var instantStartRandomArray = [];
+var ignoreList = [];
 var raceStarter;
 /*var TwitchRequests = {
     'commands': false,
@@ -493,7 +502,7 @@ function postPastebin(pasteName, pasteString) {
 }
 
 async function getAverageTimes(IRC, channel, player, listAll = false) {
-    // Truncate white space from both sides of the string
+    // Remove whitespace from both sides of the string
     player = player.trim();
 
     // If the user is requesting a player's Twitch name instead of their SRL name, maybe we can fix the mistake automatically
@@ -527,9 +536,27 @@ async function getAverageTimes(IRC, channel, player, listAll = false) {
                 if (json.pastraces[i].results[j].player.toLowerCase() === player.toLowerCase()) {
                     foundPlayer = true;
 
-                    // Start to build the races string (which may not be used)
+                    // Start to build the races string (which will only be used if this is a "!raceList" command)
                     numRaces++;
                     racesString += numRaces + ') ';
+
+                    // Add the date and time
+                    var d = new Date(0);
+                    d.setUTCSeconds(json.pastraces[i].date);
+                    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                    var day = days[d.getDay()] + ",";
+                    var date = months[d.getMonth()] + " " + getOrdinal(d.getDate()) + ", " + d.getFullYear();
+                    var time = "";
+                    if (d.getHours() < 10) {
+                        time += "0";
+                    }
+                    time += d.getHours() + ":";
+                    if (d.getMinutes() < 10) {
+                        time += "0";
+                    }
+                    time += d.getMinutes() + " (EST)";
+                    racesString += date + ' @ ' + time + ' --- ';
 
                     // Add the time to the string
                     if (json.pastraces[i].results[j].time < 1) {
@@ -561,6 +588,7 @@ async function getAverageTimes(IRC, channel, player, listAll = false) {
             }
         }
     } catch(error) {
+        console.log('----- getAverageTimes function failed with error: ' + error + ' -----');
         sayString = 'Something went wrong when getting the race listing for ' + player + '.';
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
@@ -735,7 +763,15 @@ async function makeLeaderboard(IRC, channel) {
     });
 }
 
-function getRandomNumber(IRC, channel, minNumber, maxNumber) {
+function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
+    // Player validation
+    user = user.toLowerCase();
+    for (var i = 0; i < ignoreList.length; i++) {
+        if (ignoreList[i] === user && user !== 'zamiel' && user !== 'zamiell') {
+            return; // Ignore what they have to say
+        }
+    }
+
     // Cast all input as an integer
     minNumber = parseInt(minNumber);
     //TwitchBot.say(channel, 'min number is ' + minNumber);
@@ -743,31 +779,14 @@ function getRandomNumber(IRC, channel, minNumber, maxNumber) {
     //TwitchBot.say(channel, 'max number is ' + maxNumber);
 
     // Input validation
-    if (minNumber > 1000 || maxNumber > 1000) {
-        sayString = 'You don\'t need to roll a number that high, so get fucked.';
+    if (minNumber > 1000 || maxNumber > 1000 || minNumber < 0 || maxNumber < 0 || minNumber === maxNumber) {
+        sayString = 'Incorrect roll format. ' + user + ' has been added to the ignore list for command abuse.';
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
             TwitchBot.say(channel, sayString);
         }
-        return;
-    }
-    if (minNumber < 0 || maxNumber < 0) {
-        sayString = 'Check out this retard trying to roll negative numbers.';
-        if (IRC === 'SRL') {
-            SRLBot.say(channel, sayString);
-        } else if (IRC === 'Twitch') {
-            TwitchBot.say(channel, sayString);
-        }
-        return;
-    }
-    if (minNumber === maxNumber) {
-        sayString = 'Yeah, that\'s a pretty stupid roll request, so go fuck yourself.';
-        if (IRC === 'SRL') {
-            SRLBot.say(channel, sayString);
-        } else if (IRC === 'Twitch') {
-            TwitchBot.say(channel, sayString);
-        }
+        ignoreList.push(user);
         return;
     }
 
@@ -801,13 +820,19 @@ function shuffle(array) {
 }
 
 function refillInstantStartRandomArray() {
-    // Add 1 through 26
-    for (var i = 1; i <= 26; i++) {
+    // Add 1 through the number of instance start builds
+    for (var i = 1; i <= numInstantStartBuilds; i++) {
         instantStartRandomArray.push(i);
     }
 
     // Randomize it
     shuffle(instantStartRandomArray);
+}
+
+var getOrdinal = function(n) {
+    var s = ["th", "st", "nd", "rd"];
+    var v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
 /*
@@ -855,6 +880,9 @@ TwitchBot.addListener('registered', function(message) {
 SRLBot.addListener('message', function(user, channel, message) {
     var datetime = new Date();
     console.log(datetime + ' - SRL [' + channel + '] <' + user + '> ' + message);
+
+    // Remove whitespace from both sides of the string
+    message = message.trim();
 
     // Look for new BoIR races
     if (channel === '#speedrunslive' && message === '.startrace isaacafterbirth') {
@@ -1256,7 +1284,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             // Set the seed to what the user requested
             var build = m[1];
             var seed = m[2].toUpperCase();
-            seed = seed.trim(); // Trim the leading and trailing whitespace
+            seed = seed.trim(); // Remove the leading and trailing whitespace
             if (seed.length === 8) {
                 // Insert a space to make the seed more readable
                 var leftSide = seed.match(/^(....)....$/)[1];
@@ -1277,7 +1305,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             build = instantStartRandomArray.pop();
 
             var seed = m[1].toUpperCase();
-            seed = seed.trim(); // Trim the leading and trailing whitespace
+            seed = seed.trim(); // Remove the leading and trailing whitespace
             if (seed.length === 8) {
                 // Insert a space to make the seed more readable
                 var leftSide = seed.match(/^(....)....$/)[1];
@@ -1292,7 +1320,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             var m = message.match(/^[\.!]setis (.+)/);
             if (m) {
                 // Set the seed to what the user requested
-                var seed = m[1].trim();
+                var seed = m[1].trim(); // Remove the leading and trailing whitespace
                 var goal = goalList['setis'].replace('##', seed);
                 SRLBot.say(channel, goal);
             } else {
@@ -1310,7 +1338,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             var m = message.match(/^[\.!]setdiv (.+)/);
             if (m) {
                 // Set the seed to what the user requested
-                var seed = m[1].trim();
+                var seed = m[1].trim(); // Remove the leading and trailing whitespace
                 var goal = goalList['setdiv'].replace('#####', seed);
                 SRLBot.say(channel, goal);
             } else {
@@ -1388,12 +1416,12 @@ SRLBot.addListener('message', function(user, channel, message) {
         SRLBot.say(channel, 'I\'ll create the leaderboard - give me a minute to gather the data.');
         makeLeaderboard('SRL', channel);
     } else if (message.match(/^[\.!]roll/)) {
-        var m = message.match(/^[\.!]roll (\d+) (\d+)/);
+        var m = message.match(/^[\.!]roll (\d+) (\d+)$/);
         if (m) {
             var randomMin = m[1];
             var randomMax = m[2];
         } else {
-            var m = message.match(/^[\.!]roll (\d+)/);
+            var m = message.match(/^[\.!]roll (\d+)$/);
             if (m) {
                 var randomMin = 1;
                 var randomMax = m[1];
@@ -1402,19 +1430,19 @@ SRLBot.addListener('message', function(user, channel, message) {
                     var randomMin = 1;
                     var randomMax = 19;
                 } else {
-                    TwitchBot.say(channel, 'Your random number request was in the wrong format.');
-                    return;
+                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
+                    var randomMax = -1;
                 }
             }
         }
-        getRandomNumber('SRL', channel, randomMin, randomMax);
+        getRandomNumber('SRL', channel, user, randomMin, randomMax);
     } else if (message.match(/^[\.!]random/)) {
-        var m = message.match(/^[\.!]random (\d+) (\d+)/);
+        var m = message.match(/^[\.!]random (\d+) (\d+)$/);
         if (m) {
             var randomMin = m[1];
             var randomMax = m[2];
         } else {
-            var m = message.match(/^[\.!]random (\d+)/);
+            var m = message.match(/^[\.!]random (\d+)$/);
             if (m) {
                 var randomMin = 1;
                 var randomMax = m[1];
@@ -1423,14 +1451,14 @@ SRLBot.addListener('message', function(user, channel, message) {
                     var randomMin = 1;
                     var randomMax = 19;
                 } else {
-                    TwitchBot.say(channel, 'Your random number request was in the wrong format.');
-                    return;
+                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
+                    var randomMax = -1;
                 }
             }
         }
-        getRandomNumber('SRL', channel, randomMin, randomMax);
+        getRandomNumber('SRL', channel, user, randomMin, randomMax);
     } else if (message === '.d20' || message === '!d20') {
-        getRandomNumber('SRL', channel, 1, 20);
+        getRandomNumber('SRL', channel, user, 1, 20);
     }
 
     // Debug commands for SRL
@@ -1457,6 +1485,9 @@ TwitchBot.addListener('message', function(user, channel, message) {
     var datetime = new Date();
     console.log(datetime + ' - TWITCH [' + channel + '] <' + user + '> ' + message);
 
+    // Remove whitespace from both sides of the string
+    message = message.trim();
+
     /*
      *
      * Twitch commands
@@ -1474,18 +1505,16 @@ TwitchBot.addListener('message', function(user, channel, message) {
     }*/
 
     // Command exceptions per channel
-    if (channel === '#tyrannasauruslex' && message === '!discord') {
+    /*if (channel === '#asdf' && message === '!asdf') {
         return;
-    }
+    }*/
 
     // !join
-    for (var i = 0; i < playerList.length; i++) { // Go through the player list
-        if (user === playerList[i].twitch && message.match(/^!join .+$/)) {
-            var channelName = message.match(/^!join (.+)$/)[1];
-            console.log('----- I was told to join Twitch channel ' + channelName + ' -----');
-            TwitchBot.say(channel, 'Ok, I\'ll join channel \'' + channelName + '\'.');
-            TwitchBot.join('#' + channelName);
-        }
+    if (user === 'zamiell' && message.match(/^!join .+$/)) {
+        var channelName = message.match(/^!join (.+)$/)[1];
+        console.log('----- I was told to join Twitch channel ' + channelName + ' -----');
+        TwitchBot.say(channel, 'Ok, I\'ll join channel \'' + channelName + '\'.');
+        TwitchBot.join('#' + channelName);
     }
 
     // Info commands
@@ -1496,6 +1525,13 @@ TwitchBot.addListener('message', function(user, channel, message) {
 
         if (message === '!' + info) {
             TwitchBot.say(channel, infoList[info]);
+        }
+    }
+
+    // Info commands for specific channels
+    if (channel === '#zamiell') {
+        if (message === '!os') {
+            TwitchBot.say(channel, 'Zamiel is using Windows 7 with Aero disabled because it looks much cleaner (and is faster).');
         }
     }
 
@@ -1549,7 +1585,7 @@ TwitchBot.addListener('message', function(user, channel, message) {
             TwitchBot.action(channel, getEntrants(race));
         } else if (message === '!multitwitch' || message === '!kadgar') {
             // Get the racers in this race
-            var racerArray = []; // An array of racers to pass to the async.each() function
+            var racerArray = []; // An array of racers to pass to the async.eachLimit() function
             var TwitchNameList = {}; // A data structure of Twitch names that will be populated asynchronously
             for (var i = 0; i < raceList[raceName].entrants.length; i++) {
                 // Exclude JOPEBUSTER because he is a bot
@@ -1562,13 +1598,18 @@ TwitchBot.addListener('message', function(user, channel, message) {
             }
 
             // For the racers in the race, find out the Twitch names that correspond to their SRL names
-            async.each(racerArray, function(racer, callback) {
+            console.log('racer array is: ' + racerArray);
+            async.eachLimit(racerArray, 1, async function(racer, callback) { // We use a limit of 1 because the SRL API will lock us out
                 // Get the Twitch channel for this racer using the SRL API
                 var url = 'http://api.speedrunslive.com/stat?player=' + racer;
                 request(url, function (error, response, body) {
                     if (!error && response.statusCode == 200) {
-                        var json = JSON.parse(body);
-                        TwitchNameList[racer] = json.player.channel;
+                        try {
+                            var json = JSON.parse(body);
+                            TwitchNameList[racer] = json.player.channel;
+                        } catch(error) {
+                            error('TWITCH ERROR: Got error "' + error + '" while parsing the SRL API failed for ' + racer + ': ' + body); 
+                        }
                     } else {
                         console.log('----- WARNING: Failed to GET URL: ' + url + ' -----');
                     }
@@ -1655,12 +1696,12 @@ TwitchBot.addListener('message', function(user, channel, message) {
         TwitchBot.say(channel, 'I\'ll create the leaderboard - give me a minute to gather the data.');
         makeLeaderboard('Twitch', channel);
     } else if (message.match(/^!roll/)) {
-        var m = message.match(/^!roll (\d+) (\d+)/);
+        var m = message.match(/^!roll (\d+) (\d+)$/);
         if (m) {
             var randomMin = m[1];
             var randomMax = m[2];
         } else {
-            var m = message.match(/^!roll (\d+)/);
+            var m = message.match(/^!roll (\d+)$/);
             if (m) {
                 var randomMin = 1;
                 var randomMax = m[1];
@@ -1669,19 +1710,19 @@ TwitchBot.addListener('message', function(user, channel, message) {
                     var randomMin = 1;
                     var randomMax = 19;
                 } else {
-                    TwitchBot.say(channel, 'Your random number request was in the wrong format.');
-                    return;
+                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
+                    var randomMax = -1;
                 }
             }
         }
-        getRandomNumber('Twitch', channel, randomMin, randomMax);
+        getRandomNumber('Twitch', channel, user, randomMin, randomMax);
     } else if (message.match(/^!random/)) {
-        var m = message.match(/^!random (\d+) (\d+)/);
+        var m = message.match(/^!random (\d+) (\d+)$/);
         if (m) {
             var randomMin = m[1];
             var randomMax = m[2];
         } else {
-            var m = message.match(/^!random (\d+)/);
+            var m = message.match(/^!random (\d+)$/);
             if (m) {
                 var randomMin = 1;
                 var randomMax = m[1];
@@ -1690,14 +1731,14 @@ TwitchBot.addListener('message', function(user, channel, message) {
                     var randomMin = 1;
                     var randomMax = 19;
                 } else {
-                    TwitchBot.say(channel, 'Your random number request was in the wrong format.');
-                    return;
+                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
+                    var randomMax = -1;
                 }
             }
         }
-        getRandomNumber('Twitch', channel, randomMin, randomMax);
+        getRandomNumber('Twitch', channel, user, randomMin, randomMax);
     } else if (message === '!d20') {
-        getRandomNumber('Twitch', channel, 1, 20);
+        getRandomNumber('Twitch', channel, user, 1, 20);
     }
 
     // Automatically ban spam bots
@@ -1875,6 +1916,8 @@ SRLBot.addListener('topic', function(channel, topic) {
             if (m) {
                 var status = m[1].toLowerCase();
                 if (status === 'entry open') {
+                    raceList[race].status = 0;
+                } else if (status === 'entry closed') {
                     raceList[race].status = 0;
                 } else if (status === 'in progress') {
                     raceList[race].status = 1;
