@@ -6,7 +6,7 @@ use constant DB_USERNAME    => "zamiel";
 use constant DB_NAME        => "isaac";
 use constant DB_COLLECTION  => "races";
 use constant DIRECTORY_PATH => "/home/zamiel/zamiel-bot/update-races";
-use constant NEW_JSON_FILE  => "new_races.json";
+use constant NEW_JSON_FILE  => "new-races.json";
 
 # Imports
 use strict;

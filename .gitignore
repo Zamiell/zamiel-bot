@@ -8,4 +8,4 @@ node_modules
 passwords
 
 # This is just a temporary file used by the update-races.pl script
-update-races/new_races.json
+update-races/new-races.json
