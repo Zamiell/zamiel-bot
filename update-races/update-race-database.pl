@@ -2,6 +2,7 @@
 
 # Configuration
 use constant DB_HOST        => "127.0.0.1:27017";
+use constant DB_USERNAME    => "zamiel";
 use constant DB_NAME        => "isaac";
 use constant DB_COLLECTION  => "races";
 use constant DIRECTORY_PATH => "/home/zamiel/zamiel-bot/update-races";
@@ -19,8 +20,12 @@ use DateTime;
 # Welcome
 print "\nUpdating the races collection on \"" . DB_HOST . "\"...\n\n";
 
+# Get the password
+my $command = "cat '" . DIRECTORY_PATH . "/../passwords/MongoDB.txt'";
+my $DBPassword = `$command`;
+
 # Find out the most recent race that is in the database
-my $client = MongoDB::MongoClient->new(host => 'mongodb://' . DB_HOST . "/" . DB_NAME);
+my $client = MongoDB::MongoClient->new(host => "mongodb://" . DB_USERNAME . ":$DBPassword\@" . DB_HOST . "/" . DB_NAME);
 my $db = $client->get_database(DB_NAME);
 my $races = $db->get_collection(DB_COLLECTION);
 my $allRaces = $races->find;
@@ -62,11 +67,12 @@ if (!$foundLastRace) {
 	die "I was not able to find the last race in the downloaded JSON from the SRL API. Was there an Internet outage or something? Exiting...\n";
 }
 
-splice @json, $i - 1; # Truncate the array
-push @json, "}"; # Add a "}" at the end
-shift @json for (1..5); # Remove the first 5 lines
-unshift @json, '[';# Add a "[" at the beginning
-push @json, "]"; # Add a "]" at the end
+# Format it as a JSON array of objects so that mongoimport will suck it in with the "--jsonArray" flag
+splice(@json, $i - 1); # Truncate the array
+push(@json, "}"); # Add a "}" at the end
+shift(@json) for (1..5); # Remove the first 5 lines
+unshift(@json, "["); # Add a "[" at the beginning
+push(@json, "]"); # Add a "]" at the end
 untie @json;
 
 # Exit if there are no new races
@@ -76,4 +82,4 @@ if (`cat '$directoryPath/$newJsonFile' | wc -l` =~ /^3$/) {
 }
 
 # Import the new races
-system "mongoimport -h '" . DB_HOST . "' -d " . DB_NAME . " -c " . DB_COLLECTION . " '$directoryPath/$newJsonFile' --jsonArray";
+system "mongoimport --host '" . DB_HOST . "' --username '" . DB_USERNAME . "' --password '$DBPassword' --db '" . DB_NAME . "' --collection '" . DB_COLLECTION . "' '$directoryPath/$newJsonFile' --jsonArray";

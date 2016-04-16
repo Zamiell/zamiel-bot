@@ -420,18 +420,6 @@ function debug() {
 
 function sendTwitch(type, channel, message) {
     console.log('----- Sending ' + type + ' notification to ' + channel + ': ' + message + ' -----');
-
-    // Before sending anything, check to see if we are a moderator in this channel first
-    /*for (var i = 0; i < playerList.length; i++) { // Go through the player list
-        if (playerList[i].twitch === channel) {
-            if (playerList[i].mod === false) {
-                error('TWITCH ERRROR: I was going to send an action to channel ' + channel + ', but I am not a moderator there.');
-                return;
-            }
-            break;
-        }
-    }*/
-
     TwitchBot.action(channel, message);
 }
 
