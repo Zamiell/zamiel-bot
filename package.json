@@ -9,10 +9,11 @@
     "async": "*",
     "babel-polyfill": "*",
     "fs": "*",
-    "irc": "*",
+    "irc": "0.4.1",
+    "mongodb": "*",
     "promise-retry": "*",
     "request": "*",
-    "tmi.js": "0.0.29"
+    "tmi.js": "*"
   },
   "devDependencies": {
     "babel-cli": "*",

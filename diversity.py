@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Imports
 import sys
@@ -8,14 +8,14 @@ from binascii import crc32
 
 # Validate command-line arguments
 if len(sys.argv) < 2:
-    print "You need to provide the seed."
+    print("You need to provide the seed.")
     sys.exit()
 
 # Trim whitespace from the seed
 dmseed = sys.argv[1].strip()
 
 # Set the RNG seed
-seed(crc32(dmseed))
+seed(crc32(bytes(dmseed, 'UTF-8')))
 
 # "valid_items" is the list of all passive items in the game EXCLUDING the 25 items listed in the readme
 valid_items =  [
@@ -66,7 +66,7 @@ with open("items.json", "r") as items_file:
 string = ''
 counter = 0
 for randomlyChosenItem in [itemIDs[0], itemIDs[1], itemIDs[2]]:
-    for itemid, item in items_info.iteritems():
+    for itemid, item in items_info.items():
         if int(randomlyChosenItem) == int(itemid):
             counter += 1
             if counter == 1 or counter == 2:
@@ -74,4 +74,4 @@ for randomlyChosenItem in [itemIDs[0], itemIDs[1], itemIDs[2]]:
             else:
                 string += 'and [' + item["name"] + '].'
 
-print string.rstrip()
+print(string.rstrip())

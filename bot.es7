@@ -1,11 +1,3 @@
-// #!/usr/bin/env node
-
-// TODO
-// - Change to Twitch capabilities mode
-//     - check for mod before saying anything
-//     - add !title command for mods
-//     - add !game command for mods
-
 // Welcome message
 var datetime = new Date();
 console.log('----- STARTING SERVER @ ' + datetime + ' -----');
@@ -17,12 +9,13 @@ var fs      = require('fs');                 // For getting passwords
 var exec    = require('child_process').exec; // For diversity.py
 var async   = require('async');              // For performing API calls asynchronously
 var request = require('request');            // For talking to the SRL API
+var mongodb = require('mongodb');            // For talking to the MongoDB database
 
 // Configuration
 var botDirectory          = '/home/zamiel/zamiel-bot';
-var jud6sVersion          = 'v1.20';
-var diversityVersion      = 'v2.2';
-var instantStartVersion   = 'v1.5';
+var jud6sVersion          = 'v1.21';
+var diversityVersion      = 'v2.3.1';
+var instantStartVersion   = 'v1.6.1';
 var numInstantStartBuilds = 28;
 var numAverageRacesToUse  = 50;
 var numRacesToAdvert      = 9999999;
@@ -41,8 +34,8 @@ var infoList = {
     'jud6s':           'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
     'judas':           'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
     'judasd6':         'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
-    'diversity':       'Diversity mod download + info: https://github.com/Zamiell/diversitymod',
-    'divmod':          'Diversity mod download + info: https://github.com/Zamiell/diversitymod',
+    'diversity':       'Diversity mod download + info: https://github.com/Zamiell/diversity-mod',
+    'divmod':          'Diversity mod download + info: https://github.com/Zamiell/diversity-mod',
     'noreset':         'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
     'noresetmod':      'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
     'nrmod':           'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
@@ -84,20 +77,21 @@ var SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
     //channels: ['#speedrunslive', '#lemonparty', '#isaac'],
     channels: ['#speedrunslive', '#lemonparty'], // Uncomment this when debugging because Hyphen-ated gets pissed
     autoConnect: true,
-    //autoConnect: false, // Uncomment this for debugging purposes
 });
 var oauth = fs.readFileSync(botDirectory + '/passwords/Twitch.txt', 'utf8').trim();
-var TwitchBot = new irc.Client('irc.chat.twitch.tv', 'ZamielBot', {
-    debug: true,
-    showErrors: true,
-    password: oauth,
-    //autoConnect: true
-    autoConnect: false, // Uncomment this for debugging purposes
+var TwitchBot = new tmi.client({
+    options: {
+        debug: true,
+    },
+    connection: {
+        reconnect: true,
+    },
+    identity: {
+        username: 'ZamielBot',
+        password: oauth,
+    },
 });
-var TwitchBot2 = new tmi.client({
-    options: {debug: true},
-    channels: ['#zamiell'],
-});
+TwitchBot.connect();
 var playerList = [
     {
         'srl': 'Zamiel',
@@ -134,12 +128,6 @@ var playerList = [
         'srl': 'haagiboy88',
         'twitch': 'Haagiboy88',
         'delayTwitchOutput': 30000,
-    },
-    {
-        'srl': 'Cyber_1',
-        'twitch': 'Cyber_1',
-        'echoComments': false,
-        'delayTwitchOutput': 20000,
     },
     {
         'srl': 'Cmondinger',
@@ -272,10 +260,6 @@ var advertCounter = 0;
 var instantStartRandomArray = [];
 var ignoreList = [];
 var raceStarter;
-/*var TwitchRequests = {
-    'commands': false,
-    'tags':     false,
-};*/
 var PastebinDevKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-Dev.txt', 'utf8').trim();
 var PastebinUserKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-User.txt', 'utf8').trim();
 var characterArray = [
@@ -284,10 +268,11 @@ var characterArray = [
     'Cain',      // 2
     'Judas',     // 3
     'Blue Baby', // 4
-    'Eve',       // 5
-    'Samson',    // 6
-    'Azazel',    // 7
-    'Lazarus'    // 8
+    'Samson',    // 5
+    'Azazel',    // 6
+    'Lazarus',   // 7
+    'The Lost',  // 8
+    'Lilith',    // 9
 ];
 
 // Initialize the player list
@@ -450,15 +435,6 @@ function sendTwitch(type, channel, message) {
     TwitchBot.action(channel, message);
 }
 
-function joinTwitchChannels() {
-    // Go through the player list
-    for (var i = 0; i < playerList.length; i++) {
-        // Join Twitch channels for all of the players
-        console.log('----- Joining Twitch chat for ' + playerList[i].twitch + ' -----');
-        TwitchBot.join('#' + playerList[i].twitch);
-    }
-}
-
 function getAPI(url) {
     console.log('----- Getting SRL API at URL: ' + url + ' -----');
     return new Promise(function(resolve, reject) {
@@ -513,9 +489,8 @@ async function getAverageTimes(IRC, channel, player, listAll = false) {
         }
     }
 
-    // Get this player's past races using the SRL API
     try {
-        var url = 'http://api.speedrunslive.com/pastraces?game=isaacafterbirth&player=' + player + '&page=1&pageSize=250';
+        var url = 'http://api.speedrunslive.com/pastraces?game=isaacafterbirth&player=' + player + '&page=1&pageSize=500';
         var json = await getAPI(url);
 
         // Go through the player's past 250 races
@@ -638,12 +613,17 @@ async function getAverageTimes(IRC, channel, player, listAll = false) {
         }
     }
 
-    // Calculate and format the average time
-    var averageTime = sumTimes / (numRaces - numForfeits);
-    var averageMinutes = Math.floor(averageTime / 60);
-    var averageSeconds = Math.floor(averageTime % 60);
-    if (averageSeconds < 10) {
-        averageSeconds = '0' + averageSeconds;
+    // There is a special case where they forfeited every single race
+    if (numRaces === numForfeits) {
+        var averageTime = 1000000000; // Set it to a billion seconds
+    // Otherwise, calculate and format the average time
+    } else {
+        var averageTime = sumTimes / (numRaces - numForfeits);
+        var averageMinutes = Math.floor(averageTime / 60);
+        var averageSeconds = Math.floor(averageTime % 60);
+        if (averageSeconds < 10) {
+            averageSeconds = '0' + averageSeconds;
+        }
     }
 
     // Return the average time and the number of forfeits
@@ -657,8 +637,11 @@ async function getAverageTimes(IRC, channel, player, listAll = false) {
             });
         });
     } else {
-        var sayString = 'Average time from ' + player + '\'s last ' + numRaces + ' races: ' + averageMinutes + ':' + averageSeconds + ' (' + numForfeits + ' forfeits)';
-        console.log(sayString);
+        if (averageTime === 1000000000) {
+            var sayString = player + ' has forfeited every race that they have entered, so how can I calculate the average time?';
+        } else {
+            var sayString = 'Average time from ' + player + '\'s last ' + numRaces + ' races: ' + averageMinutes + ':' + averageSeconds + ' (' + numForfeits + ' forfeits)';
+        }
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
@@ -740,7 +723,13 @@ async function makeLeaderboard(IRC, channel) {
             for (var j = 0; j < spacing; j++) {
                 leaderboardString += ' ';
             }
-            leaderboardString += averageMinutes + ':' + averageSeconds + ' (' + leaderboard[i].numForfeits + '/' + leaderboard[i].numRaces + ' forfeits)\n';
+            
+            if (leaderboard[i].averageTime === 1000000000) {
+                leaderboardString +=  'n/a';
+            } else {
+                leaderboardString += averageMinutes + ':' + averageSeconds;
+            }
+            leaderboardString += ' (' + leaderboard[i].numForfeits + '/' + leaderboard[i].numRaces + ' forfeits)\n';
         }
 
         // Post the leaderboard string to Pastebin
@@ -771,12 +760,6 @@ function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
             return; // Ignore what they have to say
         }
     }
-
-    // Cast all input as an integer
-    minNumber = parseInt(minNumber);
-    //TwitchBot.say(channel, 'min number is ' + minNumber);
-    maxNumber = parseInt(maxNumber);
-    //TwitchBot.say(channel, 'max number is ' + maxNumber);
 
     // Input validation
     if (minNumber > 1000 || maxNumber > 1000 || minNumber < 0 || maxNumber < 0 || minNumber === maxNumber) {
@@ -837,7 +820,7 @@ var getOrdinal = function(n) {
 
 /*
  *
- * IRC Listeners
+ * SRL Stuff
  *
  */
 
@@ -852,9 +835,6 @@ SRLBot.addListener('error', function(message) {
         console.log(raceList);
     }
 });
-TwitchBot.addListener('error', function(message) {
-    error('TWITCH ERROR: ' + message.command + ': ' + message.args.join(' '));
-});
 
 // Detect broken session
 SRLBot.addListener('ping', function(server) {
@@ -862,27 +842,15 @@ SRLBot.addListener('ping', function(server) {
     SRLTimeoutTimer = currentTime;
     setTimeout(checkSRLBroken, 600000, currentTime); // 10 minutes (changed this from 5 minutes because it was too short)
 });
-TwitchBot.addListener('ping', function(server) {
-    var currentTime = (new Date).getTime();
-    TwitchTimeoutTimer = currentTime;
-    setTimeout(checkTwitchBroken, 600000, currentTime); // 10 minutes (changed this from 5 minutes because it was too short)
-});
 
-// Do stuff once we successfully join the Twitch IRC server
-TwitchBot.addListener('registered', function(message) {
-    // Register for Twitch-specific capabilities (https://github.com/justintv/Twitch-API/blob/master/IRC.md)
-    //TwitchBot.send('CAP', 'REQ', 'twitch.tv/commands'); // Turning this on breaks normal message catching
-    //TwitchBot.send('CAP', 'REQ', 'twitch.tv/tags');
-    joinTwitchChannels();
-});
-
-// Catch messages for SRL
+// Catch messages
 SRLBot.addListener('message', function(user, channel, message) {
-    var datetime = new Date();
-    console.log(datetime + ' - SRL [' + channel + '] <' + user + '> ' + message);
-
     // Remove whitespace from both sides of the string
     message = message.trim();
+
+    // Log all messages
+    var datetime = new Date();
+    console.log(datetime + ' - SRL [' + channel + '] <' + user + '> ' + message);
 
     // Look for new BoIR races
     if (channel === '#speedrunslive' && message === '.startrace isaacafterbirth') {
@@ -1288,7 +1256,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             if (seed.length === 8) {
                 // Insert a space to make the seed more readable
                 var leftSide = seed.match(/^(....)....$/)[1];
-                var rightRight = seed.match(/^....(....)$/)[1];
+                var rightSide = seed.match(/^....(....)$/)[1];
                 seed = leftSide + ' ' + rightSide;
             }
             var goal = goalList['sets'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
@@ -1309,7 +1277,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             if (seed.length === 8) {
                 // Insert a space to make the seed more readable
                 var leftSide = seed.match(/^(....)....$/)[1];
-                var rightRight = seed.match(/^....(....)$/)[1];
+                var rightSide = seed.match(/^....(....)$/)[1];
                 seed = leftSide + ' ' + rightSide;
             }
             var goal = goalList['sets'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
@@ -1475,34 +1443,255 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
     } else if (user === 'Zamiel' && (message === '.debug' || message === '!debug')) {
         console.log('----- Doing debug function -----');
-        debug();
-        //SRLBot.say(channel, 'a' + '\x034\x02' + 'b' + '\x03\x02' + 'c');
+        //debug();
+        /*var collection = db.get('races');
+        collection.find({}, { limit: 1 }, function(e, races) {
+            console.log(races);
+        });*/
     }
 });
 
-// Catch messages for Twitch
-TwitchBot.addListener('message', function(user, channel, message) {
+// Catch PMs
+SRLBot.addListener('pm', function (user, message) {
+    console.log('SRL PM <' + user + '> ' + message);
+
+    // .join (1/2)
+    for (var i = 0; i < playerList.length; i++) { // Go through the player list
+        if (user.toLowerCase() === playerList[i].srl && message.match(/^.join .+$/)) {
+            var channelToJoin = '#' + message.match(/^.join (.+)$/)[1];
+            channelsToJoin.push(channelToJoin);
+            console.log('----- I was told to join SRL channel ' + channelToJoin + ' -----');
+            addRace(channelToJoin);
+            SRLBot.join(channelToJoin);
+        }
+    }
+
+    // .debug
+    if (user === 'Zamiel' && message.match(/^.debug$/)) {
+        debug();
+
+    // .tsay
+    } else if (user === 'Zamiel' && message.match(/^.tsay .+ .+$/)) {
+        var sayChannel = message.match(/^.tsay (.+?) .+$/)[1];
+        var sayMessage = message.match(/^.tsay .+? (.+)$/)[1];
+
+        console.log('----- I was told to say to Twitch ' + sayChannel + ': "' + sayMessage + '" -----');
+        TwitchBot.say('#' + sayChannel, sayMessage)
+
+    // .ssay
+    } else if (user === 'Zamiel' && message.match(/^.ssay .+ .+$/)) {
+        var sayChannel = message.match(/^.ssay (.+?) .+$/)[1];
+        var sayMessage = message.match(/^.ssay .+? (.+)$/)[1];
+
+        console.log('----- I was told to say to SRL ' + sayChannel + ': "' + sayMessage + '" -----');
+        SRLBot.say('#' + sayChannel, sayMessage)
+    }
+});
+
+// Joining a new race
+SRLBot.addListener('names', function(channel, nicks) {
+    console.log('----- Joined channel ' + channel + ' -----');
+
+    // Automatically set the goal (if this is a race and we aren't manually joining the channel)
+    if (channelsToJoin.indexOf(channel) === -1 && channel.match(/^#srl-.+$/)) {
+        //var seed = channel.match(/^#srl-(.+)$/)[1];
+        //var characterNum = Math.floor((Math.random() * 9)); // Get a random number between 0 and 8
+        SRLBot.say(channel, goalList['set']);
+    }
+
+    // Joining a race channel late either from a .join comment or a restart
+    if (channelsToJoin.indexOf(channel) !== -1 && channel.match(/^#srl-.+$/)) {
+        // Populate the entrants by looking to see who is a voice in the channel
+        for (var nick in nicks) {
+            if (!nicks.hasOwnProperty(nick)) {
+                continue;
+            }
+
+            // Check if this user is a voice
+            if (nicks[nick] === '+') {
+                raceList[channel].entrants.push(nick.toLowerCase());
+                console.log('----- Adding ' + nick + ' to the entrants list for race ' + channel + ' since they are a voice (' + raceList[channel].entrants.length + ' current entrants) -----');
+            }
+        }
+
+        // Ask for a list of the current racers so we can adjust entrantsLeft appropriately
+        SRLBot.say(channel, '.entrants');
+
+        // Remove the channel from the channelsToJoin array since we have successfully joined it
+        channelsToJoin.splice(channelsToJoin.indexOf(channel), 1);
+    }
+});
+
+// Notice is used by RaceBot for various things
+SRLBot.addListener('notice', function(nick, to, text, message) {
     var datetime = new Date();
-    console.log(datetime + ' - TWITCH [' + channel + '] <' + user + '> ' + message);
+    console.log(datetime + ' - SRL Notice <' + nick + '> ' + text);
+
+    // Identify
+    if (nick === 'NickServ' && text.match(/^If you do not change within 20 seconds, I will change your nick.$/)) {
+        var SRLPassword = fs.readFileSync(botDirectory + '/passwords/SRL.txt', 'utf8').trim();
+        SRLBot.say('NickServ', 'IDENTIFY ' + SRLPassword);
+    } else if (nick === 'NickServ' && text.match(/^Password accepted - you are now recognized.$/)) {
+        identified = true;
+        console.log('----- Setting identified variable to true -----');
+    }
+
+    // Automatically join any races that are already going
+    if (nick === 'RaceBot' && (
+        text.match(/^\d+\. The Binding of Isaac: Rebirth - .+ /) ||
+        text.match(/^\d+\. The Binding of Isaac: Afterbirth - .+ /) ||
+        text.match(/^\d+\. The Binding of Isaac: Afterbirth+ - .+ /)
+    )) {
+        // Parse the race name
+        var m = text.match(/^\d+\. The Binding of Isaac: .+ - .+ \|....(#srl-.....).+\|.+\|.+$/);
+        if (m) {
+            var raceChannelName = m[1];
+            joinRace(raceChannelName);
+        } else {
+            error('SRL ERROR: Regex failure when automatically joining open races.');
+        }
+
+    // Update entrantsLeft for the race that we joined midway through
+    } else if (nick === 'RaceBot' && text.match(/.+ \(.+\) \| .+ \(.+\)/)) {
+        var racers = text.split('|');
+
+        // Make a list of all the racers not finished yet
+        var noticePlayers = [];
+        for (var i = 0; i < racers.length; i++) {
+            var m = racers[i].trim().match(/^(.+) \(Ready\)$/);
+            if (m) {
+                var readyRacer = m[1].trim().toLowerCase();
+                noticePlayers.push(readyRacer);
+            }
+        }
+
+        // Find out what race this corresponds to
+        var raceName = false;
+        for (var race in raceList) {
+            if (!raceList.hasOwnProperty(race)) {
+                continue;
+            }
+
+            // Count the number of players in the notice who are in this race
+            var playersFound = 0;
+            for (var i = 0; i < noticePlayers.length; i++) {
+                for (var j = 0; j < raceList[race].entrants.length; j++) {
+                    // toLowerCase is needed here because sometimes RaceBot will capitalize people's names in the .entrants message
+                    if (noticePlayers[i].toLowerCase() === raceList[race].entrants[j].toLowerCase()) {
+                        playersFound++;
+                    }
+                }
+            }
+
+            // If all of the players in the notice are entrants in this race
+            if (playersFound === noticePlayers.length) {
+                raceName = race;
+                break;
+            }
+        }
+
+        // Update entrantsLeft for this race
+        if (raceName !== false) {
+            raceList[raceName].entrantsLeft = noticePlayers.slice();
+            console.log('----- Updating the entrantsLeft for race ' + raceName + ' that I joined late (' + raceList[raceName].entrantsLeft + ') -----');
+        } else {
+            error('SRL ERROR: I couldn\'t find a matching race for the .entrants message of: ' + noticePlayers);
+            debug();
+        }
+    }
+});
+
+// Listen for races starting
+SRLBot.addListener('topic', function(channel, topic) {
+    // We only care about listening to the topic for race channels
+    if (!channel.match(/^#srl-.....$/)) {
+        return
+    }
+
+    // Go through the race list
+    var foundRace = false;
+    for (var race in raceList) {
+        if (!raceList.hasOwnProperty(race)) {
+            continue;
+        }
+
+        if (race === channel) {
+            // Set the status
+            var m = topic.match(/^Status: (.+?) \| Game:/);
+            if (m) {
+                var status = m[1].toLowerCase();
+                if (status === 'entry open') {
+                    raceList[race].status = 0;
+                } else if (status === 'entry closed') {
+                    raceList[race].status = 0;
+                } else if (status === 'in progress') {
+                    raceList[race].status = 1;
+                } else if (status === 'complete') {
+                    raceList[race].status = 2;
+                } else if (status === 'race over') {
+                    raceList[race].status = 2;
+                } else {
+                    error('SRL ERROR: I was not able to parse the status of the race from the topic for channel "' + channel + '": ' + topic);
+                }
+            } else {
+                error('SRL ERROR: I was not able to parse the topic for channel "' + channel + '": ' + topic);
+            }
+
+            // Set the goal
+            var m = topic.match(/\| Goal: (.+)$/);
+            if (m) {
+                var goal = m[1];
+                raceList[channel].goal = goal;
+                console.log('----- Set the goal for channel ' + channel + ' in my database to: ' + goal + ' -----');
+            }
+
+            foundRace = true;
+            break;
+        }
+    }
+    if (foundRace === false) {
+        error('SRL ERROR: I recieved a topic for channel ' + channel + ', but I could not find a race that corresponds with it.');
+    }
+});
+
+/*
+ *
+ * Twitch Stuff
+ *
+ */
+
+// Do stuff once we successfully join the Twitch IRC server
+TwitchBot.once('connected', async function() {
+    // Join every channel on the player list
+    for (var i = 0; i < playerList.length; i++) {
+        // Check to see if the bot is a mod in the channel before joining it
+        var modList = await TwitchBot.mods('#' + playerList[i].twitch);
+        if (modList.indexOf('zamielbot') !== -1) {
+            console.log('----- Mod check succeeded for ' + playerList[i].twitch + ', joining channel. -----');
+            TwitchBot.join('#' + playerList[i].twitch);
+        } else {
+            error('TWITCH ERROR: ZamielBot is not a mod in the Twitch channel of: ' + playerList[i].twitch);
+        }
+    }
+});
+
+// Catch chat messages
+TwitchBot.on('chat', function(channel, user, message, self) {
+    // Since user is an object containing various things, just make it equal to the username for simplicity
+    user = user.username; // See: https://www.tmijs.org/docs/Events.md#chat
 
     // Remove whitespace from both sides of the string
     message = message.trim();
+
+    // Log all messages
+    var datetime = new Date();
+    console.log(datetime + ' - TWITCH [' + channel + '] <' + user + '> ' + message);
 
     /*
      *
      * Twitch commands
      *
      */
-
-    // Check to see if we are a moderator before responding to any commands
-    /*for (var i = 0; i < playerList.length; i++) { // Go through the player list
-        if (playerList[i].twitch === channel.match(/#(.+)/)[1]) {
-            if (playerList[i].mod === false) {
-                error('TWITCH ERRROR: I was going to see if someone was sending me a command on channel ' + channel + ', but I am not a moderator there.');
-                return;
-            }
-        }
-    }*/
 
     // Command exceptions per channel
     /*if (channel === '#asdf' && message === '!asdf') {
@@ -1515,6 +1704,14 @@ TwitchBot.addListener('message', function(user, channel, message) {
         console.log('----- I was told to join Twitch channel ' + channelName + ' -----');
         TwitchBot.say(channel, 'Ok, I\'ll join channel \'' + channelName + '\'.');
         TwitchBot.join('#' + channelName);
+    }
+
+    // !leave
+    if (user === 'zamiell' && message.match(/^!leave .+$/)) {
+        var channelName = message.match(/^!join (.+)$/)[1];
+        console.log('----- I was told to leave Twitch channel ' + channelName + ' -----');
+        TwitchBot.say(channel, 'Ok, I\'ll leave channel \'' + channelName + '\'.');
+        TwitchBot.part('#' + channelName);
     }
 
     // Info commands
@@ -1740,255 +1937,4 @@ TwitchBot.addListener('message', function(user, channel, message) {
     } else if (message === '!d20') {
         getRandomNumber('Twitch', channel, user, 1, 20);
     }
-
-    // Automatically ban spam bots
-    /*if (message.match(/https:\/\/t\.co\/.+/)) {
-        TwitchBot.say(channel, '/ban ' + user);
-    }*/
 });
-
-// Catch PMs for SRL
-SRLBot.addListener('pm', function (user, message) {
-    console.log('SRL PM <' + user + '> ' + message);
-
-    // .join (1/2)
-    for (var i = 0; i < playerList.length; i++) { // Go through the player list
-        if (user.toLowerCase() === playerList[i].srl && message.match(/^.join .+$/)) {
-            var channelToJoin = '#' + message.match(/^.join (.+)$/)[1];
-            channelsToJoin.push(channelToJoin);
-            console.log('----- I was told to join SRL channel ' + channelToJoin + ' -----');
-            addRace(channelToJoin);
-            SRLBot.join(channelToJoin);
-        }
-    }
-
-    // .debug
-    if (user === 'Zamiel' && message.match(/^.debug$/)) {
-        debug();
-
-    // .tsay
-    } else if (user === 'Zamiel' && message.match(/^.tsay .+ .+$/)) {
-        var sayChannel = message.match(/^.tsay (.+?) .+$/)[1];
-        var sayMessage = message.match(/^.tsay .+? (.+)$/)[1];
-
-        console.log('----- I was told to say to Twitch ' + sayChannel + ': "' + sayMessage + '" -----');
-        TwitchBot.say('#' + sayChannel, sayMessage)
-
-    // .ssay
-    } else if (user === 'Zamiel' && message.match(/^.ssay .+ .+$/)) {
-        var sayChannel = message.match(/^.ssay (.+?) .+$/)[1];
-        var sayMessage = message.match(/^.ssay .+? (.+)$/)[1];
-
-        console.log('----- I was told to say to SRL ' + sayChannel + ': "' + sayMessage + '" -----');
-        SRLBot.say('#' + sayChannel, sayMessage)
-    }
-});
-
-// Joining a new race
-SRLBot.addListener('names', function(channel, nicks) {
-    console.log('----- Joined channel ' + channel + ' -----');
-
-    // Automatically set the goal (if this is a race and we aren't manually joining the channel)
-    if (channelsToJoin.indexOf(channel) === -1 && channel.match(/^#srl-.+$/)) {
-        //var seed = channel.match(/^#srl-(.+)$/)[1];
-        //var characterNum = Math.floor((Math.random() * 9)); // Get a random number between 0 and 8
-        SRLBot.say(channel, goalList['set']);
-    }
-
-    // Joining a race channel late either from a .join comment or a restart
-    if (channelsToJoin.indexOf(channel) !== -1 && channel.match(/^#srl-.+$/)) {
-        // Populate the entrants by looking to see who is a voice in the channel
-        for (var nick in nicks) {
-            if (!nicks.hasOwnProperty(nick)) {
-                continue;
-            }
-
-            // Check if this user is a voice
-            if (nicks[nick] === '+') {
-                raceList[channel].entrants.push(nick.toLowerCase());
-                console.log('----- Adding ' + nick + ' to the entrants list for race ' + channel + ' since they are a voice (' + raceList[channel].entrants.length + ' current entrants) -----');
-            }
-        }
-
-        // Ask for a list of the current racers so we can adjust entrantsLeft appropriately
-        SRLBot.say(channel, '.entrants');
-
-        // Remove the channel from the channelsToJoin array since we have successfully joined it
-        channelsToJoin.splice(channelsToJoin.indexOf(channel), 1);
-    }
-});
-
-SRLBot.addListener('notice', function(nick, to, text, message) {
-    var datetime = new Date();
-    console.log(datetime + ' - SRL Notice <' + nick + '> ' + text);
-
-    // Identify
-    if (nick === 'NickServ' && text.match(/^If you do not change within 20 seconds, I will change your nick.$/)) {
-        var SRLPassword = fs.readFileSync(botDirectory + '/passwords/SRL.txt', 'utf8').trim();
-        SRLBot.say('NickServ', 'IDENTIFY ' + SRLPassword);
-    } else if (nick === 'NickServ' && text.match(/^Password accepted - you are now recognized.$/)) {
-        identified = true;
-        console.log('----- Setting identified variable to true -----');
-    }
-
-    // Automatically join any races that are already going
-    if (nick === 'RaceBot' && (
-        text.match(/^\d+\. The Binding of Isaac: Rebirth - .+ /) ||
-        text.match(/^\d+\. The Binding of Isaac: Afterbirth - .+ /) ||
-        text.match(/^\d+\. The Binding of Isaac: Afterbirth+ - .+ /)
-    )) {
-        // Parse the race name
-        var m = text.match(/^\d+\. The Binding of Isaac: .+ - .+ \|....(#srl-.....).+\|.+\|.+$/);
-        if (m) {
-            var raceChannelName = m[1];
-            joinRace(raceChannelName);
-        } else {
-            error('SRL ERROR: Regex failure when automatically joining open races.');
-        }
-
-    // Update entrantsLeft for the race that we joined midway through
-    } else if (nick === 'RaceBot' && text.match(/.+ \(.+\) \| .+ \(.+\)/)) {
-        var racers = text.split('|');
-
-        // Make a list of all the racers not finished yet
-        var noticePlayers = [];
-        for (var i = 0; i < racers.length; i++) {
-            var m = racers[i].trim().match(/^(.+) \(Ready\)$/);
-            if (m) {
-                var readyRacer = m[1].trim().toLowerCase();
-                noticePlayers.push(readyRacer);
-            }
-        }
-
-        // Find out what race this corresponds to
-        var raceName = false;
-        for (var race in raceList) {
-            if (!raceList.hasOwnProperty(race)) {
-                continue;
-            }
-
-            // Count the number of players in the notice who are in this race
-            var playersFound = 0;
-            for (var i = 0; i < noticePlayers.length; i++) {
-                for (var j = 0; j < raceList[race].entrants.length; j++) {
-                    // toLowerCase is needed here because sometimes RaceBot will capitalize people's names in the .entrants message
-                    if (noticePlayers[i].toLowerCase() === raceList[race].entrants[j].toLowerCase()) {
-                        playersFound++;
-                    }
-                }
-            }
-
-            // If all of the players in the notice are entrants in this race
-            if (playersFound === noticePlayers.length) {
-                raceName = race;
-                break;
-            }
-        }
-
-        // Update entrantsLeft for this race
-        if (raceName !== false) {
-            raceList[raceName].entrantsLeft = noticePlayers.slice();
-            console.log('----- Updating the entrantsLeft for race ' + raceName + ' that I joined late (' + raceList[raceName].entrantsLeft + ') -----');
-        } else {
-            error('SRL ERROR: I couldn\'t find a matching race for the .entrants message of: ' + noticePlayers);
-            debug();
-        }
-    }
-});
-
-// Listen for races starting
-SRLBot.addListener('topic', function(channel, topic) {
-    // We only care about listening to the topic for race channels
-    if (!channel.match(/^#srl-.....$/)) {
-        return
-    }
-
-    // Go through the race list
-    var foundRace = false;
-    for (var race in raceList) {
-        if (!raceList.hasOwnProperty(race)) {
-            continue;
-        }
-
-        if (race === channel) {
-            // Set the status
-            var m = topic.match(/^Status: (.+?) \| Game:/);
-            if (m) {
-                var status = m[1].toLowerCase();
-                if (status === 'entry open') {
-                    raceList[race].status = 0;
-                } else if (status === 'entry closed') {
-                    raceList[race].status = 0;
-                } else if (status === 'in progress') {
-                    raceList[race].status = 1;
-                } else if (status === 'complete') {
-                    raceList[race].status = 2;
-                } else if (status === 'race over') {
-                    raceList[race].status = 2;
-                } else {
-                    error('SRL ERROR: I was not able to parse the status of the race from the topic for channel "' + channel + '": ' + topic);
-                }
-            } else {
-                error('SRL ERROR: I was not able to parse the topic for channel "' + channel + '": ' + topic);
-            }
-
-            // Set the goal
-            var m = topic.match(/\| Goal: (.+)$/);
-            if (m) {
-                var goal = m[1];
-                raceList[channel].goal = goal;
-                console.log('----- Set the goal for channel ' + channel + ' in my database to: ' + goal + ' -----');
-            }
-
-            foundRace = true;
-            break;
-        }
-    }
-    if (foundRace === false) {
-        error('SRL ERROR: I recieved a topic for channel ' + channel + ', but I could not find a race that corresponds with it.');
-    }
-});
-
-// Catch special things
-/*TwitchBot.addListener('raw', function(message) {
-    //console.log('TWITCH RAW:');
-    //console.log(message);
-
-    // Look for capability request acknowledgements
-    if (message.command === 'CAP' && message.args[0] === '*' && message.args[1] === 'ACK' && message.args[2] === 'twitch.tv/commands') {
-        console.log('----- Recieved commands capabilitiy from Twitch. ----');
-        TwitchRequests.commands = true;
-        if (TwitchRequests.commands === true && TwitchRequests.tags === true) {
-            joinTwitchChannels();
-        }
-    } else if (message.command === 'CAP' && message.args[0] === '*' && message.args[1] === 'ACK' && message.args[2] === 'twitch.tv/tags') {
-        console.log('----- Recieved tags capabilitiy from Twitch. ----');
-        TwitchRequests.tags = true;
-        if (TwitchRequests.commands === true && TwitchRequests.tags === true) {
-            joinTwitchChannels();
-        }
-
-    // Look for USERSTATE messages
-    } else if (message.args[0].match(/^tmi.twitch.tv USERSTATE #.+/)) {
-        var channel = message.args[0].match(/^tmi.twitch.tv USERSTATE #(.+)/)[1];
-        console.log('DEBUG: FOUND USERSTATE for ' + channel + ': ' + message.command);
-        if (message.command.match(/;mod=[01];/)) {
-            var mod = message.command.match(/;mod=([01]);/)[1];
-            if (mod === '1') {
-                console.log('---- Confirmed that we are a moderator in the Twitch channel of ' + channel + '.');
-
-                // Set the "mod" property to true
-                for (var i = 0; i < playerList.length; i++) { // Go through the player list
-                    if (playerList[i].twitch === channel) {
-                        playerList[i].mod = true;
-                        break;
-                    }
-                }
-            } else {
-                console.log('----- We do not appear to be a moderator in the Twitch channel of ' + channel + '.');
-            }
-        } else {
-            error('TWITCH ERROR: I could not parse the USERSTATE for channel ' + channel + '.');
-        }
-    }
-});*/
