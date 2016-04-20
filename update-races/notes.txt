@@ -1,0 +1,38 @@
+Query used to find misnamed goals for Afterbirth:
+
+{
+  $and: [
+    { goal: { $not: /^Beat The Chest with Judas \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, seed .... ....\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, seed .....\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, seed ... ...\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(Instant Start Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, build \d+, seed .... ....\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(Instant Start Mod v1\.\d+\.*\d*, &quot;BLCK CNDL&quot; easter egg, build \d+, seed .... ....\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(Instant Start Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, build \d+\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(No Reset Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, seed .... ....\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(No Reset Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, item \d+\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(No Reset Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, item \d+, seed .... ....\)/ } },
+    { goal: { $not: /^Beat The Chest with Cain \(Diversity Mod v0\.\d+, &quot;BLCK CNDL&quot; easter egg, seed ......*\)/ } },
+    { goal: { $not: /^Beat The Chest with Cain \(Diversity Mod v2\.\d+, &quot;BLCK CNDL&quot; easter egg, seed ......*\)/ } },
+    { goal: { $not: /^Beat The Chest with Cain \(Diversity Mod v2\.\d+\.\d+, &quot;BLCK CNDL&quot; easter egg, seed ......*\)/ } },
+    { goal: { $not: /^Beat The Dark Room with Judas \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg\)/ } },
+    { goal: { $not: /^Beat The Dark Room with Judas \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg, seed .... ....\)/ } },
+    { goal: { $not: /^Beat The Dark Room with Judas \(Jud6s Mod v1\.\d+, normal mode, &quot;BLCK CNDL&quot; easter egg, seed .... ....\)/ } },
+    { goal: { $not: /^Beat The Dark Room with Judas \(Jud6s Mod v1\.\d+, hard mode, &quot;BLCK CNDL&quot; easter egg, seed .... ....\)/ } },
+    { goal: { $not: /^Beat The Dark Room with Blue Baby \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg\)/ } },
+    { goal: { $not: /^Beat The Dark Room with Judas. Shadow \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg\)/ } },
+    { goal: { $not: /^Beat The Chest with Judas \(Seeded Mod v1\.\d+, &quot;Total curse immunity&quot; easter egg, seed .... ....\)/i } },
+    { goal: { $not: /^beat chest with judas \(seeded mod v1\.\d+, &quot;total curse immunity&quot; easter egg, seed .... ....\)/i } },
+    { goal: { $not: /^Beat The Chest with Isaac/i } },
+    { goal: { $not: /^beat chest with isaac/i } },
+    { goal: { $not: /^beat chest with lilith/i } },
+    { goal: { $not: /^beat chest with lazurus/i } },
+    { goal: { $not: /^beat the chest with lazarus/i } },
+    { goal: { $not: /^.beat the chest with lazarus/i } },
+    { goal: { $not: /^Beat Ultra.greed/i } },
+    { goal: { $not: /^Beat greed mode with isaac/i } },
+    { goal: { $not: /^7 characters to the chest/i } },
+    { goal: { $not: /^Goal: beat chest with isaac/i } },
+    { goal: { $not: /^Game: The Binding of Isaac: Afterbirth | Goal: beat chest with isaac/i } },
+  ]
+}

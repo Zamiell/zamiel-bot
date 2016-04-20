@@ -18,7 +18,7 @@ use JSON;
 use DateTime;
 
 # Welcome
-print "\nUpdating the races collection on \"" . DB_HOST . "\"...\n\n";
+print "Updating the races collection on \"" . DB_HOST . "\"...\n";
 
 # Get the password
 my $command = "cat '" . DIRECTORY_PATH . "/../passwords/MongoDB.txt'";
@@ -38,7 +38,7 @@ while (my $race = $allRaces->next) {
 	}
 }
 my $date = DateTime->from_epoch(epoch => $mostRecentRaceDate);
-print "The most recent race is $mostRecentRaceID (on " . $date->month_name . " " . $date->day . ", " . $date->year . ").\n\n";
+print "The most recent race is $mostRecentRaceID (on " . $date->month_name . " " . $date->day . ", " . $date->year . ").\n";
 
 # Query the SRL API for the list of races
 my $directoryPath = DIRECTORY_PATH;

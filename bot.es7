@@ -1,7 +1,3 @@
-// Welcome message
-var datetime = new Date();
-console.log('----- STARTING SERVER @ ' + datetime + ' -----');
-
 // Imports
 var irc     = require('irc');                // The SRL side uses the node-irc library
 var tmi     = require('tmi.js');             // The Twitch side uses the tmi-js library
@@ -13,10 +9,10 @@ var mongodb = require('mongodb');            // For talking to the MongoDB datab
 
 // Configuration
 var botDirectory          = '/home/zamiel/zamiel-bot';
-var jud6sVersion          = 'v1.21';
-var diversityVersion      = 'v2.3.1';
-var instantStartVersion   = 'v1.6.1';
-var numInstantStartBuilds = 28;
+var jud6sVersion          = 'v1.22';
+var diversityVersion      = 'v2.3.3';
+var instantStartVersion   = 'v1.6.3';
+var numInstantStartBuilds = 29;
 var numAverageRacesToUse  = 50;
 var numRacesToAdvert      = 9999999;
 var advertMessage         = 'Sign up for Isaac tournaments and leagues. See the list/schedule here: http://pastebin.com/q9Y3MRdT';
@@ -50,6 +46,7 @@ var infoList = {
     'lemon':           'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'lemonparty':      'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'lemonleague':     'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
+    'lpl':             'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'tracker':         'Rebirth Item Tracker download + info: https://github.com/Hyphen-ated/RebirthItemTracker/releases',
     'itemtracker':     'Rebirth Item Tracker download + info: https://github.com/Hyphen-ated/RebirthItemTracker/releases',
     '100':             'Fully unlocked Afterbirth save download: http://www.speedrun.com/saves/fully_unlocked_afterbirth_save_5vkrx.zip',
@@ -71,27 +68,6 @@ var infoList = {
     'help':            'ZamielBot FAQ: http://pastebin.com/8ysF8VgX',
     'commands':        'ZamielBot FAQ: http://pastebin.com/8ysF8VgX',
 };
-var SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
-    debug: true,
-    showErrors: true,
-    //channels: ['#speedrunslive', '#lemonparty', '#isaac'],
-    channels: ['#speedrunslive', '#lemonparty'], // Uncomment this when debugging because Hyphen-ated gets pissed
-    autoConnect: true,
-});
-var oauth = fs.readFileSync(botDirectory + '/passwords/Twitch.txt', 'utf8').trim();
-var TwitchBot = new tmi.client({
-    options: {
-        debug: true,
-    },
-    connection: {
-        reconnect: true,
-    },
-    identity: {
-        username: 'ZamielBot',
-        password: oauth,
-    },
-});
-TwitchBot.connect();
 var playerList = [
     {
         'srl': 'Zamiel',
@@ -249,6 +225,26 @@ var playerList = [
         'twitch': 'NeNeSSquick',
     },
 ];
+var SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
+    debug: true,
+    showErrors: true,
+    channels: ['#speedrunslive', '#lemonparty', '#isaac'],
+    //channels: ['#speedrunslive', '#lemonparty'], // Uncomment this when debugging because Hyphen gets pissy
+    autoConnect: false,
+});
+var oauth = fs.readFileSync(botDirectory + '/passwords/Twitch.txt', 'utf8').trim();
+var TwitchBot = new tmi.client({
+    options: {
+        debug: true,
+    },
+    connection: {
+        reconnect: true,
+    },
+    identity: {
+        username: 'ZamielBot',
+        password: oauth,
+    },
+});
 
 // Variables
 var raceList = {};
@@ -262,6 +258,7 @@ var ignoreList = [];
 var raceStarter;
 var PastebinDevKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-Dev.txt', 'utf8').trim();
 var PastebinUserKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-User.txt', 'utf8').trim();
+var mongoPassword = fs.readFileSync(botDirectory + '/passwords/MongoDB.txt', 'utf8').trim();
 var characterArray = [
     'Isaac',     // 0
     'Magdalene', // 1
@@ -297,6 +294,14 @@ for (var i = 0; i < playerList.length; i++) { // Go through the player list
 
 // Initialize the no reset random number array
 refillInstantStartRandomArray();
+
+// Welcome message
+
+// Start the two servers
+var datetime = new Date();
+console.log('----- STARTING ZAMIELBOT @ ' + datetime + ' for ' + playerList.length + ' users! -----');
+SRLBot.connect();
+TwitchBot.connect();
 
 /*
  *
@@ -423,23 +428,6 @@ function sendTwitch(type, channel, message) {
     TwitchBot.action(channel, message);
 }
 
-function getAPI(url) {
-    console.log('----- Getting SRL API at URL: ' + url + ' -----');
-    return new Promise(function(resolve, reject) {
-        request({
-            url: url,
-            method: 'GET',
-            timeout: 1000,
-        }, function (error, response, body) {
-            if (!error && response.statusCode === 200) {
-                resolve(JSON.parse(body));
-            } else {
-                return reject(error);
-            }
-        });
-    });
-}
-
 function postPastebin(pasteName, pasteString) {
     return new Promise(function(resolve, reject) {
         request({
@@ -465,7 +453,31 @@ function postPastebin(pasteName, pasteString) {
     });
 }
 
-async function getAverageTimes(IRC, channel, player, listAll = false) {
+function getFormattedDate(epoch) {
+    var d = new Date(0);
+    d.setUTCSeconds(epoch);
+    var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var day = days[d.getDay()] + ',';
+    var date = months[d.getMonth()] + ' ' + getOrdinal(d.getDate()) + ', ' + d.getFullYear();
+    var time = '';
+    if (d.getHours() < 10) {
+        time += '0';
+    }
+    time += d.getHours() + ':';
+    if (d.getMinutes() < 10) {
+        time += '0';
+    }
+    time += d.getMinutes() + ' ';
+    if (d.getTimezoneOffset() / 60 === 4) {
+        time += '(EDT)';
+    } else {
+        time += '(EST)';
+    }
+    return date + ' @ ' + time;
+}
+
+function getAverageTimes(IRC, channel, player, requester, listAll = false) {
     // Remove whitespace from both sides of the string
     player = player.trim();
 
@@ -476,80 +488,164 @@ async function getAverageTimes(IRC, channel, player, listAll = false) {
             break;
         }
     }
-
+    
+    // Get this player's past races from the database
     try {
-        var url = 'http://api.speedrunslive.com/pastraces?game=isaacafterbirth&player=' + player + '&page=1&pageSize=500';
-        var json = await getAPI(url);
-
-        // Go through the player's past 250 races
-        var numRaces = 0;
-        var numForfeits = 0;
-        var sumTimes = 0;
-        var racesString = 'Past ' + numAverageRacesToUse + ' Jud6s races for ' + player + ':\n\n'; 
-        for (var i = 0; i < json.pastraces.length; i++) {
-            // Go to the next race if it does not match the goal
-            if (!json.pastraces[i].goal.match(/Beat The Chest with Judas \(Jud6s Mod v1\.\d+, \&quot;BLCK CNDL\&quot; easter egg\)/)) {
-                continue;
+        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (error, db) {
+            if (error) {
+                error('ERROR - Unable to connect to the MongoDB server: ' + error);
+                throw 'Unable to connect to the MongoDB server.';
             }
 
-            // Go through the results for this race
-            var foundPlayer = false;
-            for (var j = 0; j < json.pastraces[i].results.length; j++) {
-                // Look for this player
-                if (json.pastraces[i].results[j].player.toLowerCase() === player.toLowerCase()) {
-                    foundPlayer = true;
+            // Create a regular expression to be used in the next step
+            function regexEscape(str) {
+                return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+            }
+            var re = new RegExp('^' + regexEscape(player) + '$', 'i'); // Match the player exactly, but case insensitive
 
-                    // Start to build the races string (which will only be used if this is a "!raceList" command)
-                    numRaces++;
-                    racesString += numRaces + ') ';
+            // Initialize variables
+            var numRaces = 0;
+            var numForfeits = 0;
+            var sumTimes = 0;
+            var racesString = 'The Binding of Isaac: Afterbirth\n';
+            racesString += 'List of Jud6s Races for ' + player + '\n';
+            racesString += new Date() + '\n';
+            racesString += '(requested by ' + requester + ')\n\n';
 
-                    // Add the date and time
-                    var d = new Date(0);
-                    d.setUTCSeconds(json.pastraces[i].date);
-                    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-                    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                    var day = days[d.getDay()] + ",";
-                    var date = months[d.getMonth()] + " " + getOrdinal(d.getDate()) + ", " + d.getFullYear();
-                    var time = "";
-                    if (d.getHours() < 10) {
-                        time += "0";
-                    }
-                    time += d.getHours() + ":";
-                    if (d.getMinutes() < 10) {
-                        time += "0";
-                    }
-                    time += d.getMinutes() + " (EST)";
-                    racesString += date + ' @ ' + time + ' --- ';
+            // Get the races collection
+            var collection = db.collection('races');
+            if (listAll === true) {
+                var options = {
+                    sort: [['id','desc']], // Get every race that they have ever done, with the most recent being at the top
+                };
+            } else {
+                var options = {
+                    sort: [['id','desc']], // We want the most recent races first
+                    limit: numAverageRacesToUse, // We only want to use the past X races for the purposes of calculating an average
+                };
+            }
+            var stream = collection.find({
+                results: { $elemMatch: { player: re } },
+                goal: /Beat The Chest with Judas \(Jud6s Mod v1\.\d+, \&quot;BLCK CNDL\&quot; easter egg\)/
+            }, options).stream();
 
-                    // Add the time to the string
-                    if (json.pastraces[i].results[j].time < 1) {
-                        numForfeits++; // They forfeited this race
-                        racesString += 'Forfeit';
-                    } else {
-                        var minutes = Math.floor(json.pastraces[i].results[j].time / 60);
-                        var seconds = json.pastraces[i].results[j].time % 60;
-                        sumTimes += json.pastraces[i].results[j].time; // They finished this race
-                        racesString += minutes + ':' + seconds;
-                    }
-
-                    // Add the message to the string, if there is one
-                    if (json.pastraces[i].results[j].message !== '') {
-                        racesString += ' - ' + json.pastraces[i].results[j].message;
-                    }
-                    racesString += '\n';
-
-                    break;
+            // For each race
+            stream.on('data', function(race) {
+                // Start to build the races string (which will only be used if this is a "!raceList" command)
+                numRaces++;
+                if (numRaces < 1000) {
+                    racesString += ' ';
                 }
-            }
-            if (!foundPlayer) {
-                error('ERROR: When calculating the average time, I was not able to find player ' + player + ' in race ' + i + '.');
-                throw 'Player ' + player + ' not found in race ' + i + '.';
-            }
+                if (numRaces < 100) {
+                    racesString += ' ';
+                }
+                if (numRaces < 10) {
+                    racesString += ' ';
+                }
+                racesString += numRaces + ')';
 
-            if (numRaces === numAverageRacesToUse) {
-                break;
-            }
-        }
+                // Add the date/time that the race happened
+                var date = getFormattedDate(race.date);
+                var spacing = 34 - date.length; // Pad with spaces so that it is properly aligned
+                for (var i = 0; i < spacing; i++) {
+                    racesString += ' ';
+                }
+                racesString += date + '     ';
+
+                // Find their time (and comment)
+                var foundPlayer = false;
+                for (var i = 0; i < race.results.length; i++) {
+                    if (race.results[i].player.toLowerCase() === player.toLowerCase()) {
+                        var raceTime = race.results[i].time;
+                        var comment = race.results[i].message;
+                        foundPlayer = true;
+                        break;
+                    }
+                }
+                if (foundPlayer === false) {
+                    error('ERROR: When going through the database, I was not able to find player ' + player + ' in race ' + i + '.');
+                    throw 'Player ' + player + ' not found in race ' + i + '.';
+                }
+
+                // Add the time to the string
+                if (raceTime < 1) {
+                    numForfeits++; // They forfeited this race
+                    racesString += 'Forfeit';
+                } else {
+                    var minutes = Math.floor(raceTime / 60);
+                    var seconds = raceTime % 60;
+                    if (seconds < 10) {
+                        seconds = '0' + seconds;
+                    }
+                    sumTimes += raceTime; // They finished this race
+                    racesString += ' ' + minutes + ':' + seconds + ' ';
+                }
+
+                // Add the message to the string, if there is one
+                if (comment !== '') {
+                    racesString += '     ' + comment;
+                }
+                racesString += '\n';
+            });
+
+            // We have now gone through all the races
+            stream.on('end', async function() {
+                // Close connection
+                db.close();
+
+                // Check to see if they have any races
+                if (numRaces === 0) {
+                    var sayString = player + ' has 0 Jud6s races played.';
+                    if (IRC === 'SRL') {
+                        SRLBot.say(channel, sayString);
+                    } else if (IRC === 'Twitch') {
+                        TwitchBot.say(channel, sayString);
+                    }
+                    return;
+                }
+
+                // If we are returning all races, instead of just the average
+                if (listAll === true) {
+                    // Post it to Pastebin
+                    var response = await postPastebin('Race Listing', racesString);
+                    var sayString = 'List of ' + player + '\'s Jud6s races: ' + response;
+                    if (IRC === 'SRL') {
+                        SRLBot.say(channel, sayString);
+                    } else if (IRC === 'Twitch') {
+                        TwitchBot.say(channel, sayString);
+                    }
+                    return;
+                }
+
+                // Check to see if they forfeited every race
+                if (numRaces === numForfeits) {
+                    var sayString = player + ' has forfeited every race that they have entered, so how can I calculate the average time?';
+                    if (IRC === 'SRL') {
+                        SRLBot.say(channel, sayString);
+                    } else if (IRC === 'Twitch') {
+                        TwitchBot.say(channel, sayString);
+                    }
+                    return;
+
+                }
+
+                // Calculate and format the average time
+                var averageTime = sumTimes / (numRaces - numForfeits);
+                var averageMinutes = Math.floor(averageTime / 60);
+                var averageSeconds = Math.floor(averageTime % 60);
+                if (averageSeconds < 10) {
+                    averageSeconds = '0' + averageSeconds;
+                }
+
+                // Return the average time and the number of forfeits
+                var sayString = 'Average time from ' + player + '\'s last ' + numRaces + ' races: ' + averageMinutes + ':' + averageSeconds + ' (' + numForfeits + ' forfeits)';
+                if (IRC === 'SRL') {
+                    SRLBot.say(channel, sayString);
+                } else if (IRC === 'Twitch') {
+                    TwitchBot.say(channel, sayString);
+                }
+            });
+        });
     } catch(error) {
         console.log('----- getAverageTimes function failed with error: ' + error + ' -----');
         sayString = 'Something went wrong when getting the race listing for ' + player + '.';
@@ -558,186 +654,253 @@ async function getAverageTimes(IRC, channel, player, listAll = false) {
         } else if (IRC === 'Twitch') {
             TwitchBot.say(channel, sayString);
         }
-        return;
     }
+}
 
-    // Check to see if they have any races
-    if (numRaces === 0) {
-        if (IRC === 'Leaderboard') {
-            return new Promise(function(resolve, reject) {
-                resolve(-2);
+function getLeaderboard(IRC, channel, requester) {
+    try {
+        // Get all the Jud6s races from the database
+        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (error, db) {
+            if (error) {
+                error('ERROR - Unable to connect to the MongoDB server: ' + error);
+                throw 'Unable to connect to the MongoDB server.';
+            }
+
+            // Initialize variables
+            var leaderboard = {};
+            var topTenTimes = [];
+
+            // Get the races collection
+            var collection = db.collection('races');
+            var stream = collection.find({
+                goal: /Beat The Chest with Judas \(Jud6s Mod v1\.\d+, \&quot;BLCK CNDL\&quot; easter egg\)/
+            }, {
+                sort: [['id','desc']],
+            }).stream();
+
+            // For each race
+            stream.on('data', function(race) {
+                // Go through the results
+                for (var i = 0; i < race.results.length; i++) {
+                    var player = race.results[i].player.toLowerCase();
+                    var raceTime = race.results[i].time;
+                    var version = race.goal.match(/Beat The Chest with Judas \(Jud6s Mod (v1\.\d+),/)[1];
+                    var date = race.date;
+
+                    // If the time is worthy of being in the top ten times, add it
+                    if (raceTime !== -1 && raceTime !== -2) {
+                        if (topTenTimes.length < 10) {
+                            topTenTimes.push({
+                                player: player,
+                                raceTime: raceTime,
+                                version: version,
+                                date: date,
+                            });
+
+                            // Sort the top ten times by race time
+                            topTenTimes = topTenTimes.sort(function(a, b) {
+                                return a.raceTime - b.raceTime;
+                            });
+                        } else {
+                            // The last element will be the worst time, so replace it if necessary
+                            if (topTenTimes[9].raceTime > raceTime) {
+                                topTenTimes.pop(); // Remove the worst time
+                                topTenTimes.push({
+                                    player: player,
+                                    raceTime: raceTime,
+                                    version: version,
+                                    date: date,
+                                });
+
+                                // Sort the top ten times by race time
+                                topTenTimes = topTenTimes.sort(function(a, b) {
+                                    return a.raceTime - b.raceTime;
+                                });
+                            }
+                        }
+                    }
+
+                    // This is the first time we have come across this player, so make an entry for them in the leaderboard
+                    if (typeof leaderboard[player] === 'undefined') {
+                        leaderboard[player] = {
+                                numRaces: 0,
+                                numForfeits: 0,
+                                totalTime: 0,
+                                allRacesCount: 0,
+                        };
+                    }
+
+                    // Increment the count of their total races
+                    leaderboard[player].allRacesCount++;
+
+                    // Move to the next race if we have already hit the limit of the races to use
+                    if (leaderboard[player].numRaces === numAverageRacesToUse) {
+                        continue;
+                    }
+
+                    // Increment their stats
+                    leaderboard[player].numRaces++;
+                    if (raceTime === -1 || raceTime === -2) { // They quit or were disqualified
+                        leaderboard[player].numForfeits++;
+                    } else { // They finished the race
+                        leaderboard[player].totalTime += raceTime;
+                    }
+                }
             });
-        } else {
-            var sayString = player + ' has 0 Jud6s races played.';
-            if (IRC === 'SRL') {
-                SRLBot.say(channel, sayString);
-            } else if (IRC === 'Twitch') {
-                TwitchBot.say(channel, sayString);
-            }
-            return;
-        }
-    }
 
-    // If we are returning all races, instead of just the average
-    if (listAll === true) {
-        // Post it to Pastebin
-        try {
-            var response = await postPastebin('Race Listing', racesString);
-            var sayString = 'List of ' + player + '\'s past ' + numAverageRacesToUse + ' races: ' + response;
-            if (IRC === 'SRL') {
-                SRLBot.say(channel, sayString);
-            } else if (IRC === 'Twitch') {
-                TwitchBot.say(channel, sayString);
-            }
-            return;
-        } catch(error) {
-            sayString = 'Something went wrong when posting to Pastebin.';
-            if (IRC === 'SRL') {
-                SRLBot.say(channel, sayString);
-            } else if (IRC === 'Twitch') {
-                TwitchBot.say(channel, sayString);
-            }
-            return;
-        }
-    }
+            // We have now gone through all the races
+            stream.on('end', async function() {
+                // Close connection
+                db.close();
 
-    // There is a special case where they forfeited every single race
-    if (numRaces === numForfeits) {
-        var averageTime = 1000000000; // Set it to a billion seconds
-    // Otherwise, calculate and format the average time
-    } else {
-        var averageTime = sumTimes / (numRaces - numForfeits);
-        var averageMinutes = Math.floor(averageTime / 60);
-        var averageSeconds = Math.floor(averageTime % 60);
-        if (averageSeconds < 10) {
-            averageSeconds = '0' + averageSeconds;
-        }
-    }
+                // Calculate everyone's average
+                var leaderboardArray = []; // We have to make an array so that we can sort it later
+                for (var player in leaderboard) {
+                    // If they have under 10 races played, skip to the next player
+                    if (leaderboard[player].numRaces < 10) {
+                        continue;
+                    }
 
-    // Return the average time and the number of forfeits
-    if (IRC === 'Leaderboard') {
-        return new Promise(function(resolve, reject) {
-            resolve({
-                player: player,
-                averageTime: averageTime,
-                numRaces: numRaces,
-                numForfeits: numForfeits,
+                    // If they forfeited every race, then we will have a divide by 0 later on
+                    if (leaderboard[player].numRaces === leaderboard[player].numForfeits) {
+                        leaderboardArray.push({
+                            player: player,
+                            averageTime: 1000000, // Set it to a million seconds
+                            numRaces: leaderboard[player].numRaces,
+                            numForfeits: leaderboard[player].numForfeits,
+                            allRacesCount: leaderboard[player].allRacesCount,
+                        });
+
+                    // Otherwise, calculate and format the average time
+                    } else {
+                        var averageTime = leaderboard[player].totalTime / (leaderboard[player].numRaces - leaderboard[player].numForfeits);
+                        leaderboardArray.push({
+                            player: player,
+                            averageTime: averageTime,
+                            numRaces: leaderboard[player].numRaces,
+                            numForfeits: leaderboard[player].numForfeits,
+                            allRacesCount: leaderboard[player].allRacesCount,
+                        });
+                    }
+                }
+
+                // Sort the leaderboard by average times
+                leaderboardArray = leaderboardArray.sort(function(a, b) {
+                    return a.averageTime - b.averageTime;
+                });
+
+                // Start to construct the leaderboard string
+                var leaderboardString = 'The Binding of Isaac: Afterbirth\n';
+                leaderboardString += 'Jud6s Average Time Leaderboard\n';
+                leaderboardString += new Date() + '\n';
+                leaderboardString += '(requested by ' + requester + ')\n\n';
+                leaderboardString += '- Only the last ' + numAverageRacesToUse + ' races are used for players with over ' + numAverageRacesToUse + ' races.\n';
+                leaderboardString += '- Players with under 10 races are not included in the leaderboard.\n\n';
+
+                // Iterate through the leaderboard array
+                for (var i = 0; i < leaderboardArray.length; i++) {
+                    // Create the header for the player
+                    var place = i + 1;
+                    if (place < 10) {
+                        leaderboardString += ' ';
+                    }
+                    leaderboardString += place + ') ' + leaderboardArray[i].player;
+                    var spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (var j = 0; j < spacing; j++) {
+                        leaderboardString += ' ';
+                    }
+
+                    // Parse the average time
+                    var averageMinutes = Math.floor(leaderboardArray[i].averageTime / 60);
+                    var averageSeconds = Math.floor(leaderboardArray[i].averageTime % 60);
+                    if (averageSeconds < 10) {
+                        averageSeconds = '0' + averageSeconds;
+                    }
+
+                    // Add the average time and forfeit rate to the string
+                    if (leaderboardArray[i].averageTime === 1000000) {
+                        leaderboardString +=  'n/a';
+                    } else {
+                        leaderboardString += averageMinutes + ':' + averageSeconds;
+                    }
+                    var forfeitPercent = Math.round(leaderboardArray[i].numForfeits / leaderboardArray[i].numRaces * 100);
+                    leaderboardString += '     ' + forfeitPercent + '% forfeit rate (' + leaderboardArray[i].numForfeits + '/' + leaderboardArray[i].numRaces + ')\n';
+                }
+
+                // Add a second leaderboard for the top ten times
+                leaderboardString += '\n\n\nTop Ten Jud6s Times:\n\n';
+                for (var i = 0; i < topTenTimes.length; i++) {
+                    // Create the header for the player
+                    var place = i + 1;
+                    if (place < 10) {
+                        leaderboardString += ' ';
+                    }
+                    leaderboardString += place + ') ' + topTenTimes[i].player;
+                    var spacing = 21 - topTenTimes[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (var j = 0; j < spacing; j++) {
+                        leaderboardString += ' ';
+                    }
+
+                    // Parse the average time
+                    var averageMinutes = Math.floor(topTenTimes[i].raceTime / 60);
+                    var averageSeconds = Math.floor(topTenTimes[i].raceTime % 60);
+                    if (averageSeconds < 10) {
+                        averageSeconds = '0' + averageSeconds;
+                    }
+
+                    // Add the average time
+                    leaderboardString += averageMinutes + ':' + averageSeconds;
+
+                    // Add the version
+                    leaderboardString += '     ' + topTenTimes[i].version;
+
+                    // Add the date
+                    leaderboardString += '     ' + getFormattedDate(topTenTimes[i].date) + '\n';
+                }
+
+                // Add a third leaderboard for most races played
+                leaderboardString += '\n\n\nMost Jud6s Races Played:\n\n';
+
+                // Resort the leaderboardArray based on allRacesCount
+                leaderboardArray = leaderboardArray.sort(function(a, b) {
+                    return b.allRacesCount - a.allRacesCount;
+                });
+                for (var i = 0; i < 10; i++) {
+                    // Create the header for the player
+                    var place = i + 1;
+                    if (place < 10) {
+                        leaderboardString += ' ';
+                    }
+                    leaderboardString += place + ') ' + leaderboardArray[i].player;
+                    var spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (var j = 0; j < spacing; j++) {
+                        leaderboardString += ' ';
+                    }
+
+                    // Add the amount of races that they played
+                    leaderboardString += leaderboardArray[i].allRacesCount + ' races\n';
+                }
+                leaderboardString += '\n';
+
+                // Post the leaderboard to Pastebin
+                var response = await postPastebin('Jud6s Leaderboard', leaderboardString);
+                var sayString = 'Jud6s Leaderboard: ' + response;
+                if (IRC === 'SRL') {
+                    SRLBot.say(channel, sayString);
+                } else if (IRC === 'Twitch') {
+                    TwitchBot.say(channel, sayString);
+                }
             });
         });
-    } else {
-        if (averageTime === 1000000000) {
-            var sayString = player + ' has forfeited every race that they have entered, so how can I calculate the average time?';
-        } else {
-            var sayString = 'Average time from ' + player + '\'s last ' + numRaces + ' races: ' + averageMinutes + ':' + averageSeconds + ' (' + numForfeits + ' forfeits)';
-        }
+    } catch(error) {
+        console.log('----- getLeaderboard function failed with error: ' + error + ' -----');
+        sayString = 'Something went wrong when getting the leaderboard.';
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
             TwitchBot.say(channel, sayString);
         }
     }
-}
-
-async function makeLeaderboard(IRC, channel) {
-    // Get the SRL Afterbirth leaderboard based on SRL points
-    var url = 'http://api.speedrunslive.com/leaderboard/isaacafterbirth?season=0';
-    try {
-        var json = await getAPI(url);
-    } catch(error) {
-        error('ERROR: makeLeaderboard encountered an error: ' + error);
-        if (IRC === 'SRL') {
-            SRLBot.say(channel, 'Something went wrong when creating the leaderboard.');
-        } else if (IRC === 'Twitch') {
-            TwitchBot.say(channel, 'Something went wrong when creating the leaderboard.');
-        }
-        return;
-    }
-
-    // Get the top 50 players
-    var playerArray = []
-    for (var i = 0; i < json.leaders.length; i++) {
-        playerArray.push(json.leaders[i].name);
-        if (i === 49) {
-            break;
-        }
-    }
-
-    // Get the average time for each of the players
-    var leaderboard = [];
-    console.log('----- Starting to construct the leaderboard... -----');
-    async.eachLimit(playerArray, 1, async function(player, callback) { // We use a limit of 1 because the SRL API will lock us out
-        var playerObject = await getAverageTimes('Leaderboard', null, player);
-        if (playerObject === -2) {
-            // Skip players who have 0 Jud6s races played
-        } else {
-            leaderboard.push(playerObject);
-        }
-        callback();
-    }, async function(error) {
-        if (error) {
-            error('ERROR: ' + error);
-            var sayString = 'Something went wrong when creating the leaderboard.';
-            if (IRC === 'SRL') {
-                SRLBot.say(channel, sayString);
-            } else if (IRC === 'Twitch') {
-                TwitchBot.say(channel, sayString);
-            }
-            return;
-        }
-
-        // Sort by average times
-        leaderboard = leaderboard.sort(function(a, b) {
-            return a.averageTime - b.averageTime;
-        });
-
-        // Construct the leaderboard
-        var leaderboardString = 'The Binding of Isaac: Afterbirth\n';
-        leaderboardString += 'Jud6s Average Time Leaderboard\n';
-        leaderboardString += '(based on the player\'s last ' + numAverageRacesToUse + ' races)\n';
-        leaderboardString += new Date() + '\n\n';
-        for (var i = 0; i < leaderboard.length; i++) {
-            var averageMinutes = Math.floor(leaderboard[i].averageTime / 60);
-            var averageSeconds = Math.floor(leaderboard[i].averageTime % 60);
-            if (averageSeconds < 10) {
-                averageSeconds = '0' + averageSeconds;
-            }
-
-            var place = i + 1;
-            if (place < 10) {
-                leaderboardString += ' ';
-            }
-            leaderboardString += place + ') ' + leaderboard[i].player;
-            var spacing = 17 - leaderboard[i].player.length; // Pad with spaces so that it is properly aligned
-            for (var j = 0; j < spacing; j++) {
-                leaderboardString += ' ';
-            }
-            
-            if (leaderboard[i].averageTime === 1000000000) {
-                leaderboardString +=  'n/a';
-            } else {
-                leaderboardString += averageMinutes + ':' + averageSeconds;
-            }
-            leaderboardString += ' (' + leaderboard[i].numForfeits + '/' + leaderboard[i].numRaces + ' forfeits)\n';
-        }
-
-        // Post the leaderboard string to Pastebin
-        try {
-            var response = await postPastebin('Jud6s Leaderboard', leaderboardString);
-            var sayString = 'Jud6s Leaderboard: ' + response;
-            if (IRC === 'SRL') {
-                SRLBot.say(channel, sayString);
-            } else if (IRC === 'Twitch') {
-                TwitchBot.say(channel, sayString);
-            }
-        } catch(error) {
-            var sayString = 'Something went wrong when posting the leaderboard to Pastebin.';
-            if (IRC === 'SRL') {
-                SRLBot.say(channel, sayString);
-            } else if (IRC === 'Twitch') {
-                TwitchBot.say(channel, sayString);
-            }
-        }
-    });
 }
 
 function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
@@ -849,7 +1012,7 @@ SRLBot.addListener('message', function(user, channel, message) {
     if (channel === '#speedrunslive' && user === 'RaceBot' && (
         message.match(/^Race initiated for The Binding of Isaac: Rebirth\. Join.+#srl-..... .to participate\.$/) ||
         message.match(/^Race initiated for The Binding of Isaac: Afterbirth\. Join.+#srl-..... .to participate\.$/) ||
-        message.match(/^Race initiated for The Binding of Isaac: Afterbirth+\. Join.+#srl-..... .to participate\.$/)
+        message.match(/^Race initiated for The Binding of Isaac: Afterbirth\+\. Join.+#srl-..... .to participate\.$/)
     )) {
         var raceChannelName = message.match(/^Race initiated for The Binding of Isaac: .+\. Join.+(#srl-.+) .to participate\.$/)[1];
         var expansion = message.match(/^Race initiated for The Binding of Isaac: (.+)\. Join.+#srl-.+ .to participate\.$/)[1];
@@ -1349,7 +1512,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             var player = user;
         }
 
-        getAverageTimes('SRL', channel, player);
+        getAverageTimes('SRL', channel, player, user);
     } else if (message.match(/^[\.!]avg/)) {
         var m = message.match(/^[\.!]avg (.+)/);
         if (m) {
@@ -1358,7 +1521,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             var player = user;
         }
 
-        getAverageTimes('SRL', channel, player);
+        getAverageTimes('SRL', channel, player, user);
     } else if (message.match(/^[\.!]racelist/)) {
         var m = message.match(/^[\.!]racelist (.+)/);
         if (m) {
@@ -1367,10 +1530,9 @@ SRLBot.addListener('message', function(user, channel, message) {
             var player = user;
         }
 
-        getAverageTimes('SRL', channel, player, true);
+        getAverageTimes('SRL', channel, player, user, true);
     } else if (message === '.leaderboard' || message === '!leaderboard') {
-        SRLBot.say(channel, 'I\'ll create the leaderboard - give me a minute to gather the data.');
-        makeLeaderboard('SRL', channel);
+        getLeaderboard('SRL', channel, user);
     } else if (message.match(/^[\.!]roll/)) {
         var m = message.match(/^[\.!]roll (\d+) (\d+)$/);
         if (m) {
@@ -1431,11 +1593,7 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
     } else if (user === 'Zamiel' && (message === '.debug' || message === '!debug')) {
         console.log('----- Doing debug function -----');
-        //debug();
-        /*var collection = db.get('races');
-        collection.find({}, { limit: 1 }, function(e, races) {
-            console.log(races);
-        });*/
+        debug();
     }
 });
 
@@ -1528,7 +1686,7 @@ SRLBot.addListener('notice', function(nick, to, text, message) {
     if (nick === 'RaceBot' && (
         text.match(/^\d+\. The Binding of Isaac: Rebirth - .+ /) ||
         text.match(/^\d+\. The Binding of Isaac: Afterbirth - .+ /) ||
-        text.match(/^\d+\. The Binding of Isaac: Afterbirth+ - .+ /)
+        text.match(/^\d+\. The Binding of Isaac: Afterbirth\+ - .+ /)
     )) {
         // Parse the race name
         var m = text.match(/^\d+\. The Binding of Isaac: .+ - .+ \|....(#srl-.....).+\|.+\|.+$/);
@@ -1783,7 +1941,8 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             }
 
             // For the racers in the race, find out the Twitch names that correspond to their SRL names
-            console.log('racer array is: ' + racerArray);
+            console.log('----- Entering async.eachLimit function with the following racerArray: -----');
+            console.log(racerArray);
             async.eachLimit(racerArray, 1, async function(racer, callback) { // We use a limit of 1 because the SRL API will lock us out
                 // Get the Twitch channel for this racer using the SRL API
                 var url = 'http://api.speedrunslive.com/stat?player=' + racer;
@@ -1801,6 +1960,11 @@ TwitchBot.on('chat', function(channel, user, message, self) {
                     callback();
                 });
             }, function(error) {
+                if (error) {
+                    TwitchBot.say(channel, "Something went wrong when making the MultiTwitch/Kadgar link.");
+                    return;
+                }
+
                 // Start to build the MultiTwitch/Kadgar string
                 var watchString = 'Watch everyone in the race at the same time: http://';
                 if (message === '!multitwitch') {
@@ -1846,7 +2010,7 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             }
         }
 
-        getAverageTimes('Twitch', channel, player);
+        getAverageTimes('Twitch', channel, player, user);
     } else if (message.match(/^!avg/)) {
         var m = message.match(/^!avg (.+)/);
         if (m) {
@@ -1861,7 +2025,7 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             }
         }
 
-        getAverageTimes('Twitch', channel, player);
+        getAverageTimes('Twitch', channel, player, user);
     } else if (message.match(/^!racelist/)) {
         var m = message.match(/^!racelist (.+)/);
         if (m) {
@@ -1876,10 +2040,9 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             }
         }
 
-        getAverageTimes('Twitch', channel, player, true);
+        getAverageTimes('Twitch', channel, player, user, true);
     } else if (message === '!leaderboard') {
-        TwitchBot.say(channel, 'I\'ll create the leaderboard - give me a minute to gather the data.');
-        makeLeaderboard('Twitch', channel);
+        getLeaderboard('Twitch', channel, user);
     } else if (message.match(/^!roll/)) {
         var m = message.match(/^!roll (\d+) (\d+)$/);
         if (m) {
