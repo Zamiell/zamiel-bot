@@ -10,11 +10,11 @@ var mongodb = require('mongodb');            // For talking to the MongoDB datab
 
 // Configuration
 var botDirectory          = '/home/zamiel/zamiel-bot';
-var jud6sVersion          = 'v1.27';
-var modsVersion           = 'v3.2.0';
+var jud6sVersion          = 'v1.28';
+var modsVersion           = 'v3.2.2';
 var numInstantStartBuilds = 29;
 var numAverageRacesToUse  = 50;
-var numRacesToAdvert      = 3;
+var numRacesToAdvert      = 999999;
 var advertMessage         = 'Sign up for Isaac events. See the list/schedule here: http://pastebin.com/q9Y3MRdT';
 var goalList = {
     'set':       '.setgoal Beat The Chest with Judas (Jud6s Mod ' + jud6sVersion + ', "BLCK CNDL" easter egg)',
