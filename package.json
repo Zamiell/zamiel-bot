@@ -13,7 +13,8 @@
     "mongodb": "*",
     "promise-retry": "*",
     "request": "*",
-    "tmi.js": "*"
+    "tmi.js": "*",
+    "discord.io": "*"
   },
   "devDependencies": {
     "babel-cli": "*",

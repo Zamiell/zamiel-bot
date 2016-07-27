@@ -1,6 +1,7 @@
 // Imports
 var irc     = require('irc');                // The SRL side uses the node-irc library
 var tmi     = require('tmi.js');             // The Twitch side uses the tmi-js library
+var discord = require('discord.io');         // The Discord side uses the discord.io library
 var fs      = require('fs');                 // For getting passwords
 var exec    = require('child_process').exec; // For diversity.py
 var async   = require('async');              // For performing API calls asynchronously
@@ -9,44 +10,53 @@ var mongodb = require('mongodb');            // For talking to the MongoDB datab
 
 // Configuration
 var botDirectory          = '/home/zamiel/zamiel-bot';
-var jud6sVersion          = 'v1.22';
-var diversityVersion      = 'v2.3.3';
-var instantStartVersion   = 'v1.6.3';
+var jud6sVersion          = 'v1.27';
+var modsVersion           = 'v3.2.0';
 var numInstantStartBuilds = 29;
 var numAverageRacesToUse  = 50;
-var numRacesToAdvert      = 9999999;
-var advertMessage         = 'Sign up for Isaac tournaments and leagues. See the list/schedule here: http://pastebin.com/q9Y3MRdT';
+var numRacesToAdvert      = 3;
+var advertMessage         = 'Sign up for Isaac events. See the list/schedule here: http://pastebin.com/q9Y3MRdT';
 var goalList = {
     'set':       '.setgoal Beat The Chest with Judas (Jud6s Mod ' + jud6sVersion + ', "BLCK CNDL" easter egg)',
     'setdr':     '.setgoal Beat The Dark Room with Judas (Jud6s Mod ' + jud6sVersion + ', "BLCK CNDL" easter egg)',
     'sethard':   '.setgoal Beat The Chest with Judas (Jud6s Mod ' + jud6sVersion + ', hard mode, "BLCK CNDL" easter egg)',
     'setdrhard': '.setgoal Beat The Dark Room with Judas (Jud6s Mod ' + jud6sVersion + ', hard mode, "BLCK CNDL" easter egg)',
-    'sets':      '.setgoal Beat The Chest with Judas (Instant Start Mod ' + instantStartVersion + ', "BLCK CNDL" easter egg, build ##, seed #### ####)',
-    'setis':     '.setgoal Beat The Chest with Judas (Instant Start Mod ' + instantStartVersion + ', "BLCK CNDL" easter egg, build ##)',
-    'setdiv':    '.setgoal Beat The Chest with Cain (Diversity Mod ' + diversityVersion + ', "BLCK CNDL" easter egg, seed #####)',
+    'sets':      '.setgoal Beat The Chest with Judas (Instant Start Mod ' + modsVersion + ', "BLCK CNDL" easter egg, build ##, seed #### ####)',
+    'setms':      '.setgoal Beat Blue Baby and Mega Satan with Judas (Instant Start Mod ' + modsVersion + ', "BLCK CNDL" easter egg, build ##, seed #### ####)',
+    'setis':     '.setgoal Beat The Chest with Judas (Instant Start Mod ' + modsVersion + ', "BLCK CNDL" easter egg, build ##)',
+    'setdiv':    '.setgoal Beat The Chest with Cain (Diversity Mod ' + modsVersion + ', "BLCK CNDL" easter egg, seed #####)',
     'setlco':    '.setgoal Beat The Dark Room with Judas\' Shadow (Jud6s Mod ' + jud6sVersion + ', "BLCK CNDL" easter egg)',
 };
 var infoList = {
     'jud6s':           'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
     'judas':           'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
     'judasd6':         'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
-    'diversity':       'Diversity mod download + info: https://github.com/Zamiell/diversity-mod',
-    'divmod':          'Diversity mod download + info: https://github.com/Zamiell/diversity-mod',
-    'noreset':         'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
-    'noresetmod':      'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
-    'nrmod':           'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
-    'nr':              'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
-    'instantstart':    'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
-    'instantstartmod': 'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
-    'ismod':           'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
-    'is':              'Instant Start mod download + info: https://github.com/Zamiell/instant-start-mod',
-    'mod':             'Hint: Try doing the "!jud6s", "!diversity", or "!instantstart" command.',
+    'diversity':       'Diversity mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'divmod':          'Diversity mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'instantstart':    'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'instantstartmod': 'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'ismod':           'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'is':              'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'noreset':         'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'noresetmod':      'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'nrmod':           'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'nr':              'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'mod':             'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'mods':            'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'isaacmod':        'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'isaacmods':       'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'isaacracingmod':  'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'isaacracingmods': 'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
     'tournament':      'List/schedule of Isaac tournaments and events: http://pastebin.com/q9Y3MRdT',
     'tournaments':     'List/schedule of Isaac tournaments and events: http://pastebin.com/q9Y3MRdT',
     'lemon':           'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'lemonparty':      'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'lemonleague':     'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'lpl':             'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
+    'battleofkings':   'Battle of Kings info: http://isaacbattleofkings.weebly.com/about.html',
+    'bok':             'Battle of Kings info: http://isaacbattleofkings.weebly.com/about.html',
+    'battle':          'Battle of Kings info: http://isaacbattleofkings.weebly.com/about.html',
+    'kings':           'Battle of Kings info: http://isaacbattleofkings.weebly.com/about.html',
     'tracker':         'Rebirth Item Tracker download + info: https://github.com/Hyphen-ated/RebirthItemTracker/releases',
     'itemtracker':     'Rebirth Item Tracker download + info: https://github.com/Hyphen-ated/RebirthItemTracker/releases',
     '100':             'Fully unlocked Afterbirth save download: http://www.speedrun.com/saves/fully_unlocked_afterbirth_save_5vkrx.zip',
@@ -63,7 +73,7 @@ var infoList = {
     'platinumgod':     'Platinum God explains every item in the game: http://platinumgod.co.uk/',
     'start':           'Item starts for racing: http://pastebin.com/mCmrYP8Q',
     'starts':          'Item starts for racing: http://pastebin.com/mCmrYP8Q',
-    'discord':         'Join the Isaac discord server: https://discord.gg/0Sokdog3miDT5ENm',
+    'discord':         'Join the Isaac racing & speedrunning Discord server: https://discord.gg/JzbhWQb',
     'faq':             'ZamielBot FAQ: http://pastebin.com/8ysF8VgX',
     'help':            'ZamielBot FAQ: http://pastebin.com/8ysF8VgX',
     'commands':        'ZamielBot FAQ: http://pastebin.com/8ysF8VgX',
@@ -74,10 +84,6 @@ var playerList = [
         'twitch': 'Zamiell',
         'echoComments': true,   // The default
         'delayTwitchOutput': 0, // The default
-    },
-    {
-        'srl': 'Xelnas',
-        'twitch': 'Xelnas',
     },
     {
         'srl': 'bmz_loop',
@@ -181,10 +187,6 @@ var playerList = [
         'twitch': '910dan',
     },
     {
-        'srl': 'fireonearth',
-        'twitch': 'FireOnEarth',
-    },
-    {
         'srl': 'FireDead659',
         'twitch': 'FireDead659',
     },
@@ -224,6 +226,27 @@ var playerList = [
         'srl': 'NeNeSSquick',
         'twitch': 'NeNeSSquick',
     },
+    {
+        'srl': 'magicdiner_',
+        'twitch': 'MagicDiner',
+        'delayTwitchOutput': 10000,
+    },
+    {
+        'srl': 'PaulByPaul',
+        'twitch': 'PaulByPaul',
+    },
+    {
+        'srl': 'Warshoty',
+        'twitch': 'Warshoty',
+    },
+    {
+        'srl': 'SedNegi',
+        'twitch': 'SedNegi',
+    },
+    {
+        'srl': 'Waltimate',
+        'twitch': 'Waltimate',
+    },
 ];
 var SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
     debug: true,
@@ -232,7 +255,7 @@ var SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
     //channels: ['#speedrunslive', '#lemonparty'], // Uncomment this when debugging because Hyphen gets pissy
     autoConnect: false,
 });
-var oauth = fs.readFileSync(botDirectory + '/passwords/Twitch.txt', 'utf8').trim();
+var TwitchOAuth = fs.readFileSync(botDirectory + '/passwords/Twitch.txt', 'utf8').trim();
 var TwitchBot = new tmi.client({
     options: {
         debug: true,
@@ -242,15 +265,24 @@ var TwitchBot = new tmi.client({
     },
     identity: {
         username: 'ZamielBot',
-        password: oauth,
+        password: TwitchOAuth,
     },
+    channels: ['#battle_of_kings'],
 });
+var DiscordOAuth = fs.readFileSync(botDirectory + '/passwords/Discord.txt', 'utf8').trim();
+var DiscordBot = new discord.Client({
+    token: DiscordOAuth,
+    autorun: false,
+});
+var DiscordServerID = '83214009964171264'; // This is the ID of the "Isaac Speedrunning & Racing" server
+var DiscordRacingChatID = '188083642948386816'; // This is room ID for the "currently-racing" chat room
 
 // Variables
 var raceList = {};
 var channelsToJoin = [];
 var SRLTimeoutTimer;
 var TwitchTimeoutTimer;
+var DiscordRaceTimer = 0;
 var identified = false;
 var advertCounter = 0;
 var instantStartRandomArray = [];
@@ -287,21 +319,17 @@ for (var i = 0; i < playerList.length; i++) { // Go through the player list
     if (!('delayTwitchOutput' in playerList[i])) {
         playerList[i].delayTwitchOutput = 0;
     }
-
-    // Set that we have not verified that we are a moderator in this Twitch channel yet
-    playerList[i].mod = false;
 }
 
 // Initialize the no reset random number array
 refillInstantStartRandomArray();
 
-// Welcome message
-
-// Start the two servers
+// Start the servers
 var datetime = new Date();
 console.log('----- STARTING ZAMIELBOT @ ' + datetime + ' for ' + playerList.length + ' users! -----');
 SRLBot.connect();
 TwitchBot.connect();
+DiscordBot.connect();
 
 /*
  *
@@ -344,8 +372,7 @@ function joinRace(raceChannelName) {
         addRace(raceChannelName);
         SRLBot.join(raceChannelName);
     } else {
-        var datetime = new Date();
-        console.log(datetime + ' - SRL WARNING: I need to join ' + raceChannelName + ' but I haven\'t identified yet. Trying again in 1 second...');
+        warning('SRL WARNING: I need to join ' + raceChannelName + ' but I haven\'t identified yet. Trying again in 1 second...');
         setTimeout(joinRace, 1000, raceChannelName); // 1 second
     }
 }
@@ -416,11 +443,20 @@ function error(message) {
     console.log(message);
 }
 
+function warning(message) {
+    var datetime = new Date();
+    message = datetime + ' - ' + message;
+    console.log(message);
+}
+
 function debug() {
     console.log('##### RACE LIST #####');
     console.log(raceList);
     console.log('##### CHANNELSTOJOIN LIST #####');
     console.log(channelsToJoin);
+    //console.log('##### DISCORD DEBUG ####');
+    //console.log(DiscordBot.servers[DiscordServerID].channels[DiscordRacingChatID].name);
+    //DiscordBot.sendMessage({ to: DiscordRacingChatID, message: 'test' });
 }
 
 function sendTwitch(type, channel, message) {
@@ -442,12 +478,12 @@ function postPastebin(pasteName, pasteString) {
                 api_paste_code: pasteString,
                 api_paste_expire_date: '1D',
             },
-        }, function (error, response, body) {
-            if (!error && response.statusCode === 200) {
+        }, function (err, response, body) {
+            if (!err && response.statusCode === 200) {
                 resolve(body);
             } else {
-                console.log('----- WARNING: Failed to POST to Pastebin: ' + error + ' -----');
-                return reject(error);
+                warning('WARNING: Failed to POST to Pastebin: ' + err);
+                return reject(err);
             }
         });
     });
@@ -488,12 +524,12 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
             break;
         }
     }
-    
+
     // Get this player's past races from the database
     try {
-        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (error, db) {
-            if (error) {
-                error('ERROR - Unable to connect to the MongoDB server: ' + error);
+        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (err, db) {
+            if (err) {
+                error('ERROR - Unable to connect to the MongoDB server: ' + err);
                 throw 'Unable to connect to the MongoDB server.';
             }
 
@@ -600,6 +636,8 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                         SRLBot.say(channel, sayString);
                     } else if (IRC === 'Twitch') {
                         TwitchBot.say(channel, sayString);
+                    } else if (IRC === 'Discord') {
+                        DiscordBot.sendMessage({ to: channel, message: sayString });
                     }
                     return;
                 }
@@ -613,6 +651,8 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                         SRLBot.say(channel, sayString);
                     } else if (IRC === 'Twitch') {
                         TwitchBot.say(channel, sayString);
+                    } else if (IRC === 'Discord') {
+                        DiscordBot.sendMessage({ to: channel, message: sayString });
                     }
                     return;
                 }
@@ -624,6 +664,8 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                         SRLBot.say(channel, sayString);
                     } else if (IRC === 'Twitch') {
                         TwitchBot.say(channel, sayString);
+                    } else if (IRC === 'Discord') {
+                        DiscordBot.sendMessage({ to: channel, message: sayString });
                     }
                     return;
 
@@ -643,16 +685,20 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                     SRLBot.say(channel, sayString);
                 } else if (IRC === 'Twitch') {
                     TwitchBot.say(channel, sayString);
+                } else if (IRC === 'Discord') {
+                    DiscordBot.sendMessage({ to: channel, message: sayString });
                 }
             });
         });
-    } catch(error) {
-        console.log('----- getAverageTimes function failed with error: ' + error + ' -----');
+    } catch(err) {
+        console.log('----- getAverageTimes function failed with error: ' + err + ' -----');
         sayString = 'Something went wrong when getting the race listing for ' + player + '.';
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
             TwitchBot.say(channel, sayString);
+        } else if (IRC === 'Discord') {
+            DiscordBot.sendMessage({ to: channel, message: sayString });
         }
     }
 }
@@ -660,9 +706,9 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
 function getLeaderboard(IRC, channel, requester) {
     try {
         // Get all the Jud6s races from the database
-        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (error, db) {
-            if (error) {
-                error('ERROR - Unable to connect to the MongoDB server: ' + error);
+        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (err, db) {
+            if (err) {
+                error('ERROR - Unable to connect to the MongoDB server: ' + err);
                 throw 'Unable to connect to the MongoDB server.';
             }
 
@@ -889,16 +935,430 @@ function getLeaderboard(IRC, channel, requester) {
                     SRLBot.say(channel, sayString);
                 } else if (IRC === 'Twitch') {
                     TwitchBot.say(channel, sayString);
+                } else if (IRC === 'Discord') {
+                    DiscordBot.sendMessage({ to: channel, message: sayString });
                 }
             });
         });
-    } catch(error) {
-        console.log('----- getLeaderboard function failed with error: ' + error + ' -----');
+    } catch(err) {
+        console.log('----- getLeaderboard function failed with error: ' + err + ' -----');
         sayString = 'Something went wrong when getting the leaderboard.';
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
             TwitchBot.say(channel, sayString);
+        } else if (IRC === 'Discord') {
+            DiscordBot.sendMessage({ to: channel, message: sayString });
+        }
+    }
+}
+
+function getLeaderboardLCO(IRC, channel, requester) {
+    try {
+        // Get all the Jud6s LCO races from the database
+        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (err, db) {
+            if (err) {
+                error('ERROR - Unable to connect to the MongoDB server: ' + err);
+                throw 'Unable to connect to the MongoDB server.';
+            }
+
+            // Initialize variables
+            var leaderboard = {};
+            var topTenTimes = [];
+
+            // Get the races collection
+            var collection = db.collection('races');
+            var stream = collection.find({
+                goal: /Beat The Dark Room with Judas\' Shadow \(Jud6s Mod v1\.\d+, \&quot;BLCK CNDL\&quot; easter egg\)/
+            }, {
+                sort: [['id','desc']],
+            }).stream();
+
+            // For each race
+            stream.on('data', function(race) {
+                // Go through the results
+                for (var i = 0; i < race.results.length; i++) {
+                    var player = race.results[i].player.toLowerCase();
+                    var raceTime = race.results[i].time;
+                    var version = race.goal.match(/Beat The Dark Room with Judas\' Shadow \(Jud6s Mod (v1\.\d+),/)[1];
+                    var date = race.date;
+
+                    // If the time is worthy of being in the top ten times, add it
+                    if (raceTime !== -1 && raceTime !== -2) {
+                        if (topTenTimes.length < 10) {
+                            topTenTimes.push({
+                                player: player,
+                                raceTime: raceTime,
+                                version: version,
+                                date: date,
+                            });
+
+                            // Sort the top ten times by race time
+                            topTenTimes = topTenTimes.sort(function(a, b) {
+                                return a.raceTime - b.raceTime;
+                            });
+                        } else {
+                            // The last element will be the worst time, so replace it if necessary
+                            if (topTenTimes[9].raceTime > raceTime) {
+                                topTenTimes.pop(); // Remove the worst time
+                                topTenTimes.push({
+                                    player: player,
+                                    raceTime: raceTime,
+                                    version: version,
+                                    date: date,
+                                });
+
+                                // Sort the top ten times by race time
+                                topTenTimes = topTenTimes.sort(function(a, b) {
+                                    return a.raceTime - b.raceTime;
+                                });
+                            }
+                        }
+                    }
+
+                    // This is the first time we have come across this player, so make an entry for them in the leaderboard
+                    if (typeof leaderboard[player] === 'undefined') {
+                        leaderboard[player] = {
+                                numRaces: 0,
+                                numForfeits: 0,
+                                totalTime: 0,
+                                allRacesCount: 0,
+                        };
+                    }
+
+                    // Increment the count of their total races
+                    leaderboard[player].allRacesCount++;
+
+                    // Move to the next race if we have already hit the limit of the races to use
+                    if (leaderboard[player].numRaces === numAverageRacesToUse) {
+                        continue;
+                    }
+
+                    // Increment their stats
+                    leaderboard[player].numRaces++;
+                    if (raceTime === -1 || raceTime === -2) { // They quit or were disqualified
+                        leaderboard[player].numForfeits++;
+                    } else { // They finished the race
+                        leaderboard[player].totalTime += raceTime;
+                    }
+                }
+            });
+
+            // We have now gone through all the races
+            stream.on('end', async function() {
+                // Close connection
+                db.close();
+
+                // Calculate everyone's average
+                var leaderboardArray = []; // We have to make an array so that we can sort it later
+                for (var player in leaderboard) {
+                    // If they have under 10 races played, skip to the next player
+                    if (leaderboard[player].numRaces < 10) {
+                        continue;
+                    }
+
+                    // If they forfeited every race, then we will have a divide by 0 later on
+                    if (leaderboard[player].numRaces === leaderboard[player].numForfeits) {
+                        leaderboardArray.push({
+                            player: player,
+                            averageTime: 1000000, // Set it to a million seconds
+                            numRaces: leaderboard[player].numRaces,
+                            numForfeits: leaderboard[player].numForfeits,
+                            allRacesCount: leaderboard[player].allRacesCount,
+                        });
+
+                    // Otherwise, calculate and format the average time
+                    } else {
+                        var averageTime = leaderboard[player].totalTime / (leaderboard[player].numRaces - leaderboard[player].numForfeits);
+                        leaderboardArray.push({
+                            player: player,
+                            averageTime: averageTime,
+                            numRaces: leaderboard[player].numRaces,
+                            numForfeits: leaderboard[player].numForfeits,
+                            allRacesCount: leaderboard[player].allRacesCount,
+                        });
+                    }
+                }
+
+                // Sort the leaderboard by average times
+                leaderboardArray = leaderboardArray.sort(function(a, b) {
+                    return a.averageTime - b.averageTime;
+                });
+
+                // Start to construct the leaderboard string
+                var leaderboardString = 'The Binding of Isaac: Afterbirth\n';
+                leaderboardString += 'Jud6s Lost Child Open Loser\'s Bracket Average Time Leaderboard\n';
+                leaderboardString += new Date() + '\n';
+                leaderboardString += '(requested by ' + requester + ')\n\n';
+                leaderboardString += '- Only the last ' + numAverageRacesToUse + ' races are used for players with over ' + numAverageRacesToUse + ' races.\n';
+                leaderboardString += '- Players with under 10 races are not included in the leaderboard.\n\n';
+
+                // Iterate through the leaderboard array
+                for (var i = 0; i < leaderboardArray.length; i++) {
+                    // Create the header for the player
+                    var place = i + 1;
+                    if (place < 10) {
+                        leaderboardString += ' ';
+                    }
+                    leaderboardString += place + ') ' + leaderboardArray[i].player;
+                    var spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (var j = 0; j < spacing; j++) {
+                        leaderboardString += ' ';
+                    }
+
+                    // Parse the average time
+                    var averageMinutes = Math.floor(leaderboardArray[i].averageTime / 60);
+                    var averageSeconds = Math.floor(leaderboardArray[i].averageTime % 60);
+                    if (averageSeconds < 10) {
+                        averageSeconds = '0' + averageSeconds;
+                    }
+
+                    // Add the average time and forfeit rate to the string
+                    if (leaderboardArray[i].averageTime === 1000000) {
+                        leaderboardString +=  'n/a';
+                    } else {
+                        leaderboardString += averageMinutes + ':' + averageSeconds;
+                    }
+                    var forfeitPercent = Math.round(leaderboardArray[i].numForfeits / leaderboardArray[i].numRaces * 100);
+                    leaderboardString += '     ' + forfeitPercent + '% forfeit rate (' + leaderboardArray[i].numForfeits + '/' + leaderboardArray[i].numRaces + ')\n';
+                }
+
+                // Add a second leaderboard for the top ten times
+                leaderboardString += '\n\n\nTop Ten Jud6s LCO Times:\n\n';
+                for (var i = 0; i < topTenTimes.length; i++) {
+                    // Create the header for the player
+                    var place = i + 1;
+                    if (place < 10) {
+                        leaderboardString += ' ';
+                    }
+                    leaderboardString += place + ') ' + topTenTimes[i].player;
+                    var spacing = 21 - topTenTimes[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (var j = 0; j < spacing; j++) {
+                        leaderboardString += ' ';
+                    }
+
+                    // Parse the average time
+                    var averageMinutes = Math.floor(topTenTimes[i].raceTime / 60);
+                    var averageSeconds = Math.floor(topTenTimes[i].raceTime % 60);
+                    if (averageSeconds < 10) {
+                        averageSeconds = '0' + averageSeconds;
+                    }
+
+                    // Add the average time
+                    leaderboardString += averageMinutes + ':' + averageSeconds;
+
+                    // Add the version
+                    leaderboardString += '     ' + topTenTimes[i].version;
+
+                    // Add the date
+                    leaderboardString += '     ' + getFormattedDate(topTenTimes[i].date) + '\n';
+                }
+
+                // Add a third leaderboard for most races played
+                leaderboardString += '\n\n\nMost Jud6s LCO Races Played:\n\n';
+
+                // Resort the leaderboardArray based on allRacesCount
+                leaderboardArray = leaderboardArray.sort(function(a, b) {
+                    return b.allRacesCount - a.allRacesCount;
+                });
+                for (var i = 0; i < 10; i++) {
+                    // Create the header for the player
+                    var place = i + 1;
+                    if (place < 10) {
+                        leaderboardString += ' ';
+                    }
+                    leaderboardString += place + ') ' + leaderboardArray[i].player;
+                    var spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (var j = 0; j < spacing; j++) {
+                        leaderboardString += ' ';
+                    }
+
+                    // Add the amount of races that they played
+                    leaderboardString += leaderboardArray[i].allRacesCount + ' races\n';
+                }
+                leaderboardString += '\n';
+
+                // Post the leaderboard to Pastebin
+                var response = await postPastebin('Jud6s LCO Leaderboard', leaderboardString);
+                var sayString = 'Jud6s LCO Leaderboard: ' + response;
+                if (IRC === 'SRL') {
+                    SRLBot.say(channel, sayString);
+                } else if (IRC === 'Twitch') {
+                    TwitchBot.say(channel, sayString);
+                } else if (IRC === 'Discord') {
+                    DiscordBot.sendMessage({ to: channel, message: sayString });
+                }
+            });
+        });
+    } catch(err) {
+        console.log('----- getLeaderboardLCO function failed with error: ' + err + ' -----');
+        sayString = 'Something went wrong when getting the LCO leaderboard.';
+        if (IRC === 'SRL') {
+            SRLBot.say(channel, sayString);
+        } else if (IRC === 'Twitch') {
+            TwitchBot.say(channel, sayString);
+        } else if (IRC === 'Discord') {
+            DiscordBot.sendMessage({ to: channel, message: sayString });
+        }
+    }
+}
+
+function getAllRaces(IRC, channel, player, requester) {
+    // Remove whitespace from both sides of the string
+    player = player.trim();
+
+    // If the user is requesting a player's Twitch name instead of their SRL name, maybe we can fix the mistake automatically
+    for (var i = 0; i < playerList.length; i++) { // Go through the player list
+        if (playerList[i].twitch === player.toLowerCase()) {
+            player = playerList[i].srl;
+            break;
+        }
+    }
+
+    // Get this player's past races from the database
+    try {
+        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (err, db) {
+            if (err) {
+                error('ERROR - Unable to connect to the MongoDB server: ' + err);
+                throw 'Unable to connect to the MongoDB server.';
+            }
+
+            // Create a regular expression to be used in the next step
+            function regexEscape(str) {
+                return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+            }
+            var re = new RegExp('^' + regexEscape(player) + '$', 'i'); // Match the player exactly, but case insensitive
+
+            // Initialize variables
+            var numRaces = 0;
+            var numForfeits = 0;
+            var sumTimes = 0;
+            var racesString = 'The Binding of Isaac: Afterbirth\n';
+            racesString += 'List of Races for ' + player + '\n';
+            racesString += new Date() + '\n';
+            racesString += '(requested by ' + requester + ')\n\n';
+
+            // Get the races collection
+            var collection = db.collection('races');
+            var options = {
+                sort: [['id','desc']], // Get every race that they have ever done, with the most recent being at the top
+            };
+            var stream = collection.find({
+                results: { $elemMatch: { player: re } },
+            }, options).stream();
+
+            // For each race
+            stream.on('data', function(race) {
+                // Start to build the races string (which will only be used if this is a "!raceList" command)
+                numRaces++;
+                if (numRaces < 1000) {
+                    racesString += ' ';
+                }
+                if (numRaces < 100) {
+                    racesString += ' ';
+                }
+                if (numRaces < 10) {
+                    racesString += ' ';
+                }
+                racesString += numRaces + ')';
+
+                // Add the date/time that the race happened
+                var date = getFormattedDate(race.date);
+                var spacing = 34 - date.length; // Pad with spaces so that it is properly aligned
+                for (var i = 0; i < spacing; i++) {
+                    racesString += ' ';
+                }
+                racesString += date + '     ';
+
+                // Find their time (and comment)
+                var foundPlayer = false;
+                for (var i = 0; i < race.results.length; i++) {
+                    if (race.results[i].player.toLowerCase() === player.toLowerCase()) {
+                        var raceTime = race.results[i].time;
+                        var comment = race.results[i].message;
+                        var goal = race.goal;
+                        foundPlayer = true;
+                        break;
+                    }
+                }
+                if (foundPlayer === false) {
+                    error('ERROR: When going through the database, I was not able to find player ' + player + ' in race ' + i + '.');
+                    throw 'Player ' + player + ' not found in race ' + i + '.';
+                }
+
+                // Add the time to the string
+                if (raceTime < 1) {
+                    numForfeits++; // They forfeited this race
+                    racesString += 'Forfeit';
+                } else {
+                    var minutes = Math.floor(raceTime / 60);
+                    var seconds = raceTime % 60;
+                    if (seconds < 10) {
+                        seconds = '0' + seconds;
+                    }
+                    sumTimes += raceTime; // They finished this race
+                    racesString += ' ' + minutes + ':' + seconds + ' ';
+                }
+
+                // Add the message to the string, if there is one
+                if (comment !== '') {
+                    racesString += '     ' + comment;
+                }
+                racesString += '\n';
+
+                // Add the goal
+                if (numRaces < 1000) {
+                    racesString += ' ';
+                }
+                if (numRaces < 100) {
+                    racesString += ' ';
+                }
+                if (numRaces < 10) {
+                    racesString += ' ';
+                }
+                racesString += goal + '\n';
+            });
+
+            // We have now gone through all the races
+            stream.on('end', async function() {
+                // Close connection
+                db.close();
+
+                // Check to see if they have any races
+                if (numRaces === 0) {
+                    var sayString = player + ' has 0 races played.';
+                    if (IRC === 'SRL') {
+                        SRLBot.say(channel, sayString);
+                    } else if (IRC === 'Twitch') {
+                        TwitchBot.say(channel, sayString);
+                    } else if (IRC === 'Discord') {
+                        DiscordBot.sendMessage({ to: channel, message: sayString });
+                    }
+                    return;
+                }
+
+                // Post it to Pastebin
+                var response = await postPastebin('Race Listing', racesString);
+                var sayString = 'List of ' + player + '\'s races: ' + response;
+                if (IRC === 'SRL') {
+                    SRLBot.say(channel, sayString);
+                } else if (IRC === 'Twitch') {
+                    TwitchBot.say(channel, sayString);
+                } else if (IRC === 'Discord') {
+                    DiscordBot.sendMessage({ to: channel, message: sayString });
+                }
+                return;
+            });
+        });
+    } catch(err) {
+        console.log('----- getAverageTimes function failed with error: ' + err + ' -----');
+        sayString = 'Something went wrong when getting the race listing for ' + player + '.';
+        if (IRC === 'SRL') {
+            SRLBot.say(channel, sayString);
+        } else if (IRC === 'Twitch') {
+            TwitchBot.say(channel, sayString);
+        } else if (IRC === 'Discord') {
+            DiscordBot.sendMessage({ to: channel, message: sayString });
         }
     }
 }
@@ -912,6 +1372,11 @@ function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
         }
     }
 
+    // Twitch channel exceptions
+    if (IRC === 'Twitch' && channel.toLowerCase() == '#paulbypaul') {
+        return;
+    }
+
     // Input validation
     if (minNumber > 1000 || maxNumber > 1000 || minNumber < 0 || maxNumber < 0 || minNumber === maxNumber) {
         sayString = 'Incorrect roll format. ' + user + ' has been added to the ignore list for command abuse.';
@@ -919,6 +1384,8 @@ function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
             TwitchBot.say(channel, sayString);
+        } else if (IRC === 'Discord') {
+            DiscordBot.sendMessage({ to: channel, message: sayString });
         }
         ignoreList.push(user);
         return;
@@ -931,6 +1398,8 @@ function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
         SRLBot.say(channel, sayString);
     } else if (IRC === 'Twitch') {
         TwitchBot.say(channel, sayString);
+    } else if (IRC === 'Discord') {
+        DiscordBot.sendMessage({ to: channel, message: sayString });
     }
 }
 
@@ -989,7 +1458,7 @@ SRLBot.addListener('error', function(message) {
 
 // Detect broken session
 SRLBot.addListener('ping', function(server) {
-    var currentTime = (new Date).getTime();
+    var currentTime = (new Date).getTime(); // Get the epoch timestamp
     SRLTimeoutTimer = currentTime;
     setTimeout(checkSRLBroken, 600000, currentTime); // 10 minutes (changed this from 5 minutes because it was too short)
 });
@@ -1004,7 +1473,7 @@ SRLBot.addListener('message', function(user, channel, message) {
     console.log(datetime + ' - SRL [' + channel + '] <' + user + '> ' + message);
 
     // Look for new BoIR races
-    if (channel === '#speedrunslive' && message === '.startrace isaacafterbirth') {
+    if (channel === '#speedrunslive' && (message.match(/^\.startrace isaacafterbirth\s*/) || message.match(/^\.startrace afterbirth\s*/))) {
         console.log('----- Setting raceStarter to "' + user + '". -----');
         raceStarter = user;
     }
@@ -1014,17 +1483,9 @@ SRLBot.addListener('message', function(user, channel, message) {
         message.match(/^Race initiated for The Binding of Isaac: Afterbirth\. Join.+#srl-..... .to participate\.$/) ||
         message.match(/^Race initiated for The Binding of Isaac: Afterbirth\+\. Join.+#srl-..... .to participate\.$/)
     )) {
+        // Parse the message from RaceBot
         var raceChannelName = message.match(/^Race initiated for The Binding of Isaac: .+\. Join.+(#srl-.+) .to participate\.$/)[1];
         var expansion = message.match(/^Race initiated for The Binding of Isaac: (.+)\. Join.+#srl-.+ .to participate\.$/)[1];
-
-        // Alert other race channels that a new race has started
-        for (var race in raceList) {
-            if (!raceList.hasOwnProperty(race)) {
-                continue;
-            }
-
-            SRLBot.say(race, 'A new ' + expansion + ' race has been started by \x034\x02' + raceStarter + '\x03\x02! To join, type: /join ' + raceChannelName);
-        }
 
         // Join the race
         addRace(raceChannelName);
@@ -1150,7 +1611,7 @@ SRLBot.addListener('message', function(user, channel, message) {
                     return;
                 }
                 var cmd = botDirectory + '/diversity.py ' + seed;
-                exec(cmd, function(error, stdout, stderr) {
+                exec(cmd, function(err, stdout, stderr) {
                     SRLBot.say(channel, 'The items for this seed are ' + stdout);
                 });
             }
@@ -1160,7 +1621,7 @@ SRLBot.addListener('message', function(user, channel, message) {
         if (message.match(/^Rematch!$/)) {
             addRematch(channel);
 
-            // Look for Diversity races so that we can automatically set the goal // 
+            // Look for Diversity races so that we can automatically set the goal
             var m = goalList['setdiv'].match(/\.setgoal (.+?, seed ).+/);
             if (m) {
                 var matchString = m[1];
@@ -1434,6 +1895,44 @@ SRLBot.addListener('message', function(user, channel, message) {
             var goal = goalList['sets'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
             SRLBot.say(channel, goal);
 
+        // .setms (2 arguments; the user entered a build and a seed)
+        } else if (message.match(/^[\.!]setms (.+?) (....\s*....)/)) {
+            var m = message.match(/^[\.!]setms (.+?) (....\s*....)/);
+
+            // Set the seed to what the user requested
+            var build = m[1];
+            var seed = m[2].toUpperCase();
+            seed = seed.trim(); // Remove the leading and trailing whitespace
+            if (seed.length === 8) {
+                // Insert a space to make the seed more readable
+                var leftSide = seed.match(/^(....)....$/)[1];
+                var rightSide = seed.match(/^....(....)$/)[1];
+                seed = leftSide + ' ' + rightSide;
+            }
+            var goal = goalList['setms'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
+            SRLBot.say(channel, goal);
+
+        // .setms (1 argument; the user entered a seed but not a build)
+        } else if (message.match(/^[\.!]setms (....\s*....)/)) {
+            var m = (message.match(/^[\.!]setms (....\s*....)/));
+
+            // Assume they want a random build
+            if (instantStartRandomArray.length === 0) {
+                refillInstantStartRandomArray();
+            }
+            build = instantStartRandomArray.pop();
+
+            var seed = m[1].toUpperCase();
+            seed = seed.trim(); // Remove the leading and trailing whitespace
+            if (seed.length === 8) {
+                // Insert a space to make the seed more readable
+                var leftSide = seed.match(/^(....)....$/)[1];
+                var rightSide = seed.match(/^....(....)$/)[1];
+                seed = leftSide + ' ' + rightSide;
+            }
+            var goal = goalList['setms'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
+            SRLBot.say(channel, goal);
+
         // .setis
         } else if (message.match(/^[\.!]setis/)) {
             var m = message.match(/^[\.!]setis (.+)/);
@@ -1504,8 +2003,8 @@ SRLBot.addListener('message', function(user, channel, message) {
         if (channel.match(/^#srl-.+$/)) {
             SRLBot.say(channel, 'Hint: The command to unquit is ".undone".');
         }
-    } else if (message.match(/^[\.!]average/)) {
-        var m = message.match(/^[\.!]average (.+)/);
+    } else if (message.match(/^[\.!]average/) || message.match(/^[\.!]avg/)) {
+        var m = message.match(/^[\.!]\w+ (.+)/);
         if (m) {
             var player = m[1];
         } else {
@@ -1513,15 +2012,15 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
 
         getAverageTimes('SRL', channel, player, user);
-    } else if (message.match(/^[\.!]avg/)) {
-        var m = message.match(/^[\.!]avg (.+)/);
+    } else if (message.match(/^[\.!]racelistall/)) {
+        var m = message.match(/^[\.!]racelistall (.+)/);
         if (m) {
             var player = m[1];
         } else {
             var player = user;
         }
 
-        getAverageTimes('SRL', channel, player, user);
+        getAllRaces('SRL', channel, player, user);
     } else if (message.match(/^[\.!]racelist/)) {
         var m = message.match(/^[\.!]racelist (.+)/);
         if (m) {
@@ -1533,39 +2032,20 @@ SRLBot.addListener('message', function(user, channel, message) {
         getAverageTimes('SRL', channel, player, user, true);
     } else if (message === '.leaderboard' || message === '!leaderboard') {
         getLeaderboard('SRL', channel, user);
-    } else if (message.match(/^[\.!]roll/)) {
-        var m = message.match(/^[\.!]roll (\d+) (\d+)$/);
+    } else if (message === '.leaderboardlco' || message === '!leaderboardlco') {
+        getLeaderboardLCO('SRL', channel, user);
+    } else if (message.match(/^[\.!]roll/) || message.match(/^[\.!]random/) ) {
+        var m = message.match(/^[\.!]\w+ (\d+) (\d+)$/);
         if (m) {
             var randomMin = m[1];
             var randomMax = m[2];
         } else {
-            var m = message.match(/^[\.!]roll (\d+)$/);
+            var m = message.match(/^[\.!]\w+ (\d+)$/);
             if (m) {
                 var randomMin = 1;
                 var randomMax = m[1];
             } else {
-                if (message === '!roll' || message === '.roll') {
-                    var randomMin = 1;
-                    var randomMax = 19;
-                } else {
-                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
-                    var randomMax = -1;
-                }
-            }
-        }
-        getRandomNumber('SRL', channel, user, randomMin, randomMax);
-    } else if (message.match(/^[\.!]random/)) {
-        var m = message.match(/^[\.!]random (\d+) (\d+)$/);
-        if (m) {
-            var randomMin = m[1];
-            var randomMax = m[2];
-        } else {
-            var m = message.match(/^[\.!]random (\d+)$/);
-            if (m) {
-                var randomMin = 1;
-                var randomMax = m[1];
-            } else {
-                if (message === '!roll' || message === '.roll') {
+                if (message === '!roll' || message === '.roll' || message === '!random' || message === '.random') {
                     var randomMin = 1;
                     var randomMax = 19;
                 } else {
@@ -1638,11 +2118,38 @@ SRLBot.addListener('pm', function (user, message) {
 SRLBot.addListener('names', function(channel, nicks) {
     console.log('----- Joined channel ' + channel + ' -----');
 
-    // Automatically set the goal (if this is a race and we aren't manually joining the channel)
+    // If this is a race and we aren't manually joining the channel
     if (channelsToJoin.indexOf(channel) === -1 && channel.match(/^#srl-.+$/)) {
-        //var seed = channel.match(/^#srl-(.+)$/)[1];
-        //var characterNum = Math.floor((Math.random() * 9)); // Get a random number between 0 and 8
+        // Automatically set the goal
         SRLBot.say(channel, goalList['set']);
+
+        // Alert the Discord server that a new race has started
+        var currentTime = (new Date).getTime(); // Get the epoch timestamp
+        console.log('currentTime:', currentTime);
+        console.log('DiscordRaceTimer:', DiscordRaceTimer);
+        console.log('difference:', currentTime - DiscordRaceTimer);
+        if (currentTime - DiscordRaceTimer > 3600000) {
+            // Only alert if it has been over an hour since the last alert
+            DiscordRaceTimer = currentTime;
+            var datetime = new Date();
+            DiscordBot.sendMessage({
+                to: DiscordRacingChatID,
+                message: datetime + ' - A new Isaac race has been started by ' + raceStarter + ' on SRL!',
+            });
+        }
+
+        // Alert other race channels that a new race has started
+        for (var race in raceList) {
+            if (!raceList.hasOwnProperty(race)) {
+                continue;
+            }
+
+            if (race === channel) {
+                continue; // Skip this channel since the point is to tell people in other channels
+            }
+
+            SRLBot.say(race, 'A new Isaac race has been started by \x034\x02' + raceStarter + '\x03\x02! To join, type: /join ' + channel);
+        }
     }
 
     // Joining a race channel late either from a .join comment or a restart
@@ -1694,7 +2201,7 @@ SRLBot.addListener('notice', function(nick, to, text, message) {
             var raceChannelName = m[1];
             joinRace(raceChannelName);
         } else {
-            error('SRL ERROR: Regex failure when automatically joining open races.');
+            error('SRL ERROR: Regex failure when automatically joining open races: ' + text);
         }
 
     // Update entrantsLeft for the race that we joined midway through
@@ -1751,7 +2258,7 @@ SRLBot.addListener('notice', function(nick, to, text, message) {
 SRLBot.addListener('topic', function(channel, topic) {
     // We only care about listening to the topic for race channels
     if (!channel.match(/^#srl-.....$/)) {
-        return
+        return;
     }
 
     // Go through the race list
@@ -1783,7 +2290,7 @@ SRLBot.addListener('topic', function(channel, topic) {
                 error('SRL ERROR: I was not able to parse the topic for channel "' + channel + '": ' + topic);
             }
 
-            // Set the goal
+            // Set the goal in the database
             var m = topic.match(/\| Goal: (.+)$/);
             if (m) {
                 var goal = m[1];
@@ -1876,6 +2383,15 @@ TwitchBot.on('chat', function(channel, user, message, self) {
         if (message === '!os') {
             TwitchBot.say(channel, 'Zamiel is using Windows 7 with Aero disabled because it looks much cleaner (and is faster).');
         }
+    } else if (channel === '#battle_of_kings') {
+        if (message === '!commentator' ||
+            message === '!commentators' ||
+            message === '!caster' ||
+            message === '!casters' ||
+            message === '!host' ||
+            message === '!hosts') {
+            TwitchBot.say(channel, 'The two commentators are NuRelic and Antizoubilamaka.');
+        }
     }
 
     // Twitch special info commands (that require finding the current race)
@@ -1946,21 +2462,21 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             async.eachLimit(racerArray, 1, async function(racer, callback) { // We use a limit of 1 because the SRL API will lock us out
                 // Get the Twitch channel for this racer using the SRL API
                 var url = 'http://api.speedrunslive.com/stat?player=' + racer;
-                request(url, function (error, response, body) {
-                    if (!error && response.statusCode == 200) {
+                request(url, function (err, response, body) {
+                    if (!err && response.statusCode == 200) {
                         try {
                             var json = JSON.parse(body);
                             TwitchNameList[racer] = json.player.channel;
-                        } catch(error) {
-                            error('TWITCH ERROR: Got error "' + error + '" while parsing the SRL API failed for ' + racer + ': ' + body); 
+                        } catch(err) {
+                            error('TWITCH ERROR: Got error "' + err + '" while parsing the SRL API for ' + racer + ': ' + body);
                         }
                     } else {
-                        console.log('----- WARNING: Failed to GET URL: ' + url + ' -----');
+                        warning('WARNING: Failed to GET URL: ' + url);
                     }
                     callback();
                 });
-            }, function(error) {
-                if (error) {
+            }, function(err) {
+                if (err) {
                     TwitchBot.say(channel, "Something went wrong when making the MultiTwitch/Kadgar link.");
                     return;
                 }
@@ -1996,23 +2512,8 @@ TwitchBot.on('chat', function(channel, user, message, self) {
         }
 
     // Twitch special info commands (that do not require finding the current race)
-    } else if (message.match(/^!average/)) {
-        var m = message.match(/^!average (.+)/);
-        if (m) {
-            var player = m[1];
-        } else {
-            var TwitchChannel = channel.match(/#(.+)/)[1];
-            for (var i = 0; i < playerList.length; i++) { // Go through the player list
-                if (playerList[i].twitch === TwitchChannel) {
-                    var player = playerList[i].srl;
-                    break;
-                }
-            }
-        }
-
-        getAverageTimes('Twitch', channel, player, user);
-    } else if (message.match(/^!avg/)) {
-        var m = message.match(/^!avg (.+)/);
+    } else if (message.match(/^!average/) || message.match(/^!avg/)) {
+        var m = message.match(/^!\w+ (.+)/);
         if (m) {
             var player = m[1];
         } else {
@@ -2043,39 +2544,20 @@ TwitchBot.on('chat', function(channel, user, message, self) {
         getAverageTimes('Twitch', channel, player, user, true);
     } else if (message === '!leaderboard') {
         getLeaderboard('Twitch', channel, user);
-    } else if (message.match(/^!roll/)) {
-        var m = message.match(/^!roll (\d+) (\d+)$/);
+    } else if (message === '!leaderboardlco') {
+        getLeaderboardLCO('Twitch', channel, user);
+    } else if (message.match(/^!roll/) || message.match(/^!random/)) {
+        var m = message.match(/^!\w+ (\d+) (\d+)$/);
         if (m) {
             var randomMin = m[1];
             var randomMax = m[2];
         } else {
-            var m = message.match(/^!roll (\d+)$/);
+            var m = message.match(/^!\w+ (\d+)$/);
             if (m) {
                 var randomMin = 1;
                 var randomMax = m[1];
             } else {
-                if (message === '!roll') {
-                    var randomMin = 1;
-                    var randomMax = 19;
-                } else {
-                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
-                    var randomMax = -1;
-                }
-            }
-        }
-        getRandomNumber('Twitch', channel, user, randomMin, randomMax);
-    } else if (message.match(/^!random/)) {
-        var m = message.match(/^!random (\d+) (\d+)$/);
-        if (m) {
-            var randomMin = m[1];
-            var randomMax = m[2];
-        } else {
-            var m = message.match(/^!random (\d+)$/);
-            if (m) {
-                var randomMin = 1;
-                var randomMax = m[1];
-            } else {
-                if (message === '!roll') {
+                if (message === '!roll' || message === '!random') {
                     var randomMin = 1;
                     var randomMax = 19;
                 } else {
@@ -2088,4 +2570,96 @@ TwitchBot.on('chat', function(channel, user, message, self) {
     } else if (message === '!d20') {
         getRandomNumber('Twitch', channel, user, 1, 20);
     }
+});
+
+/*
+ *
+ * Discord Stuff
+ *
+ */
+
+DiscordBot.on('message', function(user, userID, channelID, message, event) {
+    // Remove whitespace from both sides of the string
+    message = message.trim();
+
+    // Log all messages
+    var datetime = new Date();
+    if (DiscordBot.servers[DiscordServerID].channels[channelID].name != null) {
+        console.log(datetime + ' - DISCORD [#' + DiscordBot.servers[DiscordServerID].channels[channelID].name + '] <' + user + '#' + event.d.author.discriminator + '> ' + message);
+    } else {
+        console.log(datetime + ' - DISCORD [unknown] <' + user + '#' + event.d.author.discriminator + '> ' + message);
+        console.log('channelID:', channelID);
+        console.log('channel list:', DiscordBot.servers[DiscordServerID].channels);
+    }
+
+    /*
+     *
+     * Discord commands
+     *
+     */
+
+    // Info commands
+    for (var info in infoList) { // Go through the info list
+        if (!infoList.hasOwnProperty(info)) {
+            continue;
+        }
+
+        if (message === '!' + info) {
+            DiscordBot.sendMessage({ to: channelID, message: infoList[info] });
+        }
+    }
+
+    // Discord special info commands
+    if (message.match(/^!average/) || message.match(/^!avg/)) {
+        var m = message.match(/^!\w+ (.+)/);
+        if (m) {
+            var player = m[1];
+        } else {
+            var player = user;
+        }
+
+        getAverageTimes('Discord', channelID, player, user);
+    } else if (message.match(/^!racelist/)) {
+        var m = message.match(/^!racelist (.+)/);
+        if (m) {
+            var player = m[1];
+        } else {
+            var player = user;
+        }
+
+        getAverageTimes('Discord', channelID, player, user, true);
+    } else if (message === '!leaderboard') {
+        getLeaderboard('Discord', channelID, user);
+    } else if (message === '!leaderboardlco') {
+        getLeaderboardLCO('Discord', channelID, user);
+    } else if (message.match(/^!roll/) || message.match(/^!random/)) {
+        var m = message.match(/^!\w+ (\d+) (\d+)$/);
+        if (m) {
+            var randomMin = m[1];
+            var randomMax = m[2];
+        } else {
+            var m = message.match(/^!\w+ (\d+)$/);
+            if (m) {
+                var randomMin = 1;
+                var randomMax = m[1];
+            } else {
+                if (message === '!roll' || message === '!random') {
+                    var randomMin = 1;
+                    var randomMax = 19;
+                } else {
+                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
+                    var randomMax = -1;
+                }
+            }
+        }
+        getRandomNumber('Discord', channelID, user, randomMin, randomMax);
+    } else if (message === '!d20') {
+        getRandomNumber('Discord', channelID, user, 1, 20);
+    }
+});
+
+// Automatically reconnect if the bot disconnects due to inactivity
+DiscordBot.on('disconnect', function(erMsg, code) {
+    warning('DISCORD WARNING: Disconnected with code ' + code + ' for reason ' + erMsg + '. Attempting to reconnect...');
+    DiscordBot.connect();
 });
