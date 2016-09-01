@@ -10,8 +10,8 @@ var mongodb = require('mongodb');            // For talking to the MongoDB datab
 
 // Configuration
 var botDirectory          = '/home/zamiel/zamiel-bot';
-var jud6sVersion          = 'v1.28';
-var modsVersion           = 'v3.2.2';
+var jud6sVersion          = 'v1.32';
+var modsVersion           = 'v3.4.2';
 var numInstantStartBuilds = 29;
 var numAverageRacesToUse  = 50;
 var numRacesToAdvert      = 999999;
@@ -28,35 +28,31 @@ var goalList = {
     'setlco':    '.setgoal Beat The Dark Room with Judas\' Shadow (Jud6s Mod ' + jud6sVersion + ', "BLCK CNDL" easter egg)',
 };
 var infoList = {
-    'jud6s':           'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
-    'judas':           'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
-    'judasd6':         'Jud6s mod download + info: https://github.com/Zamiell/jud6s',
-    'diversity':       'Diversity mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'divmod':          'Diversity mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'instantstart':    'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'instantstartmod': 'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'ismod':           'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'is':              'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'noreset':         'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'noresetmod':      'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'nrmod':           'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'nr':              'Instant Start mod download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'mod':             'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'mods':            'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'isaacmod':        'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'isaacmods':       'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'isaacracingmod':  'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
-    'isaacracingmods': 'Isaac Racing Mods download + info: https://github.com/Zamiell/isaac-racing-mods',
+    'jud6s':           'Jud6s mod download + info: https://zamiell.github.io/jud6s/',
+    'judas':           'Jud6s mod download + info: https://zamiell.github.io/jud6s/',
+    'judasd6':         'Jud6s mod download + info: https://zamiell.github.io/jud6s/',
+    'diversity':       'Diversity mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'divmod':          'Diversity mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'instantstart':    'Instant Start mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'instantstartmod': 'Instant Start mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'ismod':           'Instant Start mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'is':              'Instant Start mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'noreset':         'Instant Start mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'noresetmod':      'Instant Start mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'nrmod':           'Instant Start mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'nr':              'Instant Start mod download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'mod':             'Isaac Racing Mods download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'mods':            'Isaac Racing Mods download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'isaacmod':        'Isaac Racing Mods download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'isaacmods':       'Isaac Racing Mods download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'isaacracingmod':  'Isaac Racing Mods download + info: https://zamiell.github.io/isaac-racing-mods/',
+    'isaacracingmods': 'Isaac Racing Mods download + info: https://zamiell.github.io/isaac-racing-mods/',
     'tournament':      'List/schedule of Isaac tournaments and events: http://pastebin.com/q9Y3MRdT',
     'tournaments':     'List/schedule of Isaac tournaments and events: http://pastebin.com/q9Y3MRdT',
     'lemon':           'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'lemonparty':      'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'lemonleague':     'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
     'lpl':             'Lemon Party League #2 info: http://www.lemonpartyleague.com/',
-    'battleofkings':   'Battle of Kings info: http://isaacbattleofkings.weebly.com/about.html',
-    'bok':             'Battle of Kings info: http://isaacbattleofkings.weebly.com/about.html',
-    'battle':          'Battle of Kings info: http://isaacbattleofkings.weebly.com/about.html',
-    'kings':           'Battle of Kings info: http://isaacbattleofkings.weebly.com/about.html',
     'tracker':         'Rebirth Item Tracker download + info: https://github.com/Hyphen-ated/RebirthItemTracker/releases',
     'itemtracker':     'Rebirth Item Tracker download + info: https://github.com/Hyphen-ated/RebirthItemTracker/releases',
     '100':             'Fully unlocked Afterbirth save download: http://www.speedrun.com/saves/fully_unlocked_afterbirth_save_5vkrx.zip',
@@ -246,6 +242,14 @@ var playerList = [
     {
         'srl': 'Waltimate',
         'twitch': 'Waltimate',
+    },
+    {
+        'srl': 'starg09',
+        'twitch': 'starg09',
+    },
+    {
+        'srl': 'Ognos',
+        'twitch': 'Ognos',
     },
 ];
 var SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
@@ -1612,7 +1616,8 @@ SRLBot.addListener('message', function(user, channel, message) {
                 }
                 var cmd = botDirectory + '/diversity.py ' + seed;
                 exec(cmd, function(err, stdout, stderr) {
-                    SRLBot.say(channel, 'The items for this seed are ' + stdout);
+                    var items = stdout.trim()
+                    SRLBot.say(channel, 'The items for this seed are ' + items);
                 });
             }
         }
@@ -1894,6 +1899,22 @@ SRLBot.addListener('message', function(user, channel, message) {
             }
             var goal = goalList['sets'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
             SRLBot.say(channel, goal);
+
+        // .sets (0 arguments)
+        } else if (message === '.sets') {
+            // Assume they want a random build
+            if (instantStartRandomArray.length === 0) {
+                refillInstantStartRandomArray();
+            }
+            build = instantStartRandomArray.pop();
+
+            // Assume they want a random seed
+            var cmd = botDirectory + '/isaac_seed_gen';
+            exec(cmd, function(err, stdout, stderr) {
+                var seed = stdout.trim();
+                var goal = goalList['sets'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
+                SRLBot.say(channel, goal);
+            });
 
         // .setms (2 arguments; the user entered a build and a seed)
         } else if (message.match(/^[\.!]setms (.+?) (....\s*....)/)) {
