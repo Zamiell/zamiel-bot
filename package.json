@@ -8,7 +8,6 @@
   "dependencies": {
     "async": "*",
     "babel-polyfill": "*",
-    "fs": "*",
     "irc": "0.4.1",
     "mongodb": "*",
     "promise-retry": "*",

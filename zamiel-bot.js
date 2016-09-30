@@ -9,7 +9,7 @@ var request = require('request');            // For talking to the SRL API
 var mongodb = require('mongodb');            // For talking to the MongoDB database
 
 // Configuration
-var botDirectory          = '/home/zamiel/zamiel-bot';
+var botDirectory          = '/root/zamiel-bot';
 var jud6sVersion          = 'v1.32';
 var modsVersion           = 'v3.4.2';
 var numInstantStartBuilds = 29;
@@ -22,7 +22,8 @@ var goalList = {
     'sethard':   '.setgoal Beat The Chest with Judas (Jud6s Mod ' + jud6sVersion + ', hard mode, "BLCK CNDL" easter egg)',
     'setdrhard': '.setgoal Beat The Dark Room with Judas (Jud6s Mod ' + jud6sVersion + ', hard mode, "BLCK CNDL" easter egg)',
     'sets':      '.setgoal Beat The Chest with Judas (Instant Start Mod ' + modsVersion + ', "BLCK CNDL" easter egg, build ##, seed #### ####)',
-    'setms':      '.setgoal Beat Blue Baby and Mega Satan with Judas (Instant Start Mod ' + modsVersion + ', "BLCK CNDL" easter egg, build ##, seed #### ####)',
+    'setms':     '.setgoal Beat Blue Baby and Mega Satan with Judas (Instant Start Mod ' + modsVersion + ', "BLCK CNDL" easter egg, build ##, seed #### ####)',
+    'seti':      '.setgoal Beat The Chest with _____ (Instant Start Mod ' + modsVersion + ', "BLCK CNDL" easter egg, build ##, seed #### ####)',
     'setis':     '.setgoal Beat The Chest with Judas (Instant Start Mod ' + modsVersion + ', "BLCK CNDL" easter egg, build ##)',
     'setdiv':    '.setgoal Beat The Chest with Cain (Diversity Mod ' + modsVersion + ', "BLCK CNDL" easter egg, seed #####)',
     'setlco':    '.setgoal Beat The Dark Room with Judas\' Shadow (Jud6s Mod ' + jud6sVersion + ', "BLCK CNDL" easter egg)',
@@ -301,11 +302,48 @@ var characterArray = [
     'Cain',      // 2
     'Judas',     // 3
     'Blue Baby', // 4
-    'Samson',    // 5
-    'Azazel',    // 6
-    'Lazarus',   // 7
-    'The Lost',  // 8
-    'Lilith',    // 9
+    'Eve',       // 5
+    'Samson',    // 6
+    'Azazel',    // 7
+    'Lazarus',   // 8
+    'Eden',      // 9
+    'The Lost',  // 10
+    'Lilith',    // 11
+    'Keeper',    // 12
+];
+var instantStartArray = [
+    'NULL',               // 0
+    '20/20',              // 1
+    'Chocolate Milk',     // 2
+    'Cricket\'s Body',    // 3
+    'Cricket\'s Head',    // 4
+    'Deadeye',            // 5
+    'Death\'s Touch',     // 6
+    'Dr. Fetus',          // 7
+    'Epic Fetus',         // 8
+    'Ipecac',             // 9
+    'Judas\' Shadow',     // 10
+    'Lil\' Brimstone',    // 11
+    'Magic Mushroom',     // 12
+    'Mom\'s Knife',       // 13
+    'Monstro\'s Lung',    // 14
+    'Polyphemus',         // 15
+    'Proptosis',          // 16
+    'Sacrificial Dagger', // 17
+    'Tech.5',             // 18
+    'Tech X',             // 19
+    'Brimstone',          // 20
+    'Incubus',            // 21
+    'Maw of the Void',    // 22
+    'Crown of Light',     // 23
+    'Godhead',            // 24
+    'Sacred Heart',       // 25
+    'Mutant Spider + The Inner Eye',         // 26
+    'Technology + A Lump of Coal',           // 27
+    'The Ludovico Technique + The Parasite', // 28
+    'Fire Mind + Lucky Foot x13',            // 29
+    'Kamikaze! + Host Hat',                  // 30
+    'Mega Blast + Habit + The Battery',      // 31
 ];
 
 // Initialize the player list
@@ -1397,7 +1435,69 @@ function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
 
     // Get the random number
     var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
+
+    // Announce it
     var sayString = 'Random number between ' + minNumber + ' and ' + maxNumber + ': ' + randomNum;
+    if (IRC === 'SRL') {
+        SRLBot.say(channel, sayString);
+    } else if (IRC === 'Twitch') {
+        TwitchBot.say(channel, sayString);
+    } else if (IRC === 'Discord') {
+        DiscordBot.sendMessage({ to: channel, message: sayString });
+    }
+}
+
+function getRandomBuild(IRC, channel, user) {
+    // Player validation
+    user = user.toLowerCase();
+    for (var i = 0; i < ignoreList.length; i++) {
+        if (ignoreList[i] === user && user !== 'zamiel' && user !== 'zamiell') {
+            return; // Ignore what they have to say
+        }
+    }
+
+    // Twitch channel exceptions
+    if (IRC === 'Twitch' && channel.toLowerCase() == '#paulbypaul') {
+        return;
+    }
+
+    // Get the random number
+    var minNumber = 1;
+    var maxNumber = instantStartArray.length;
+    var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
+
+    // Announce it
+    var sayString = 'Random build: #' + randomNum + '  - ' + instantStartArray[randomNum];
+    if (IRC === 'SRL') {
+        SRLBot.say(channel, sayString);
+    } else if (IRC === 'Twitch') {
+        TwitchBot.say(channel, sayString);
+    } else if (IRC === 'Discord') {
+        DiscordBot.sendMessage({ to: channel, message: sayString });
+    }
+}
+
+function getRandomCharacter(IRC, channel, user) {
+    // Player validation
+    user = user.toLowerCase();
+    for (var i = 0; i < ignoreList.length; i++) {
+        if (ignoreList[i] === user && user !== 'zamiel' && user !== 'zamiell') {
+            return; // Ignore what they have to say
+        }
+    }
+
+    // Twitch channel exceptions
+    if (IRC === 'Twitch' && channel.toLowerCase() == '#paulbypaul') {
+        return;
+    }
+
+    // Get the random number
+    var minNumber = 0;
+    var maxNumber = characterArray.length;
+    var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
+
+    // Announce it
+    var sayString = 'Random character: ' + characterArray[randomNum];
     if (IRC === 'SRL') {
         SRLBot.say(channel, sayString);
     } else if (IRC === 'Twitch') {
@@ -1876,18 +1976,19 @@ SRLBot.addListener('message', function(user, channel, message) {
                 var rightSide = seed.match(/^....(....)$/)[1];
                 seed = leftSide + ' ' + rightSide;
             }
-            var goal = goalList['sets'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
+            var goal = goalList['sets'].replace('build ##', 'build ' + build);
+            goal = goal.replace('seed #### ####', 'seed ' + seed);
             SRLBot.say(channel, goal);
 
         // .sets (1 argument; the user entered a seed but not a build)
         } else if (message.match(/^[\.!]sets (....\s*....)/)) {
-            var m = (message.match(/^[\.!]sets (....\s*....)/));
+            var m = message.match(/^[\.!]sets (....\s*....)/);
 
             // Assume they want a random build
             if (instantStartRandomArray.length === 0) {
                 refillInstantStartRandomArray();
             }
-            build = instantStartRandomArray.pop();
+            var build = instantStartRandomArray.pop();
 
             var seed = m[1].toUpperCase();
             seed = seed.trim(); // Remove the leading and trailing whitespace
@@ -1897,51 +1998,25 @@ SRLBot.addListener('message', function(user, channel, message) {
                 var rightSide = seed.match(/^....(....)$/)[1];
                 seed = leftSide + ' ' + rightSide;
             }
-            var goal = goalList['sets'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
+            var goal = goalList['sets'].replace('build ##', 'build ' + build);
+            goal = goal.replace('seed #### ####', 'seed ' + seed);
             SRLBot.say(channel, goal);
 
-        // .sets (0 arguments)
-        } else if (message === '.sets') {
-            // Assume they want a random build
-            if (instantStartRandomArray.length === 0) {
-                refillInstantStartRandomArray();
-            }
-            build = instantStartRandomArray.pop();
+        // .sets (1 argument; the user entered a build but not a seed)
+        } else if (message.match(/^[\.!]sets (\d+)/)) {
+            var m = message.match(/^[\.!]sets (\d+)/);
+
+            // Parse the build
+            var build = m[1];
 
             // Assume they want a random seed
             var cmd = botDirectory + '/isaac_seed_gen';
             exec(cmd, function(err, stdout, stderr) {
                 var seed = stdout.trim();
-                var goal = goalList['sets'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
+                var goal = goalList['sets'].replace('build ##', 'build ' + build);
+                goal = goal.replace('seed #### ####', 'seed ' + seed);
                 SRLBot.say(channel, goal);
             });
-
-        // .setms (2 arguments; the user entered a build and a seed)
-        } else if (message.match(/^[\.!]setms (.+?) (....\s*....)/)) {
-            var m = message.match(/^[\.!]setms (.+?) (....\s*....)/);
-
-            // Set the seed to what the user requested
-            var build = m[1];
-            var seed = m[2].toUpperCase();
-            seed = seed.trim(); // Remove the leading and trailing whitespace
-            if (seed.length === 8) {
-                // Insert a space to make the seed more readable
-                var leftSide = seed.match(/^(....)....$/)[1];
-                var rightSide = seed.match(/^....(....)$/)[1];
-                seed = leftSide + ' ' + rightSide;
-            }
-            var goal = goalList['setms'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
-            SRLBot.say(channel, goal);
-
-        // .setms (1 argument; the user entered a seed but not a build)
-        } else if (message.match(/^[\.!]setms (....\s*....)/)) {
-            var m = (message.match(/^[\.!]setms (....\s*....)/));
-
-            // Assume they want a random build
-            if (instantStartRandomArray.length === 0) {
-                refillInstantStartRandomArray();
-            }
-            build = instantStartRandomArray.pop();
 
             var seed = m[1].toUpperCase();
             seed = seed.trim(); // Remove the leading and trailing whitespace
@@ -1951,19 +2026,61 @@ SRLBot.addListener('message', function(user, channel, message) {
                 var rightSide = seed.match(/^....(....)$/)[1];
                 seed = leftSide + ' ' + rightSide;
             }
-            var goal = goalList['setms'].replace('build ##', 'build ' + build).replace('seed #### ####', 'seed ' + seed);
+            var goal = goalList['sets'].replace('build ##', 'build ' + build);
+            goal = goal.replace('seed #### ####', 'seed ' + seed);
             SRLBot.say(channel, goal);
+
+        // .sets (0 arguments; the user wants a random build and a random seed)
+        } else if (message === '.sets') {
+            // Assume they want a random build
+            if (instantStartRandomArray.length === 0) {
+                refillInstantStartRandomArray();
+            }
+            var build = instantStartRandomArray.pop();
+
+            // Assume they want a random seed
+            var cmd = botDirectory + '/isaac_seed_gen';
+            exec(cmd, function(err, stdout, stderr) {
+                var seed = stdout.trim();
+                var goal = goalList['sets'].replace('build ##', 'build ' + build);
+                goal = goal.replace('seed #### ####', 'seed ' + seed);
+                SRLBot.say(channel, goal);
+            });
+
+        // .seti
+        } else if (message === '.seti') {
+            // Assume they want a random character
+            var minNumber = 0;
+            var maxNumber = characterArray.length;
+            var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
+            var character = characterArray[randomNum];
+
+            // Assume they want a random build
+            if (instantStartRandomArray.length === 0) {
+                refillInstantStartRandomArray();
+            }
+            var build = instantStartRandomArray.pop();
+
+            // Assume they want a random seed
+            var cmd = botDirectory + '/isaac_seed_gen';
+            exec(cmd, function(err, stdout, stderr) {
+                var seed = stdout.trim();
+                var goal = goalList['seti'].replace('_____', character);
+                goal = goal.replace('build ##', 'build ' + build);
+                goal = goal.replace('seed #### ####', 'seed ' + seed);
+                SRLBot.say(channel, goal);
+            });
 
         // .setis
         } else if (message.match(/^[\.!]setis/)) {
             var m = message.match(/^[\.!]setis (.+)/);
             if (m) {
-                // Set the seed to what the user requested
-                var seed = m[1].trim(); // Remove the leading and trailing whitespace
-                var goal = goalList['setis'].replace('##', seed);
+                // Set the start to what the user requested
+                var start = m[1].trim(); // Remove the leading and trailing whitespace
+                var goal = goalList['setis'].replace('##', start);
                 SRLBot.say(channel, goal);
             } else {
-                // Set a random item
+                // Set a random start
                 if (instantStartRandomArray.length === 0) {
                     refillInstantStartRandomArray();
                 }
@@ -2068,7 +2185,7 @@ SRLBot.addListener('message', function(user, channel, message) {
             } else {
                 if (message === '!roll' || message === '.roll' || message === '!random' || message === '.random') {
                     var randomMin = 1;
-                    var randomMax = 19;
+                    var randomMax = 31;
                 } else {
                     var randomMin = -1; // Make it invalid so that they get added to the ignore list
                     var randomMax = -1;
@@ -2078,6 +2195,10 @@ SRLBot.addListener('message', function(user, channel, message) {
         getRandomNumber('SRL', channel, user, randomMin, randomMax);
     } else if (message === '.d20' || message === '!d20') {
         getRandomNumber('SRL', channel, user, 1, 20);
+    } else if (message === '.randitem' || message === '!randitem' || message === '.build' || message === '!build' || message === '.randbuild' || message === '!randbuild') {
+        getRandomBuild('SRL', channel, user);
+    } else if (message === '.randchar' || message === '!randchar' || message === '.char' || message === '!char') {
+        getRandomCharacter('SRL', channel, user);
     }
 
     // Debug commands for SRL
@@ -2580,7 +2701,7 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             } else {
                 if (message === '!roll' || message === '!random') {
                     var randomMin = 1;
-                    var randomMax = 19;
+                    var randomMax = 31;
                 } else {
                     var randomMin = -1; // Make it invalid so that they get added to the ignore list
                     var randomMax = -1;
@@ -2590,6 +2711,10 @@ TwitchBot.on('chat', function(channel, user, message, self) {
         getRandomNumber('Twitch', channel, user, randomMin, randomMax);
     } else if (message === '!d20') {
         getRandomNumber('Twitch', channel, user, 1, 20);
+    } else if (message === '!randitem' || message === '!build' || message === '!randbuild') {
+        getRandomBuild('Twitch', channel, user);
+    } else if (message === '!randchar' || message === '!char') {
+        getRandomCharacter('Twitch', channel, user);
     }
 });
 
@@ -2603,15 +2728,32 @@ DiscordBot.on('message', function(user, userID, channelID, message, event) {
     // Remove whitespace from both sides of the string
     message = message.trim();
 
+    // Find out the name of the channel by iterating through all of the servers
+    var channelName = 'unknown';
+    for (var serverID in DiscordBot.servers) {
+        if (!DiscordBot.servers.hasOwnProperty(serverID)) {
+            continue;
+        }
+
+        for (var subChannelID in DiscordBot.servers[serverID].channels) {
+            if (!DiscordBot.servers[serverID].channels.hasOwnProperty(subChannelID)) {
+                continue;
+            }
+
+            if (subChannelID === channelID) {
+                channelName = '#' + DiscordBot.servers[serverID].channels[channelID].name;
+                break;
+            }
+        }
+
+        if (channelName !== 'unknown') {
+            break;
+        }
+    }
+
     // Log all messages
     var datetime = new Date();
-    if (DiscordBot.servers[DiscordServerID].channels[channelID].name != null) {
-        console.log(datetime + ' - DISCORD [#' + DiscordBot.servers[DiscordServerID].channels[channelID].name + '] <' + user + '#' + event.d.author.discriminator + '> ' + message);
-    } else {
-        console.log(datetime + ' - DISCORD [unknown] <' + user + '#' + event.d.author.discriminator + '> ' + message);
-        console.log('channelID:', channelID);
-        console.log('channel list:', DiscordBot.servers[DiscordServerID].channels);
-    }
+    console.log(datetime + ' - DISCORD [' + channelName + '] <' + user + '#' + event.d.author.discriminator + '> ' + message);
 
     /*
      *
@@ -2666,7 +2808,7 @@ DiscordBot.on('message', function(user, userID, channelID, message, event) {
             } else {
                 if (message === '!roll' || message === '!random') {
                     var randomMin = 1;
-                    var randomMax = 19;
+                    var randomMax = 31;
                 } else {
                     var randomMin = -1; // Make it invalid so that they get added to the ignore list
                     var randomMax = -1;
@@ -2676,6 +2818,10 @@ DiscordBot.on('message', function(user, userID, channelID, message, event) {
         getRandomNumber('Discord', channelID, user, randomMin, randomMax);
     } else if (message === '!d20') {
         getRandomNumber('Discord', channelID, user, 1, 20);
+    } else if (message === '!randitem' || message === '!build' || message === '!randbuild') {
+        getRandomBuild('Discord', channelID, user);
+    } else if (message === '!randchar' || message === '!char') {
+        getRandomCharacter('Discord', channelID, user);
     }
 });
 

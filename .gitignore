@@ -1,5 +1,5 @@
-# This is compliled from bot.es7
-bot.js
+# This is compliled from zamiel-bot.js
+zamiel-bot-babel.js
 
 # This is from "npm install" and does not need to be in the repository
 node_modules
@@ -9,3 +9,4 @@ passwords
 
 # This is just a temporary file used by the update-races.pl script
 update-races/new-races.json
+logs

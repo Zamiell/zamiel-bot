@@ -1,0 +1,8 @@
+#!/bin/bash
+
+BOT_DIRECTORY=/root/zamiel-bot
+
+$BOT_DIRECTORY/node_modules/.bin/babel $BOT_DIRECTORY/zamiel-bot.js --compact=false > $BOT_DIRECTORY/zamiel-bot-babel.js
+pm2 restart zamiel-bot
+sleep 1
+ls -l /root/.pm2/logs/
