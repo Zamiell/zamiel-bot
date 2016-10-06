@@ -11,7 +11,7 @@ var mongodb = require('mongodb');            // For talking to the MongoDB datab
 // Configuration
 var botDirectory          = '/root/zamiel-bot';
 var jud6sVersion          = 'v1.32';
-var modsVersion           = 'v3.4.2';
+var modsVersion           = 'v3.5.1';
 var numInstantStartBuilds = 29;
 var numAverageRacesToUse  = 50;
 var numRacesToAdvert      = 999999;
@@ -295,7 +295,6 @@ var ignoreList = [];
 var raceStarter;
 var PastebinDevKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-Dev.txt', 'utf8').trim();
 var PastebinUserKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-User.txt', 'utf8').trim();
-var mongoPassword = fs.readFileSync(botDirectory + '/passwords/MongoDB.txt', 'utf8').trim();
 var characterArray = [
     'Isaac',     // 0
     'Magdalene', // 1
@@ -347,7 +346,7 @@ var instantStartArray = [
 ];
 
 // Initialize the player list
-for (var i = 0; i < playerList.length; i++) { // Go through the player list
+for (let i = 0; i < playerList.length; i++) { // Go through the player list
     // Set their name to be lower case
     playerList[i].srl = playerList[i].srl.toLowerCase();
     playerList[i].twitch = playerList[i].twitch.toLowerCase();
@@ -367,7 +366,7 @@ for (var i = 0; i < playerList.length; i++) { // Go through the player list
 refillInstantStartRandomArray();
 
 // Start the servers
-var datetime = new Date();
+let datetime = new Date();
 console.log('----- STARTING ZAMIELBOT @ ' + datetime + ' for ' + playerList.length + ' users! -----');
 SRLBot.connect();
 TwitchBot.connect();
@@ -381,7 +380,7 @@ DiscordBot.connect();
 
 function addRace(channel) {
     console.log('----- Adding race ' + channel + ' -----');
-    var datetime = new Date();
+    let datetime = new Date();
     raceList[channel] = {
         entrants: [],
         entrantsLeft: [],
@@ -395,7 +394,7 @@ function addRace(channel) {
 function addRematch(channel) {
     // This is the same thing as the addRace function but it does not reset the goal
     console.log('----- Rematch detected for race ' + channel + ' -----');
-    var datetime = new Date();
+    let datetime = new Date();
     raceList[channel].entrants = [];
     raceList[channel].entrantsLeft = [];
     raceList[channel].commentedList = [];
@@ -442,7 +441,7 @@ function getPeopleLeft(channel) {
     }
 
     // Build the people left string
-    var string = '- ';
+    let string = '- ';
     if (raceList[channel].entrantsLeft.length === 0) {
         if (raceList[channel].entrants.length === 0) {
             string += 'The race hasn\'t started yet, silly.';
@@ -453,7 +452,7 @@ function getPeopleLeft(channel) {
         string += 'There is 1 person left. (' + raceList[channel].entrantsLeft[0] + ')';
     } else {
         string += 'There are ' + raceList[channel].entrantsLeft.length + ' people left. (';
-        for (var i = 0; i < raceList[channel].entrantsLeft.length; i++) {
+        for (let i = 0; i < raceList[channel].entrantsLeft.length; i++) {
             string += raceList[channel].entrantsLeft[i] + ', ';
         }
         string = string.substring(0, string.length - 2) + ')';
@@ -470,8 +469,8 @@ function getEntrants(channel) {
     }
 
     // Build the entrants string
-    var string = '- There are ' + raceList[channel].entrants.length + ' people in this race. (';
-    for (var i = 0; i < raceList[channel].entrants.length; i++) {
+    let string = '- There are ' + raceList[channel].entrants.length + ' people in this race. (';
+    for (let i = 0; i < raceList[channel].entrants.length; i++) {
         string += raceList[channel].entrants[i] + ', ';
     }
     string = string.substring(0, string.length - 2) + ')';
@@ -479,14 +478,14 @@ function getEntrants(channel) {
 }
 
 function error(message) {
-    var datetime = new Date();
+    let datetime = new Date();
     message = datetime + ' - ' + message;
     console.error(message);
     console.log(message);
 }
 
 function warning(message) {
-    var datetime = new Date();
+    let datetime = new Date();
     message = datetime + ' - ' + message;
     console.log(message);
 }
@@ -532,13 +531,13 @@ function postPastebin(pasteName, pasteString) {
 }
 
 function getFormattedDate(epoch) {
-    var d = new Date(0);
+    let d = new Date(0);
     d.setUTCSeconds(epoch);
-    var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    var day = days[d.getDay()] + ',';
-    var date = months[d.getMonth()] + ' ' + getOrdinal(d.getDate()) + ', ' + d.getFullYear();
-    var time = '';
+    let days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    let day = days[d.getDay()] + ',';
+    let date = months[d.getMonth()] + ' ' + getOrdinal(d.getDate()) + ', ' + d.getFullYear();
+    let time = '';
     if (d.getHours() < 10) {
         time += '0';
     }
@@ -560,7 +559,7 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
     player = player.trim();
 
     // If the user is requesting a player's Twitch name instead of their SRL name, maybe we can fix the mistake automatically
-    for (var i = 0; i < playerList.length; i++) { // Go through the player list
+    for (let i = 0; i < playerList.length; i++) { // Go through the player list
         if (playerList[i].twitch === player.toLowerCase()) {
             player = playerList[i].srl;
             break;
@@ -569,7 +568,7 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
 
     // Get this player's past races from the database
     try {
-        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (err, db) {
+        mongodb.MongoClient.connect('mongodb://localhost:27017/isaac', function (err, db) {
             if (err) {
                 error('ERROR - Unable to connect to the MongoDB server: ' + err);
                 throw 'Unable to connect to the MongoDB server.';
@@ -577,32 +576,32 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
 
             // Create a regular expression to be used in the next step
             function regexEscape(str) {
-                return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+                return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
             }
-            var re = new RegExp('^' + regexEscape(player) + '$', 'i'); // Match the player exactly, but case insensitive
+            let re = new RegExp('^' + regexEscape(player) + '$', 'i'); // Match the player exactly, but case insensitive
 
             // Initialize variables
-            var numRaces = 0;
-            var numForfeits = 0;
-            var sumTimes = 0;
-            var racesString = 'The Binding of Isaac: Afterbirth\n';
+            let numRaces = 0;
+            let  numForfeits = 0;
+            let sumTimes = 0;
+            let racesString = 'The Binding of Isaac: Afterbirth\n';
             racesString += 'List of Jud6s Races for ' + player + '\n';
             racesString += new Date() + '\n';
             racesString += '(requested by ' + requester + ')\n\n';
 
             // Get the races collection
-            var collection = db.collection('races');
+            let collection = db.collection('races');
             if (listAll === true) {
-                var options = {
+                let options = {
                     sort: [['id','desc']], // Get every race that they have ever done, with the most recent being at the top
                 };
             } else {
-                var options = {
+                let options = {
                     sort: [['id','desc']], // We want the most recent races first
                     limit: numAverageRacesToUse, // We only want to use the past X races for the purposes of calculating an average
                 };
             }
-            var stream = collection.find({
+            let stream = collection.find({
                 results: { $elemMatch: { player: re } },
                 goal: /Beat The Chest with Judas \(Jud6s Mod v1\.\d+, \&quot;BLCK CNDL\&quot; easter egg\)/
             }, options).stream();
@@ -623,19 +622,19 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                 racesString += numRaces + ')';
 
                 // Add the date/time that the race happened
-                var date = getFormattedDate(race.date);
-                var spacing = 34 - date.length; // Pad with spaces so that it is properly aligned
-                for (var i = 0; i < spacing; i++) {
+                let date = getFormattedDate(race.date);
+                let spacing = 34 - date.length; // Pad with spaces so that it is properly aligned
+                for (let i = 0; i < spacing; i++) {
                     racesString += ' ';
                 }
                 racesString += date + '     ';
 
                 // Find their time (and comment)
-                var foundPlayer = false;
-                for (var i = 0; i < race.results.length; i++) {
+                let foundPlayer = false;
+                for (let i = 0; i < race.results.length; i++) {
                     if (race.results[i].player.toLowerCase() === player.toLowerCase()) {
-                        var raceTime = race.results[i].time;
-                        var comment = race.results[i].message;
+                        let raceTime = race.results[i].time;
+                        let comment = race.results[i].message;
                         foundPlayer = true;
                         break;
                     }
@@ -650,8 +649,8 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                     numForfeits++; // They forfeited this race
                     racesString += 'Forfeit';
                 } else {
-                    var minutes = Math.floor(raceTime / 60);
-                    var seconds = raceTime % 60;
+                    let minutes = Math.floor(raceTime / 60);
+                    let seconds = raceTime % 60;
                     if (seconds < 10) {
                         seconds = '0' + seconds;
                     }
@@ -667,13 +666,13 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
             });
 
             // We have now gone through all the races
-            stream.on('end', async function() {
+            stream.on('end', async function() { // jshint ignore:line
                 // Close connection
                 db.close();
 
                 // Check to see if they have any races
                 if (numRaces === 0) {
-                    var sayString = player + ' has 0 Jud6s races played.';
+                    let sayString = player + ' has 0 Jud6s races played.';
                     if (IRC === 'SRL') {
                         SRLBot.say(channel, sayString);
                     } else if (IRC === 'Twitch') {
@@ -687,8 +686,8 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                 // If we are returning all races, instead of just the average
                 if (listAll === true) {
                     // Post it to Pastebin
-                    var response = await postPastebin('Race Listing', racesString);
-                    var sayString = 'List of ' + player + '\'s Jud6s races: ' + response;
+                    let response = await postPastebin('Race Listing', racesString); // jshint ignore:line
+                    let sayString = 'List of ' + player + '\'s Jud6s races: ' + response;
                     if (IRC === 'SRL') {
                         SRLBot.say(channel, sayString);
                     } else if (IRC === 'Twitch') {
@@ -701,7 +700,7 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
 
                 // Check to see if they forfeited every race
                 if (numRaces === numForfeits) {
-                    var sayString = player + ' has forfeited every race that they have entered, so how can I calculate the average time?';
+                    let sayString = player + ' has forfeited every race that they have entered, so how can I calculate the average time?';
                     if (IRC === 'SRL') {
                         SRLBot.say(channel, sayString);
                     } else if (IRC === 'Twitch') {
@@ -714,15 +713,15 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                 }
 
                 // Calculate and format the average time
-                var averageTime = sumTimes / (numRaces - numForfeits);
-                var averageMinutes = Math.floor(averageTime / 60);
-                var averageSeconds = Math.floor(averageTime % 60);
+                let averageTime = sumTimes / (numRaces - numForfeits);
+                let averageMinutes = Math.floor(averageTime / 60);
+                let averageSeconds = Math.floor(averageTime % 60);
                 if (averageSeconds < 10) {
                     averageSeconds = '0' + averageSeconds;
                 }
 
                 // Return the average time and the number of forfeits
-                var sayString = 'Average time from ' + player + '\'s last ' + numRaces + ' races: ' + averageMinutes + ':' + averageSeconds + ' (' + numForfeits + ' forfeits)';
+                let sayString = 'Average time from ' + player + '\'s last ' + numRaces + ' races: ' + averageMinutes + ':' + averageSeconds + ' (' + numForfeits + ' forfeits)';
                 if (IRC === 'SRL') {
                     SRLBot.say(channel, sayString);
                 } else if (IRC === 'Twitch') {
@@ -730,7 +729,7 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
                 } else if (IRC === 'Discord') {
                     DiscordBot.sendMessage({ to: channel, message: sayString });
                 }
-            });
+            }); // jshint ignore:line
         });
     } catch(err) {
         console.log('----- getAverageTimes function failed with error: ' + err + ' -----');
@@ -748,19 +747,19 @@ function getAverageTimes(IRC, channel, player, requester, listAll = false) {
 function getLeaderboard(IRC, channel, requester) {
     try {
         // Get all the Jud6s races from the database
-        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (err, db) {
+        mongodb.MongoClient.connect('mongodb://localhost:27017/isaac', function (err, db) {
             if (err) {
                 error('ERROR - Unable to connect to the MongoDB server: ' + err);
                 throw 'Unable to connect to the MongoDB server.';
             }
 
             // Initialize variables
-            var leaderboard = {};
-            var topTenTimes = [];
+            let leaderboard = {};
+            let topTenTimes = [];
 
             // Get the races collection
-            var collection = db.collection('races');
-            var stream = collection.find({
+            let collection = db.collection('races');
+            let stream = collection.find({
                 goal: /Beat The Chest with Judas \(Jud6s Mod v1\.\d+, \&quot;BLCK CNDL\&quot; easter egg\)/
             }, {
                 sort: [['id','desc']],
@@ -769,11 +768,11 @@ function getLeaderboard(IRC, channel, requester) {
             // For each race
             stream.on('data', function(race) {
                 // Go through the results
-                for (var i = 0; i < race.results.length; i++) {
-                    var player = race.results[i].player.toLowerCase();
-                    var raceTime = race.results[i].time;
-                    var version = race.goal.match(/Beat The Chest with Judas \(Jud6s Mod (v1\.\d+),/)[1];
-                    var date = race.date;
+                for (let i = 0; i < race.results.length; i++) {
+                    let player = race.results[i].player.toLowerCase();
+                    let raceTime = race.results[i].time;
+                    let version = race.goal.match(/Beat The Chest with Judas \(Jud6s Mod (v1\.\d+),/)[1];
+                    let date = race.date;
 
                     // If the time is worthy of being in the top ten times, add it
                     if (raceTime !== -1 && raceTime !== -2) {
@@ -837,101 +836,155 @@ function getLeaderboard(IRC, channel, requester) {
             });
 
             // We have now gone through all the races
-            stream.on('end', async function() {
+            stream.on('end', async function() { // jshint ignore:line
                 // Close connection
                 db.close();
 
                 // Calculate everyone's average
-                var leaderboardArray = []; // We have to make an array so that we can sort it later
-                for (var player in leaderboard) {
-                    // If they have under 10 races played, skip to the next player
-                    if (leaderboard[player].numRaces < 10) {
+                let leaderboardArray = []; // We have to make an array so that we can sort it later
+                for (let player in leaderboard) {
+                    // If they have under 20 races played, skip to the next player
+                    if (leaderboard[player].numRaces < 20) {
                         continue;
                     }
 
                     // If they forfeited every race, then we will have a divide by 0 later on
                     if (leaderboard[player].numRaces === leaderboard[player].numForfeits) {
                         leaderboardArray.push({
-                            player: player,
-                            averageTime: 1000000, // Set it to a million seconds
-                            numRaces: leaderboard[player].numRaces,
-                            numForfeits: leaderboard[player].numForfeits,
-                            allRacesCount: leaderboard[player].allRacesCount,
+                            player:          player,
+                            averageTime:     1000000, // Arbitrarily set it to a million seconds
+                            numRaces:        leaderboard[player].numRaces,
+                            numForfeits:     leaderboard[player].numForfeits,
+                            forfeitPenalty:  1000000, // Arbitrarily set it to a million seconds
+                            adjustedAverage: 1000000, // Arbitrarily set it to a million seconds
+                            allRacesCount:   leaderboard[player].allRacesCount,
                         });
 
                     // Otherwise, calculate and format the average time
                     } else {
-                        var averageTime = leaderboard[player].totalTime / (leaderboard[player].numRaces - leaderboard[player].numForfeits);
+                        let averageTime = leaderboard[player].totalTime / (leaderboard[player].numRaces - leaderboard[player].numForfeits);
+                        let forfeitPenalty = (averageTime * leaderboard[player].numForfeits / leaderboard[player].numRaces);
                         leaderboardArray.push({
-                            player: player,
-                            averageTime: averageTime,
-                            numRaces: leaderboard[player].numRaces,
-                            numForfeits: leaderboard[player].numForfeits,
-                            allRacesCount: leaderboard[player].allRacesCount,
+                            player:          player,
+                            averageTime:     averageTime,
+                            numRaces:        leaderboard[player].numRaces,
+                            numForfeits:     leaderboard[player].numForfeits,
+                            forfeitPenalty:  forfeitPenalty,
+                            adjustedAverage: averageTime + forfeitPenalty,
+                            allRacesCount:   leaderboard[player].allRacesCount,
                         });
                     }
                 }
 
-                // Sort the leaderboard by average times
+                // Sort the leaderboard by adjusted average times (which takes into account a forfeit penalty)
                 leaderboardArray = leaderboardArray.sort(function(a, b) {
-                    return a.averageTime - b.averageTime;
+                    return a.adjustedAverage - b.adjustedAverage;
                 });
 
                 // Start to construct the leaderboard string
-                var leaderboardString = 'The Binding of Isaac: Afterbirth\n';
-                leaderboardString += 'Jud6s Average Time Leaderboard\n';
+                let leaderboardString = 'The Binding of Isaac: Afterbirth\n';
+                leaderboardString += 'Unseeded Jud6s Average Time Leaderboard\n';
                 leaderboardString += new Date() + '\n';
                 leaderboardString += '(requested by ' + requester + ')\n\n';
                 leaderboardString += '- Only the last ' + numAverageRacesToUse + ' races are used for players with over ' + numAverageRacesToUse + ' races.\n';
-                leaderboardString += '- Players with under 10 races are not included in the leaderboard.\n\n';
+                leaderboardString += '- Players with under 20 races are not included in the leaderboard.\n';
+                leaderboardString += '- A time-based penalty is added for each forfeit according to:\n';
+                leaderboardString += '    (average time * number of forfeits / number of races)\n';
+                leaderboardString += '- This means that it is only advantageous to forfeit if your finishing time will be more than double your current average.\n';
+                leaderboardString += '- This formula is derived from risk assessment (https://en.wikipedia.org/wiki/Risk_assessment).\n\n\n\n';
+                leaderboardString += 'Rank   Name                 Adjusted   Real      Forfeit         Forfeit\n';
+                leaderboardString += '                            Average    Average   Rate            Penalty\n';
+                leaderboardString += '-------------------------------------------------------------------------\n';
 
                 // Iterate through the leaderboard array
-                for (var i = 0; i < leaderboardArray.length; i++) {
-                    // Create the header for the player
-                    var place = i + 1;
+                for (let i = 0; i < leaderboardArray.length; i++) {
+                    // Create the "Rank" column
+                    let place = i + 1;
+                    leaderboardString += '#' + place;
                     if (place < 10) {
                         leaderboardString += ' ';
                     }
-                    leaderboardString += place + ') ' + leaderboardArray[i].player;
-                    var spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
-                    for (var j = 0; j < spacing; j++) {
+                    leaderboardString += '    ';
+
+                    // Create the "Name" column
+                    leaderboardString += leaderboardArray[i].player;
+                    let spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (let j = 0; j < spacing; j++) {
                         leaderboardString += ' ';
                     }
 
-                    // Parse the average time
-                    var averageMinutes = Math.floor(leaderboardArray[i].averageTime / 60);
-                    var averageSeconds = Math.floor(leaderboardArray[i].averageTime % 60);
-                    if (averageSeconds < 10) {
-                        averageSeconds = '0' + averageSeconds;
-                    }
-
-                    // Add the average time and forfeit rate to the string
+                    // Create the "Adjusted Average" column
                     if (leaderboardArray[i].averageTime === 1000000) {
-                        leaderboardString +=  'n/a';
+                        leaderboardString +=  'n/a  ';
                     } else {
+                        let adjustedAverageMinutes = Math.floor(leaderboardArray[i].adjustedAverage / 60);
+                        let adjustedAverageSeconds = Math.floor(leaderboardArray[i].adjustedAverage % 60);
+                        if (adjustedAverageSeconds < 10) {
+                            adjustedAverageSeconds = '0' + adjustedAverageSeconds;
+                        }
+                        leaderboardString += adjustedAverageMinutes + ':' + adjustedAverageSeconds;
+                    }
+                    leaderboardString += '      ';
+
+                    // Create the "Real Average" column
+                    if (leaderboardArray[i].averageTime === 1000000) {
+                        leaderboardString +=  'n/a  ';
+                    } else {
+                        let averageMinutes = Math.floor(leaderboardArray[i].averageTime / 60);
+                        let averageSeconds = Math.floor(leaderboardArray[i].averageTime % 60);
+                        if (averageSeconds < 10) {
+                            averageSeconds = '0' + averageSeconds;
+                        }
                         leaderboardString += averageMinutes + ':' + averageSeconds;
                     }
-                    var forfeitPercent = Math.round(leaderboardArray[i].numForfeits / leaderboardArray[i].numRaces * 100);
-                    leaderboardString += '     ' + forfeitPercent + '% forfeit rate (' + leaderboardArray[i].numForfeits + '/' + leaderboardArray[i].numRaces + ')\n';
+                    leaderboardString += '     ';
+
+                    // Create the "Forfeit Rate" column
+                    let forfeitPercent = Math.round(leaderboardArray[i].numForfeits / leaderboardArray[i].numRaces * 100);
+                    leaderboardString += forfeitPercent + '% ';
+                    if (forfeitPercent < 10) {
+                        leaderboardString += ' ';
+                    }
+                    leaderboardString += '(' + leaderboardArray[i].numForfeits + '/' + leaderboardArray[i].numRaces + ')';
+                    if (leaderboardArray[i].numForfeits < 10) {
+                        leaderboardString += ' ';
+                    }
+                    if (leaderboardArray[i].numRaces < 10) {
+                        leaderboardString += ' ';
+                    }
+                    leaderboardString += '     ';
+
+                    // Create the "Forfeit Penalty" column
+                    if (leaderboardArray[i].averageTime === 1000000) {
+                        leaderboardString +=  'n/a  ';
+                    } else {
+                        let penaltyMinutes = Math.floor(leaderboardArray[i].forfeitPenalty / 60);
+                        let penaltySeconds = Math.floor(leaderboardArray[i].forfeitPenalty % 60);
+                        if (penaltySeconds < 10) {
+                            penaltySeconds = '0' + penaltySeconds;
+                        }
+                        leaderboardString += penaltyMinutes + ':' + penaltySeconds;
+                    }
+                    leaderboardString += '\n';
                 }
 
                 // Add a second leaderboard for the top ten times
-                leaderboardString += '\n\n\nTop Ten Jud6s Times:\n\n';
-                for (var i = 0; i < topTenTimes.length; i++) {
+                leaderboardString += '\n\n\nTop Ten Unseeded Jud6s Times\n\n';
+                for (let i = 0; i < topTenTimes.length; i++) {
                     // Create the header for the player
-                    var place = i + 1;
+                    let place = i + 1;
                     if (place < 10) {
                         leaderboardString += ' ';
                     }
                     leaderboardString += place + ') ' + topTenTimes[i].player;
-                    var spacing = 21 - topTenTimes[i].player.length; // Pad with spaces so that it is properly aligned
-                    for (var j = 0; j < spacing; j++) {
+                    let spacing = 21 - topTenTimes[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (let j = 0; j < spacing; j++) {
                         leaderboardString += ' ';
                     }
 
                     // Parse the average time
-                    var averageMinutes = Math.floor(topTenTimes[i].raceTime / 60);
-                    var averageSeconds = Math.floor(topTenTimes[i].raceTime % 60);
+                    let averageMinutes = Math.floor(topTenTimes[i].raceTime / 60);
+                    let averageSeconds = Math.floor(topTenTimes[i].raceTime % 60);
                     if (averageSeconds < 10) {
                         averageSeconds = '0' + averageSeconds;
                     }
@@ -946,22 +999,22 @@ function getLeaderboard(IRC, channel, requester) {
                     leaderboardString += '     ' + getFormattedDate(topTenTimes[i].date) + '\n';
                 }
 
-                // Add a third leaderboard for most races played
-                leaderboardString += '\n\n\nMost Jud6s Races Played:\n\n';
+                // Add a third leaderboard for most unseeded Jud6s races played
+                leaderboardString += '\n\n\nMost Unseeded Jud6s Races Played\n\n';
 
                 // Resort the leaderboardArray based on allRacesCount
                 leaderboardArray = leaderboardArray.sort(function(a, b) {
                     return b.allRacesCount - a.allRacesCount;
                 });
-                for (var i = 0; i < 10; i++) {
+                for (let i = 0; i < 10; i++) {
                     // Create the header for the player
-                    var place = i + 1;
+                    let place = i + 1;
                     if (place < 10) {
                         leaderboardString += ' ';
                     }
                     leaderboardString += place + ') ' + leaderboardArray[i].player;
-                    var spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
-                    for (var j = 0; j < spacing; j++) {
+                    let spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (let j = 0; j < spacing; j++) {
                         leaderboardString += ' ';
                     }
 
@@ -971,8 +1024,8 @@ function getLeaderboard(IRC, channel, requester) {
                 leaderboardString += '\n';
 
                 // Post the leaderboard to Pastebin
-                var response = await postPastebin('Jud6s Leaderboard', leaderboardString);
-                var sayString = 'Jud6s Leaderboard: ' + response;
+                let response = await postPastebin('Jud6s Leaderboard', leaderboardString); // jshint ignore:line
+                let sayString = 'Jud6s Leaderboard: ' + response;
                 if (IRC === 'SRL') {
                     SRLBot.say(channel, sayString);
                 } else if (IRC === 'Twitch') {
@@ -980,7 +1033,7 @@ function getLeaderboard(IRC, channel, requester) {
                 } else if (IRC === 'Discord') {
                     DiscordBot.sendMessage({ to: channel, message: sayString });
                 }
-            });
+            }); // jshint ignore:line
         });
     } catch(err) {
         console.log('----- getLeaderboard function failed with error: ' + err + ' -----');
@@ -995,223 +1048,80 @@ function getLeaderboard(IRC, channel, requester) {
     }
 }
 
-function getLeaderboardLCO(IRC, channel, requester) {
+function getMostRaces(IRC, channel, requester) {
     try {
-        // Get all the Jud6s LCO races from the database
-        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (err, db) {
+        // Get all the Jud6s races from the database
+        mongodb.MongoClient.connect('mongodb://localhost:27017/isaac', function (err, db) {
             if (err) {
                 error('ERROR - Unable to connect to the MongoDB server: ' + err);
                 throw 'Unable to connect to the MongoDB server.';
             }
 
             // Initialize variables
-            var leaderboard = {};
-            var topTenTimes = [];
+            let leaderboard = {};
 
             // Get the races collection
-            var collection = db.collection('races');
-            var stream = collection.find({
-                goal: /Beat The Dark Room with Judas\' Shadow \(Jud6s Mod v1\.\d+, \&quot;BLCK CNDL\&quot; easter egg\)/
-            }, {
-                sort: [['id','desc']],
-            }).stream();
+            let collection = db.collection('races');
+            let stream = collection.find({}, {}).stream();
 
             // For each race
             stream.on('data', function(race) {
                 // Go through the results
-                for (var i = 0; i < race.results.length; i++) {
-                    var player = race.results[i].player.toLowerCase();
-                    var raceTime = race.results[i].time;
-                    var version = race.goal.match(/Beat The Dark Room with Judas\' Shadow \(Jud6s Mod (v1\.\d+),/)[1];
-                    var date = race.date;
-
-                    // If the time is worthy of being in the top ten times, add it
-                    if (raceTime !== -1 && raceTime !== -2) {
-                        if (topTenTimes.length < 10) {
-                            topTenTimes.push({
-                                player: player,
-                                raceTime: raceTime,
-                                version: version,
-                                date: date,
-                            });
-
-                            // Sort the top ten times by race time
-                            topTenTimes = topTenTimes.sort(function(a, b) {
-                                return a.raceTime - b.raceTime;
-                            });
-                        } else {
-                            // The last element will be the worst time, so replace it if necessary
-                            if (topTenTimes[9].raceTime > raceTime) {
-                                topTenTimes.pop(); // Remove the worst time
-                                topTenTimes.push({
-                                    player: player,
-                                    raceTime: raceTime,
-                                    version: version,
-                                    date: date,
-                                });
-
-                                // Sort the top ten times by race time
-                                topTenTimes = topTenTimes.sort(function(a, b) {
-                                    return a.raceTime - b.raceTime;
-                                });
-                            }
-                        }
-                    }
+                for (let i = 0; i < race.results.length; i++) {
+                    let player = race.results[i].player.toLowerCase();
 
                     // This is the first time we have come across this player, so make an entry for them in the leaderboard
                     if (typeof leaderboard[player] === 'undefined') {
                         leaderboard[player] = {
-                                numRaces: 0,
-                                numForfeits: 0,
-                                totalTime: 0,
                                 allRacesCount: 0,
                         };
                     }
 
                     // Increment the count of their total races
                     leaderboard[player].allRacesCount++;
-
-                    // Move to the next race if we have already hit the limit of the races to use
-                    if (leaderboard[player].numRaces === numAverageRacesToUse) {
-                        continue;
-                    }
-
-                    // Increment their stats
-                    leaderboard[player].numRaces++;
-                    if (raceTime === -1 || raceTime === -2) { // They quit or were disqualified
-                        leaderboard[player].numForfeits++;
-                    } else { // They finished the race
-                        leaderboard[player].totalTime += raceTime;
-                    }
                 }
             });
 
             // We have now gone through all the races
-            stream.on('end', async function() {
+            stream.on('end', async function() { // jshint ignore:line
                 // Close connection
                 db.close();
 
-                // Calculate everyone's average
-                var leaderboardArray = []; // We have to make an array so that we can sort it later
-                for (var player in leaderboard) {
-                    // If they have under 10 races played, skip to the next player
-                    if (leaderboard[player].numRaces < 10) {
-                        continue;
-                    }
+                // We have to make an array so that we can sort it later
+                let leaderboardArray = [];
 
-                    // If they forfeited every race, then we will have a divide by 0 later on
-                    if (leaderboard[player].numRaces === leaderboard[player].numForfeits) {
-                        leaderboardArray.push({
-                            player: player,
-                            averageTime: 1000000, // Set it to a million seconds
-                            numRaces: leaderboard[player].numRaces,
-                            numForfeits: leaderboard[player].numForfeits,
-                            allRacesCount: leaderboard[player].allRacesCount,
-                        });
-
-                    // Otherwise, calculate and format the average time
-                    } else {
-                        var averageTime = leaderboard[player].totalTime / (leaderboard[player].numRaces - leaderboard[player].numForfeits);
-                        leaderboardArray.push({
-                            player: player,
-                            averageTime: averageTime,
-                            numRaces: leaderboard[player].numRaces,
-                            numForfeits: leaderboard[player].numForfeits,
-                            allRacesCount: leaderboard[player].allRacesCount,
-                        });
-                    }
+                // Move everything in the leaderboard object to the leaderboard array
+                for (let player in leaderboard) {
+                    leaderboardArray.push({
+                        player:          player,
+                        allRacesCount:   leaderboard[player].allRacesCount,
+                    });
                 }
 
-                // Sort the leaderboard by average times
-                leaderboardArray = leaderboardArray.sort(function(a, b) {
-                    return a.averageTime - b.averageTime;
-                });
-
-                // Start to construct the leaderboard string
-                var leaderboardString = 'The Binding of Isaac: Afterbirth\n';
-                leaderboardString += 'Jud6s Lost Child Open Loser\'s Bracket Average Time Leaderboard\n';
-                leaderboardString += new Date() + '\n';
-                leaderboardString += '(requested by ' + requester + ')\n\n';
-                leaderboardString += '- Only the last ' + numAverageRacesToUse + ' races are used for players with over ' + numAverageRacesToUse + ' races.\n';
-                leaderboardString += '- Players with under 10 races are not included in the leaderboard.\n\n';
-
-                // Iterate through the leaderboard array
-                for (var i = 0; i < leaderboardArray.length; i++) {
-                    // Create the header for the player
-                    var place = i + 1;
-                    if (place < 10) {
-                        leaderboardString += ' ';
-                    }
-                    leaderboardString += place + ') ' + leaderboardArray[i].player;
-                    var spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
-                    for (var j = 0; j < spacing; j++) {
-                        leaderboardString += ' ';
-                    }
-
-                    // Parse the average time
-                    var averageMinutes = Math.floor(leaderboardArray[i].averageTime / 60);
-                    var averageSeconds = Math.floor(leaderboardArray[i].averageTime % 60);
-                    if (averageSeconds < 10) {
-                        averageSeconds = '0' + averageSeconds;
-                    }
-
-                    // Add the average time and forfeit rate to the string
-                    if (leaderboardArray[i].averageTime === 1000000) {
-                        leaderboardString +=  'n/a';
-                    } else {
-                        leaderboardString += averageMinutes + ':' + averageSeconds;
-                    }
-                    var forfeitPercent = Math.round(leaderboardArray[i].numForfeits / leaderboardArray[i].numRaces * 100);
-                    leaderboardString += '     ' + forfeitPercent + '% forfeit rate (' + leaderboardArray[i].numForfeits + '/' + leaderboardArray[i].numRaces + ')\n';
-                }
-
-                // Add a second leaderboard for the top ten times
-                leaderboardString += '\n\n\nTop Ten Jud6s LCO Times:\n\n';
-                for (var i = 0; i < topTenTimes.length; i++) {
-                    // Create the header for the player
-                    var place = i + 1;
-                    if (place < 10) {
-                        leaderboardString += ' ';
-                    }
-                    leaderboardString += place + ') ' + topTenTimes[i].player;
-                    var spacing = 21 - topTenTimes[i].player.length; // Pad with spaces so that it is properly aligned
-                    for (var j = 0; j < spacing; j++) {
-                        leaderboardString += ' ';
-                    }
-
-                    // Parse the average time
-                    var averageMinutes = Math.floor(topTenTimes[i].raceTime / 60);
-                    var averageSeconds = Math.floor(topTenTimes[i].raceTime % 60);
-                    if (averageSeconds < 10) {
-                        averageSeconds = '0' + averageSeconds;
-                    }
-
-                    // Add the average time
-                    leaderboardString += averageMinutes + ':' + averageSeconds;
-
-                    // Add the version
-                    leaderboardString += '     ' + topTenTimes[i].version;
-
-                    // Add the date
-                    leaderboardString += '     ' + getFormattedDate(topTenTimes[i].date) + '\n';
-                }
-
-                // Add a third leaderboard for most races played
-                leaderboardString += '\n\n\nMost Jud6s LCO Races Played:\n\n';
-
-                // Resort the leaderboardArray based on allRacesCount
+                // Sort the leaderboard by who has the most races
                 leaderboardArray = leaderboardArray.sort(function(a, b) {
                     return b.allRacesCount - a.allRacesCount;
                 });
-                for (var i = 0; i < 10; i++) {
+
+                // Start to construct the leaderboard string
+                let leaderboardString = 'The Binding of Isaac: Afterbirth\n';
+                leaderboardString += 'Most SpeedRunsLive.com Races Played\n';
+                leaderboardString += new Date() + '\n';
+                leaderboardString += '(requested by ' + requester + ')\n\n';
+
+                // Get the top 100
+                for (let i = 0; i < 100; i++) {
                     // Create the header for the player
-                    var place = i + 1;
+                    let place = i + 1;
+                    if (place < 100) {
+                        leaderboardString += ' ';
+                    }
                     if (place < 10) {
                         leaderboardString += ' ';
                     }
                     leaderboardString += place + ') ' + leaderboardArray[i].player;
-                    var spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
-                    for (var j = 0; j < spacing; j++) {
+                    let spacing = 21 - leaderboardArray[i].player.length; // Pad with spaces so that it is properly aligned
+                    for (let j = 0; j < spacing; j++) {
                         leaderboardString += ' ';
                     }
 
@@ -1221,8 +1131,8 @@ function getLeaderboardLCO(IRC, channel, requester) {
                 leaderboardString += '\n';
 
                 // Post the leaderboard to Pastebin
-                var response = await postPastebin('Jud6s LCO Leaderboard', leaderboardString);
-                var sayString = 'Jud6s LCO Leaderboard: ' + response;
+                let response = await postPastebin('Most Races Played Leaderboard', leaderboardString); // jshint ignore:line
+                let sayString = 'Most Races Played Leaderboard: ' + response;
                 if (IRC === 'SRL') {
                     SRLBot.say(channel, sayString);
                 } else if (IRC === 'Twitch') {
@@ -1230,11 +1140,11 @@ function getLeaderboardLCO(IRC, channel, requester) {
                 } else if (IRC === 'Discord') {
                     DiscordBot.sendMessage({ to: channel, message: sayString });
                 }
-            });
+            }); // jshint ignore:line
         });
     } catch(err) {
-        console.log('----- getLeaderboardLCO function failed with error: ' + err + ' -----');
-        sayString = 'Something went wrong when getting the LCO leaderboard.';
+        console.log('----- getMostRaces function failed with error: ' + err + ' -----');
+        sayString = 'Something went wrong when getting the leaderboard.';
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
@@ -1243,6 +1153,7 @@ function getLeaderboardLCO(IRC, channel, requester) {
             DiscordBot.sendMessage({ to: channel, message: sayString });
         }
     }
+
 }
 
 function getAllRaces(IRC, channel, player, requester) {
@@ -1250,7 +1161,7 @@ function getAllRaces(IRC, channel, player, requester) {
     player = player.trim();
 
     // If the user is requesting a player's Twitch name instead of their SRL name, maybe we can fix the mistake automatically
-    for (var i = 0; i < playerList.length; i++) { // Go through the player list
+    for (let i = 0; i < playerList.length; i++) { // Go through the player list
         if (playerList[i].twitch === player.toLowerCase()) {
             player = playerList[i].srl;
             break;
@@ -1259,7 +1170,7 @@ function getAllRaces(IRC, channel, player, requester) {
 
     // Get this player's past races from the database
     try {
-        mongodb.MongoClient.connect('mongodb://zamiel:' + mongoPassword + '@localhost:27017/isaac', function (err, db) {
+        mongodb.MongoClient.connect('mongodb://localhost:27017/isaac', function (err, db) {
             if (err) {
                 error('ERROR - Unable to connect to the MongoDB server: ' + err);
                 throw 'Unable to connect to the MongoDB server.';
@@ -1267,25 +1178,25 @@ function getAllRaces(IRC, channel, player, requester) {
 
             // Create a regular expression to be used in the next step
             function regexEscape(str) {
-                return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+                return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
             }
-            var re = new RegExp('^' + regexEscape(player) + '$', 'i'); // Match the player exactly, but case insensitive
+            let re = new RegExp('^' + regexEscape(player) + '$', 'i'); // Match the player exactly, but case insensitive
 
             // Initialize variables
-            var numRaces = 0;
-            var numForfeits = 0;
-            var sumTimes = 0;
-            var racesString = 'The Binding of Isaac: Afterbirth\n';
+            let numRaces = 0;
+            let numForfeits = 0;
+            let sumTimes = 0;
+            let racesString = 'The Binding of Isaac: Afterbirth\n';
             racesString += 'List of Races for ' + player + '\n';
             racesString += new Date() + '\n';
             racesString += '(requested by ' + requester + ')\n\n';
 
             // Get the races collection
-            var collection = db.collection('races');
-            var options = {
+            let collection = db.collection('races');
+            let options = {
                 sort: [['id','desc']], // Get every race that they have ever done, with the most recent being at the top
             };
-            var stream = collection.find({
+            let stream = collection.find({
                 results: { $elemMatch: { player: re } },
             }, options).stream();
 
@@ -1305,20 +1216,20 @@ function getAllRaces(IRC, channel, player, requester) {
                 racesString += numRaces + ')';
 
                 // Add the date/time that the race happened
-                var date = getFormattedDate(race.date);
-                var spacing = 34 - date.length; // Pad with spaces so that it is properly aligned
-                for (var i = 0; i < spacing; i++) {
+                let date = getFormattedDate(race.date);
+                let spacing = 34 - date.length; // Pad with spaces so that it is properly aligned
+                for (let i = 0; i < spacing; i++) {
                     racesString += ' ';
                 }
                 racesString += date + '     ';
 
                 // Find their time (and comment)
-                var foundPlayer = false;
-                for (var i = 0; i < race.results.length; i++) {
+                let foundPlayer = false;
+                for (let i = 0; i < race.results.length; i++) {
                     if (race.results[i].player.toLowerCase() === player.toLowerCase()) {
-                        var raceTime = race.results[i].time;
-                        var comment = race.results[i].message;
-                        var goal = race.goal;
+                        let raceTime = race.results[i].time;
+                        let comment = race.results[i].message;
+                        let goal = race.goal;
                         foundPlayer = true;
                         break;
                     }
@@ -1333,8 +1244,8 @@ function getAllRaces(IRC, channel, player, requester) {
                     numForfeits++; // They forfeited this race
                     racesString += 'Forfeit';
                 } else {
-                    var minutes = Math.floor(raceTime / 60);
-                    var seconds = raceTime % 60;
+                    let minutes = Math.floor(raceTime / 60);
+                    let seconds = raceTime % 60;
                     if (seconds < 10) {
                         seconds = '0' + seconds;
                     }
@@ -1362,13 +1273,13 @@ function getAllRaces(IRC, channel, player, requester) {
             });
 
             // We have now gone through all the races
-            stream.on('end', async function() {
+            stream.on('end', async function() { // jshint ignore:line
                 // Close connection
                 db.close();
 
                 // Check to see if they have any races
                 if (numRaces === 0) {
-                    var sayString = player + ' has 0 races played.';
+                    let sayString = player + ' has 0 races played.';
                     if (IRC === 'SRL') {
                         SRLBot.say(channel, sayString);
                     } else if (IRC === 'Twitch') {
@@ -1380,8 +1291,8 @@ function getAllRaces(IRC, channel, player, requester) {
                 }
 
                 // Post it to Pastebin
-                var response = await postPastebin('Race Listing', racesString);
-                var sayString = 'List of ' + player + '\'s races: ' + response;
+                let response = await postPastebin('Race Listing', racesString); // jshint ignore:line
+                let sayString = 'List of ' + player + '\'s races: ' + response;
                 if (IRC === 'SRL') {
                     SRLBot.say(channel, sayString);
                 } else if (IRC === 'Twitch') {
@@ -1390,7 +1301,7 @@ function getAllRaces(IRC, channel, player, requester) {
                     DiscordBot.sendMessage({ to: channel, message: sayString });
                 }
                 return;
-            });
+            }); // jshint ignore:line
         });
     } catch(err) {
         console.log('----- getAverageTimes function failed with error: ' + err + ' -----');
@@ -1408,7 +1319,7 @@ function getAllRaces(IRC, channel, player, requester) {
 function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
     // Player validation
     user = user.toLowerCase();
-    for (var i = 0; i < ignoreList.length; i++) {
+    for (let i = 0; i < ignoreList.length; i++) {
         if (ignoreList[i] === user && user !== 'zamiel' && user !== 'zamiell') {
             return; // Ignore what they have to say
         }
@@ -1421,7 +1332,7 @@ function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
 
     // Input validation
     if (minNumber > 1000 || maxNumber > 1000 || minNumber < 0 || maxNumber < 0 || minNumber === maxNumber) {
-        sayString = 'Incorrect roll format. ' + user + ' has been added to the ignore list for command abuse.';
+        let sayString = 'Incorrect roll format. ' + user + ' has been added to the ignore list for command abuse.';
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
@@ -1434,10 +1345,10 @@ function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
     }
 
     // Get the random number
-    var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
+    let randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
 
     // Announce it
-    var sayString = 'Random number between ' + minNumber + ' and ' + maxNumber + ': ' + randomNum;
+    let sayString = 'Random number between ' + minNumber + ' and ' + maxNumber + ': ' + randomNum;
     if (IRC === 'SRL') {
         SRLBot.say(channel, sayString);
     } else if (IRC === 'Twitch') {
@@ -1450,7 +1361,7 @@ function getRandomNumber(IRC, channel, user, minNumber, maxNumber) {
 function getRandomBuild(IRC, channel, user) {
     // Player validation
     user = user.toLowerCase();
-    for (var i = 0; i < ignoreList.length; i++) {
+    for (let i = 0; i < ignoreList.length; i++) {
         if (ignoreList[i] === user && user !== 'zamiel' && user !== 'zamiell') {
             return; // Ignore what they have to say
         }
@@ -1462,12 +1373,12 @@ function getRandomBuild(IRC, channel, user) {
     }
 
     // Get the random number
-    var minNumber = 1;
-    var maxNumber = instantStartArray.length;
-    var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
+    let minNumber = 1;
+    let maxNumber = instantStartArray.length;
+    let randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
 
     // Announce it
-    var sayString = 'Random build: #' + randomNum + '  - ' + instantStartArray[randomNum];
+    let sayString = 'Random build: #' + randomNum + '  - ' + instantStartArray[randomNum];
     if (IRC === 'SRL') {
         SRLBot.say(channel, sayString);
     } else if (IRC === 'Twitch') {
@@ -1480,7 +1391,7 @@ function getRandomBuild(IRC, channel, user) {
 function getRandomCharacter(IRC, channel, user) {
     // Player validation
     user = user.toLowerCase();
-    for (var i = 0; i < ignoreList.length; i++) {
+    for (let i = 0; i < ignoreList.length; i++) {
         if (ignoreList[i] === user && user !== 'zamiel' && user !== 'zamiell') {
             return; // Ignore what they have to say
         }
@@ -1492,12 +1403,12 @@ function getRandomCharacter(IRC, channel, user) {
     }
 
     // Get the random number
-    var minNumber = 0;
-    var maxNumber = characterArray.length;
-    var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
+    let minNumber = 0;
+    let maxNumber = characterArray.length;
+    let randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
 
     // Announce it
-    var sayString = 'Random character: ' + characterArray[randomNum];
+    let sayString = 'Random character: ' + characterArray[randomNum];
     if (IRC === 'SRL') {
         SRLBot.say(channel, sayString);
     } else if (IRC === 'Twitch') {
@@ -1509,7 +1420,7 @@ function getRandomCharacter(IRC, channel, user) {
 
 // From: http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 function shuffle(array) {
-    var currentIndex = array.length, temporaryValue, randomIndex;
+    let currentIndex = array.length, temporaryValue, randomIndex;
 
     // While there remain elements to shuffle...
     while (0 !== currentIndex) {
@@ -1528,7 +1439,7 @@ function shuffle(array) {
 
 function refillInstantStartRandomArray() {
     // Add 1 through the number of instance start builds
-    for (var i = 1; i <= numInstantStartBuilds; i++) {
+    for (let i = 1; i <= numInstantStartBuilds; i++) {
         instantStartRandomArray.push(i);
     }
 
@@ -1536,9 +1447,9 @@ function refillInstantStartRandomArray() {
     shuffle(instantStartRandomArray);
 }
 
-var getOrdinal = function(n) {
-    var s = ["th", "st", "nd", "rd"];
-    var v = n % 100;
+function getOrdinal(n) {
+    let s = ["th", "st", "nd", "rd"];
+    let v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
@@ -1562,7 +1473,7 @@ SRLBot.addListener('error', function(message) {
 
 // Detect broken session
 SRLBot.addListener('ping', function(server) {
-    var currentTime = (new Date).getTime(); // Get the epoch timestamp
+    let currentTime = new Date().getTime(); // Get the epoch timestamp
     SRLTimeoutTimer = currentTime;
     setTimeout(checkSRLBroken, 600000, currentTime); // 10 minutes (changed this from 5 minutes because it was too short)
 });
@@ -1573,7 +1484,7 @@ SRLBot.addListener('message', function(user, channel, message) {
     message = message.trim();
 
     // Log all messages
-    var datetime = new Date();
+    let datetime = new Date();
     console.log(datetime + ' - SRL [' + channel + '] <' + user + '> ' + message);
 
     // Look for new BoIR races
@@ -1588,8 +1499,8 @@ SRLBot.addListener('message', function(user, channel, message) {
         message.match(/^Race initiated for The Binding of Isaac: Afterbirth\+\. Join.+#srl-..... .to participate\.$/)
     )) {
         // Parse the message from RaceBot
-        var raceChannelName = message.match(/^Race initiated for The Binding of Isaac: .+\. Join.+(#srl-.+) .to participate\.$/)[1];
-        var expansion = message.match(/^Race initiated for The Binding of Isaac: (.+)\. Join.+#srl-.+ .to participate\.$/)[1];
+        let raceChannelName = message.match(/^Race initiated for The Binding of Isaac: .+\. Join.+(#srl-.+) .to participate\.$/)[1];
+        let expansion = message.match(/^Race initiated for The Binding of Isaac: (.+)\. Join.+#srl-.+ .to participate\.$/)[1];
 
         // Join the race
         addRace(raceChannelName);
@@ -1605,6 +1516,9 @@ SRLBot.addListener('message', function(user, channel, message) {
 
     // Look for RaceBot stuff
     if (channel.match(/^#srl-.....$/) && user === 'RaceBot') {
+        // Local variables
+        let m;
+
         // Advertise tournaments/leagues
         if (message.match(/^.4.The race will begin in 10 seconds!..$/)) {
             advertCounter++;
@@ -1615,10 +1529,10 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
 
         // Look for players joining a race
-        var m = message.match(/^(.+) enters the race! \d+ entrants*\.$/);
+        m = message.match(/^(.+) enters the race! \d+ entrants*\.$/);
         if (m) {
             // Add the racer to the entrants list
-            var racer = m[1].toLowerCase();
+            let racer = m[1].toLowerCase();
             if (raceList[channel].entrants.indexOf(racer) >= 0) {
                 error('SRL ERROR: ' + racer + ' joined race ' + channel + ', but they were already in the entrant list.');
                 console.log('SRL ERROR: ' + racer + ' joined race ' + channel + ', but they were already in the entrant list.');
@@ -1628,11 +1542,11 @@ SRLBot.addListener('message', function(user, channel, message) {
             }
 
             // Announce that the racer has joined the race in their Twitch chat
-            for (var i = 0; i < playerList.length; i++) { // Go through the player list
+            for (let i = 0; i < playerList.length; i++) { // Go through the player list
                 if (playerList[i].srl === racer) {
                     // Compile the message
-                    var twitchChannel = '#' + playerList[i].twitch;
-                    var twitchMessage = '- ' + playerList[i].twitch + ' has joined race ' + channel + '.';
+                    let twitchChannel = '#' + playerList[i].twitch;
+                    let twitchMessage = '- ' + playerList[i].twitch + ' has joined race ' + channel + '.';
 
                     // Send the message
                     console.log('----- Sending TIMEOUT join notification to ' + twitchChannel + ': ' + twitchMessage + ' -----');
@@ -1643,10 +1557,10 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
 
         // Look for people leaving the current race
-        var m = message.match(/^(.+) has been removed from the race\.$/);
+        m = message.match(/^(.+) has been removed from the race\.$/);
         if (m) {
             // Remove the racer from the entrants list
-            var racer = m[1].toLowerCase();
+            let racer = m[1].toLowerCase();
             if (raceList[channel].entrants.indexOf(racer) >= 0) {
                 raceList[channel].entrants.splice(raceList[channel].entrants.indexOf(racer), 1);
             } else {
@@ -1654,11 +1568,11 @@ SRLBot.addListener('message', function(user, channel, message) {
             }
 
             // Announce that the racer has left the race in their Twitch chat
-            for (var i = 0; i < playerList.length; i++) { // Go through the player list
+            for (let i = 0; i < playerList.length; i++) { // Go through the player list
                 if (playerList[i].srl === racer) {
                     // Compile the message
-                    var twitchChannel = '#' + playerList[i].twitch;
-                    var twitchMessage = '- ' + playerList[i].twitch + ' has left race ' + channel + '.';
+                    let twitchChannel = '#' + playerList[i].twitch;
+                    let twitchMessage = '- ' + playerList[i].twitch + ' has left race ' + channel + '.';
 
                     // Send the message
                     console.log('----- Sending TIMEOUT left notification to ' + twitchChannel + ': ' + twitchMessage + ' -----');
@@ -1669,13 +1583,13 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
 
         // Look for a race starting in 10/5/0 seconds
-        for (var i = 0; i < playerList.length; i++) { // Go through the player list
-            for (var j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+        for (let i = 0; i < playerList.length; i++) { // Go through the player list
+            for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
                 if (playerList[i].srl === raceList[channel].entrants[j]) {
                     if (message.match(/^.4.The race will begin in 10 seconds!..$/)) {
                         // Compile the message
-                        var twitchChannel = '#' + playerList[i].twitch;
-                        var twitchMessage = '- The race is starting in 10 seconds.';
+                        let twitchChannel = '#' + playerList[i].twitch;
+                        let twitchMessage = '- The race is starting in 10 seconds.';
 
                         // Send the message
                         console.log('----- Sending TIMEOUT raceBegin notification to ' + twitchChannel + ': ' + twitchMessage + ' -----');
@@ -1693,30 +1607,30 @@ SRLBot.addListener('message', function(user, channel, message) {
             console.log('----- Race starting with ' + raceList[channel].entrantsLeft.length + ' entrants. -----');
 
             // Check to see if it is a Diversity Mod race starting
-            var m = goalList['setdiv'].match(/\.setgoal (.+?, seed ).+/)
+            let m = goalList.setdiv.match(/\.setgoal (.+?, seed ).+/);
             if (m) {
-                var matchString = m[1];
+                let matchString = m[1];
             } else {
                 error('SRL ERROR: When announcing the items for a Diversity Mod race, I failed to parse the .setdiv goal.');
                 return;
             }
             matchString = matchString.replace('(', '\\(');
             matchString = matchString.replace(')', '\\)');
-            var re = new RegExp(matchString);
+            let re = new RegExp(matchString);
             if (raceList[channel].goal.match(re)) {
                 // Announce the items for the currently starting Diversity Mod race
                 console.log('----- Announcing the items for the currently starting Diversity Mod race. -----');
-                var re = new RegExp(matchString + '(.+)\\)'); // The trailing ")" character is not part of the seed
-                var m = raceList[channel].goal.match(re);
+                let re = new RegExp(matchString + '(.+)\\)'); // The trailing ")" character is not part of the seed
+                let m = raceList[channel].goal.match(re);
                 if (m) {
-                    var seed = m[1];
+                    let seed = m[1];
                 } else {
                     error('SRL ERROR: When announcing the items for a Diversity Mod race, I failed to parse the the seed.');
                     return;
                 }
-                var cmd = botDirectory + '/diversity.py ' + seed;
+                let cmd = botDirectory + '/diversity.py ' + seed;
                 exec(cmd, function(err, stdout, stderr) {
-                    var items = stdout.trim()
+                    let items = stdout.trim();
                     SRLBot.say(channel, 'The items for this seed are ' + items);
                 });
             }
@@ -1727,22 +1641,22 @@ SRLBot.addListener('message', function(user, channel, message) {
             addRematch(channel);
 
             // Look for Diversity races so that we can automatically set the goal
-            var m = goalList['setdiv'].match(/\.setgoal (.+?, seed ).+/);
+            let m = goalList.setdiv.match(/\.setgoal (.+?, seed ).+/);
             if (m) {
-                var matchString = m[1];
+                let matchString = m[1];
             } else {
                 error('SRL ERROR: When looking to see if the rematch is a Diversity Mod goal, I failed to parse the .setdiv goal.');
                 return;
             }
             matchString = matchString.replace('(', '\\(');
             matchString = matchString.replace(')', '\\)');
-            var re = new RegExp(matchString);
+            let re = new RegExp(matchString);
             if (raceList[channel].goal.match(re)) {
                 console.log('----- Setting a new goal for the Diversity Mod rematch. -----');
-                var re = new RegExp(matchString + '(.+)\\)'); // The trailing ")" character is not part of the seed
-                var m = raceList[channel].goal.match(re);
+                let re = new RegExp(matchString + '(.+)\\)'); // The trailing ")" character is not part of the seed
+                let m = raceList[channel].goal.match(re);
                 if (m) {
-                    var seed = m[1];
+                    let seed = m[1];
                 } else {
                     error('SRL ERROR: When setting a Diversity Mod rematch goal, I failed to parse the the seed.');
                     return;
@@ -1751,40 +1665,43 @@ SRLBot.addListener('message', function(user, channel, message) {
                     // Append a 1
                     seed = seed + '1';
                 } else {
+                    // Local variable for the next 2 blocks
+                    let m;
+
                     // Increment the final digit
-                    var m = seed.match(/^(.+)\d$/);
+                    m = seed.match(/^(.+)\d$/);
                     if (m) {
-                        var seedBeginning = m[1];
+                        let seedBeginning = m[1];
                     } else {
                         error('SRL ERROR: When setting a Diversity Mod rematch goal, I failed to parse the beginning of the seed: ' + seed);
-                        return
+                        return;
                     }
-                    var m = seed.match(/^.+(\d)$/);
+                    m = seed.match(/^.+(\d)$/);
                     if (m) {
-                        var finalDigit = m[1];
+                        let finalDigit = m[1];
                     } else {
                         error('SRL ERROR: When setting a Diversity Mod rematch goal, I failed to parse the end of the seed: ' + seed);
-                        return
+                        return;
                     }
                     finalDigit = parseInt(finalDigit) + 1;
                     seed = seedBeginning + finalDigit;
                 }
-                var goal = goalList['setdiv'].replace('#####', seed);
+                let goal = goalList.setdiv.replace('#####', seed);
                 SRLBot.say(channel, goal);
             }
         }
 
         // Look for racers finishing
-        var m = message.match(/^(.+) has finished in (.+) place with a time of (.+)\.$/)
+        m = message.match(/^(.+) has finished in (.+) place with a time of (.+)\.$/);
         if (m) {
-            var racer = m[1].toLowerCase();
-            var place = m[2];
-            var time = m[3];
+            let racer = m[1].toLowerCase();
+            let place = m[2];
+            let time = m[3];
 
             // Trim the preceding 0's, if present
-            var m = place.match(/00:(.+)/)
-            if (m) {
-                place = m[1];
+            let m2 = place.match(/00:(.+)/);
+            if (m2) {
+                place = m2[1];
             }
 
             // Remove the racer from the entrants list
@@ -1798,12 +1715,12 @@ SRLBot.addListener('message', function(user, channel, message) {
             SRLBot.action(channel, getPeopleLeft(channel));
 
             // Announce that someone finished in Twitch chat
-            for (var i = 0; i < playerList.length; i++) { // Go through the player list
-                for (var j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+            for (let i = 0; i < playerList.length; i++) { // Go through the player list
+                for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
                     if (playerList[i].srl === raceList[channel].entrants[j]) {
                         // Compile the message
-                        var twitchChannel = '#' + playerList[i].twitch;
-                        var twitchMessage = '- ' + place + ' - ' + racer + ' (' + time + ') - ';
+                        let twitchChannel = '#' + playerList[i].twitch;
+                        let twitchMessage = '- ' + place + ' - ' + racer + ' (' + time + ') - ';
                         if (raceList[channel].entrantsLeft.length === 0) {
                             twitchMessage += ' Race finished!';
                         } else {
@@ -1820,9 +1737,9 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
 
         // Look for racers quitting
-        var m = message.match(/^(.+) has forfeited from the race\.$/);
+        m = message.match(/^(.+) has forfeited from the race\.$/);
         if (m) {
-            var racer = m[1].toLowerCase();
+            let racer = m[1].toLowerCase();
 
             // Remove the racer from the entrants list
             if (raceList[channel].entrantsLeft.indexOf(racer) >= 0) {
@@ -1835,12 +1752,12 @@ SRLBot.addListener('message', function(user, channel, message) {
             SRLBot.action(channel, getPeopleLeft(channel));
 
             // Announce that someone quit in Twitch chat
-            for (var i = 0; i < playerList.length; i++) { // Go through the player list
-                for (var j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+            for (let i = 0; i < playerList.length; i++) { // Go through the player list
+                for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
                     if (playerList[i].srl === raceList[channel].entrants[j]) {
                         // Announce it
-                        var twitchChannel = '#' + playerList[i].twitch;
-                        var twitchMessage = '- ' + racer + ' quit - ';
+                        let twitchChannel = '#' + playerList[i].twitch;
+                        let twitchMessage = '- ' + racer + ' quit - ';
                         if (raceList[channel].entrantsLeft.length === 0) {
                             twitchMessage += ' Race finished!';
                         } else {
@@ -1855,9 +1772,9 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
 
         // Look for racers doing ".undone"
-        var m = message.match(/^(.+) has been undone from the race.$/);
+        m = message.match(/^(.+) has been undone from the race.$/);
         if (m) {
-            var racer = m[1].toLowerCase();
+            let racer = m[1].toLowerCase();
 
             // Add the racer to the entrants list
             if (raceList[channel].entrantsLeft.indexOf(racer) >= 0) {
@@ -1870,19 +1787,18 @@ SRLBot.addListener('message', function(user, channel, message) {
             SRLBot.action(channel, getPeopleLeft(channel));
 
             // Announce that someone did a ".undone" in Twitch chat
-            for (var i = 0; i < playerList.length; i++) { // Go through the player list
-                for (var j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+            for (let i = 0; i < playerList.length; i++) { // Go through the player list
+                for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
                     if (playerList[i].srl === raceList[channel].entrants[j]) {
                         // Announce it
-                        var twitchChannel = '#' + playerList[i].twitch;
-                        var twitchMessage = '- ' + racer + ' revoked their finish - ' + raceList[channel].entrantsLeft.length + ' left';
+                        let twitchChannel = '#' + playerList[i].twitch;
+                        let twitchMessage = '- ' + racer + ' revoked their finish - ' + raceList[channel].entrantsLeft.length + ' left';
                         console.log('----- Sending TIMEOUT undone notification to ' + twitchChannel + ': ' + twitchMessage + ' -----');
                         setTimeout(sendTwitch, playerList[i].delayTwitchOutput, 'undone', twitchChannel, twitchMessage);
                         break;
                     }
                 }
             }
-
         }
 
         // Look for RaceBot ending the room
@@ -1895,11 +1811,11 @@ SRLBot.addListener('message', function(user, channel, message) {
 
     // Look for racers commenting
     if (channel.match(/^#srl-.....$/) && message.match(/^\.comment .+$/)) {
-        var comment = message.match(/^.comment (.+)$/)[1];
+        let comment = message.match(/^.comment (.+)$/)[1];
 
         // Check to see if the person commenting is actually participating in the race
-        var foundRacer = false;
-        for (var i = 0; i < raceList[channel].entrants.length; i++) { // Go through the entrants for this race
+        let foundRacer = false;
+        for (let i = 0; i < raceList[channel].entrants.length; i++) { // Go through the entrants for this race
             if (user.toLowerCase() === raceList[channel].entrants[i]) {
                 foundRacer = true;
             }
@@ -1911,7 +1827,7 @@ SRLBot.addListener('message', function(user, channel, message) {
         }
 
         // Check to see if the person commenting has already made a comment for this race
-        for (var i = 0; i < raceList[channel].commentedList.length; i++) {
+        for (let i = 0; i < raceList[channel].commentedList.length; i++) {
             if (user.toLowerCase() === raceList[channel].commentedList[i]) {
                 return; // They have already made a comment
             }
@@ -1921,13 +1837,13 @@ SRLBot.addListener('message', function(user, channel, message) {
         raceList[channel].commentedList.push(user.toLowerCase());
 
         // Announce the comment to Twitch
-        for (var i = 0; i < playerList.length; i++) { // Go through the player list
-            for (var j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+        for (let i = 0; i < playerList.length; i++) { // Go through the player list
+            for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
                 if (playerList[i].srl === raceList[channel].entrants[j]) {
                     // Announce it
                     if (playerList[i].echoComments === true) {
-                        var twitchChannel = '#' + playerList[i].twitch;
-                        var twitchMessage = '- ' + user + ' comments: ' + comment;
+                        let twitchChannel = '#' + playerList[i].twitch;
+                        let twitchMessage = '- ' + user + ' comments: ' + comment;
                         console.log('----- Sending TIMEOUT comment notification to ' + twitchChannel + ': ' + twitchMessage + ' -----');
                         setTimeout(sendTwitch, playerList[i].delayTwitchOutput, 'comment', twitchChannel, twitchMessage);
                     }
@@ -1948,14 +1864,14 @@ SRLBot.addListener('message', function(user, channel, message) {
         SRLBot.say(channel, 'Use the "!goals" command to see my goal-related commands.');
     } else if (message === '!goals') {
         SRLBot.say(channel, 'I\'m programmed to accept the following goal-related commands:');
-        for (var goal in goalList) { // Go through the goal list
+        for (let goal in goalList) { // Go through the goal list
             if (!goalList.hasOwnProperty(goal)) {
                 continue;
             }
 
-            var goalMessage = '  .' + goal;
-            var spacing = 13 - goal.length; // Pad with spaces so that it is properly aligned
-            for (var i = 0; i < spacing; i++) {
+            let goalMessage = '  .' + goal;
+            let spacing = 13 - goal.length; // Pad with spaces so that it is properly aligned
+            for (let i = 0; i < spacing; i++) {
                 goalMessage += ' ';
             }
             goalMessage += ' = ' + goalList[goal];
@@ -1964,69 +1880,69 @@ SRLBot.addListener('message', function(user, channel, message) {
     } else if (channel.match(/^#srl-.....$/) && message.match(/^[\.!]set/)) {
         // .sets (2 arguments; the user entered a build and a seed)
         if (message.match(/^[\.!]sets (.+?) (....\s*....)/)) {
-            var m = message.match(/^[\.!]sets (.+?) (....\s*....)/);
+            let m = message.match(/^[\.!]sets (.+?) (....\s*....)/);
 
             // Set the seed to what the user requested
-            var build = m[1];
-            var seed = m[2].toUpperCase();
+            let build = m[1];
+            let seed = m[2].toUpperCase();
             seed = seed.trim(); // Remove the leading and trailing whitespace
             if (seed.length === 8) {
                 // Insert a space to make the seed more readable
-                var leftSide = seed.match(/^(....)....$/)[1];
-                var rightSide = seed.match(/^....(....)$/)[1];
+                let leftSide = seed.match(/^(....)....$/)[1];
+                let rightSide = seed.match(/^....(....)$/)[1];
                 seed = leftSide + ' ' + rightSide;
             }
-            var goal = goalList['sets'].replace('build ##', 'build ' + build);
+            let goal = goalList.sets.replace('build ##', 'build ' + build);
             goal = goal.replace('seed #### ####', 'seed ' + seed);
             SRLBot.say(channel, goal);
 
         // .sets (1 argument; the user entered a seed but not a build)
         } else if (message.match(/^[\.!]sets (....\s*....)/)) {
-            var m = message.match(/^[\.!]sets (....\s*....)/);
+            let m = message.match(/^[\.!]sets (....\s*....)/);
 
             // Assume they want a random build
             if (instantStartRandomArray.length === 0) {
                 refillInstantStartRandomArray();
             }
-            var build = instantStartRandomArray.pop();
+            let build = instantStartRandomArray.pop();
 
-            var seed = m[1].toUpperCase();
+            let seed = m[1].toUpperCase();
             seed = seed.trim(); // Remove the leading and trailing whitespace
             if (seed.length === 8) {
                 // Insert a space to make the seed more readable
-                var leftSide = seed.match(/^(....)....$/)[1];
-                var rightSide = seed.match(/^....(....)$/)[1];
+                let leftSide = seed.match(/^(....)....$/)[1];
+                let rightSide = seed.match(/^....(....)$/)[1];
                 seed = leftSide + ' ' + rightSide;
             }
-            var goal = goalList['sets'].replace('build ##', 'build ' + build);
+            let goal = goalList.sets.replace('build ##', 'build ' + build);
             goal = goal.replace('seed #### ####', 'seed ' + seed);
             SRLBot.say(channel, goal);
 
         // .sets (1 argument; the user entered a build but not a seed)
         } else if (message.match(/^[\.!]sets (\d+)/)) {
-            var m = message.match(/^[\.!]sets (\d+)/);
+            let m = message.match(/^[\.!]sets (\d+)/);
 
             // Parse the build
-            var build = m[1];
+            let build = m[1];
 
             // Assume they want a random seed
-            var cmd = botDirectory + '/isaac_seed_gen';
+            let cmd = botDirectory + '/isaac_seed_gen';
             exec(cmd, function(err, stdout, stderr) {
-                var seed = stdout.trim();
-                var goal = goalList['sets'].replace('build ##', 'build ' + build);
+                let seed = stdout.trim();
+                let goal = goalList.sets.replace('build ##', 'build ' + build);
                 goal = goal.replace('seed #### ####', 'seed ' + seed);
                 SRLBot.say(channel, goal);
             });
 
-            var seed = m[1].toUpperCase();
+            let seed = m[1].toUpperCase();
             seed = seed.trim(); // Remove the leading and trailing whitespace
             if (seed.length === 8) {
                 // Insert a space to make the seed more readable
-                var leftSide = seed.match(/^(....)....$/)[1];
-                var rightSide = seed.match(/^....(....)$/)[1];
+                let leftSide = seed.match(/^(....)....$/)[1];
+                let rightSide = seed.match(/^....(....)$/)[1];
                 seed = leftSide + ' ' + rightSide;
             }
-            var goal = goalList['sets'].replace('build ##', 'build ' + build);
+            let goal = goalList.sets.replace('build ##', 'build ' + build);
             goal = goal.replace('seed #### ####', 'seed ' + seed);
             SRLBot.say(channel, goal);
 
@@ -2036,13 +1952,13 @@ SRLBot.addListener('message', function(user, channel, message) {
             if (instantStartRandomArray.length === 0) {
                 refillInstantStartRandomArray();
             }
-            var build = instantStartRandomArray.pop();
+            let build = instantStartRandomArray.pop();
 
             // Assume they want a random seed
-            var cmd = botDirectory + '/isaac_seed_gen';
+            let cmd = botDirectory + '/isaac_seed_gen';
             exec(cmd, function(err, stdout, stderr) {
-                var seed = stdout.trim();
-                var goal = goalList['sets'].replace('build ##', 'build ' + build);
+                let seed = stdout.trim();
+                let goal = goalList.sets.replace('build ##', 'build ' + build);
                 goal = goal.replace('seed #### ####', 'seed ' + seed);
                 SRLBot.say(channel, goal);
             });
@@ -2050,22 +1966,22 @@ SRLBot.addListener('message', function(user, channel, message) {
         // .seti
         } else if (message === '.seti') {
             // Assume they want a random character
-            var minNumber = 0;
-            var maxNumber = characterArray.length;
-            var randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
-            var character = characterArray[randomNum];
+            let minNumber = 0;
+            let maxNumber = characterArray.length - 1;
+            let randomNum = Math.floor(Math.random() * (parseInt(maxNumber) - parseInt(minNumber) + 1) + parseInt(minNumber)); // Get a random number between minNumber and maxNumber
+            let character = characterArray[randomNum];
 
             // Assume they want a random build
             if (instantStartRandomArray.length === 0) {
                 refillInstantStartRandomArray();
             }
-            var build = instantStartRandomArray.pop();
+            let build = instantStartRandomArray.pop();
 
             // Assume they want a random seed
-            var cmd = botDirectory + '/isaac_seed_gen';
+            let cmd = botDirectory + '/isaac_seed_gen';
             exec(cmd, function(err, stdout, stderr) {
-                var seed = stdout.trim();
-                var goal = goalList['seti'].replace('_____', character);
+                let seed = stdout.trim();
+                let goal = goalList.seti.replace('_____', character);
                 goal = goal.replace('build ##', 'build ' + build);
                 goal = goal.replace('seed #### ####', 'seed ' + seed);
                 SRLBot.say(channel, goal);
@@ -2073,40 +1989,40 @@ SRLBot.addListener('message', function(user, channel, message) {
 
         // .setis
         } else if (message.match(/^[\.!]setis/)) {
-            var m = message.match(/^[\.!]setis (.+)/);
+            let m = message.match(/^[\.!]setis (.+)/);
             if (m) {
                 // Set the start to what the user requested
-                var start = m[1].trim(); // Remove the leading and trailing whitespace
-                var goal = goalList['setis'].replace('##', start);
+                let start = m[1].trim(); // Remove the leading and trailing whitespace
+                let goal = goalList.setis.replace('##', start);
                 SRLBot.say(channel, goal);
             } else {
                 // Set a random start
                 if (instantStartRandomArray.length === 0) {
                     refillInstantStartRandomArray();
                 }
-                var randomNum = instantStartRandomArray.pop();
-                var goal = goalList['setis'].replace('##', randomNum);
+                let randomNum = instantStartRandomArray.pop();
+                let goal = goalList.setis.replace('##', randomNum);
                 SRLBot.say(channel, goal);
             }
 
         // .setdiv
         } else if (message.match(/^[\.!]setdiv/)) {
-            var m = message.match(/^[\.!]setdiv (.+)/);
+            let m = message.match(/^[\.!]setdiv (.+)/);
             if (m) {
                 // Set the seed to what the user requested
-                var seed = m[1].trim(); // Remove the leading and trailing whitespace
-                var goal = goalList['setdiv'].replace('#####', seed);
+                let seed = m[1].trim(); // Remove the leading and trailing whitespace
+                let goal = goalList.setdiv.replace('#####', seed);
                 SRLBot.say(channel, goal);
             } else {
                 // Set the seed equal to the race channel
-                var seed = channel.match(/^#srl-(.+)$/)[1].toUpperCase();
-                var goal = goalList['setdiv'].replace('#####', seed);
+                let seed = channel.match(/^#srl-(.+)$/)[1].toUpperCase();
+                let goal = goalList.setdiv.replace('#####', seed);
                 SRLBot.say(channel, goal);
             }
 
         // A non-special ".set" command
         } else {
-            for (var goal in goalList) { // Go through the goal list
+            for (let goal in goalList) { // Go through the goal list
                 if (message === '.' + goal) {
                     SRLBot.say(channel, goalList[goal]);
                 }
@@ -2115,7 +2031,7 @@ SRLBot.addListener('message', function(user, channel, message) {
     }
 
     // Info commands
-    for (var info in infoList) { // Go through the info list
+    for (let info in infoList) { // Go through the info list
         if (!infoList.hasOwnProperty(info)) {
             continue;
         }
@@ -2142,53 +2058,53 @@ SRLBot.addListener('message', function(user, channel, message) {
             SRLBot.say(channel, 'Hint: The command to unquit is ".undone".');
         }
     } else if (message.match(/^[\.!]average/) || message.match(/^[\.!]avg/)) {
-        var m = message.match(/^[\.!]\w+ (.+)/);
+        let m = message.match(/^[\.!]\w+ (.+)/);
         if (m) {
-            var player = m[1];
+            let player = m[1];
         } else {
-            var player = user;
+            let player = user;
         }
 
         getAverageTimes('SRL', channel, player, user);
     } else if (message.match(/^[\.!]racelistall/)) {
-        var m = message.match(/^[\.!]racelistall (.+)/);
+        let m = message.match(/^[\.!]racelistall (.+)/);
         if (m) {
-            var player = m[1];
+            let player = m[1];
         } else {
-            var player = user;
+            let player = user;
         }
 
         getAllRaces('SRL', channel, player, user);
     } else if (message.match(/^[\.!]racelist/)) {
-        var m = message.match(/^[\.!]racelist (.+)/);
+        let m = message.match(/^[\.!]racelist (.+)/);
         if (m) {
-            var player = m[1];
+            let player = m[1];
         } else {
-            var player = user;
+            let player = user;
         }
 
         getAverageTimes('SRL', channel, player, user, true);
     } else if (message === '.leaderboard' || message === '!leaderboard') {
         getLeaderboard('SRL', channel, user);
-    } else if (message === '.leaderboardlco' || message === '!leaderboardlco') {
-        getLeaderboardLCO('SRL', channel, user);
+    } else if (message === '.mostraces' || message === '!mostraces') {
+        getMostRaces('SRL', channel, user);
     } else if (message.match(/^[\.!]roll/) || message.match(/^[\.!]random/) ) {
-        var m = message.match(/^[\.!]\w+ (\d+) (\d+)$/);
+        let m = message.match(/^[\.!]\w+ (\d+) (\d+)$/);
         if (m) {
-            var randomMin = m[1];
-            var randomMax = m[2];
+            let randomMin = m[1];
+            let randomMax = m[2];
         } else {
-            var m = message.match(/^[\.!]\w+ (\d+)$/);
+            let m = message.match(/^[\.!]\w+ (\d+)$/);
             if (m) {
-                var randomMin = 1;
-                var randomMax = m[1];
+                let randomMin = 1;
+                let randomMax = m[1];
             } else {
                 if (message === '!roll' || message === '.roll' || message === '!random' || message === '.random') {
-                    var randomMin = 1;
-                    var randomMax = 31;
+                    let randomMin = 1;
+                    let randomMax = 31;
                 } else {
-                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
-                    var randomMax = -1;
+                    let randomMin = -1; // Make it invalid so that they get added to the ignore list
+                    let randomMax = -1;
                 }
             }
         }
@@ -2207,7 +2123,7 @@ SRLBot.addListener('message', function(user, channel, message) {
         console.log('----- Fake joined race ' + channel + ' -----');
 
         // Add the racer to the entrants list
-        var racer = 'zamiel';
+        let racer = 'zamiel';
         if (raceList[channel].entrants.indexOf(racer) >= 0) {
             error('SRL ERROR: ' + racer + ' joined race ' + channel + ', but they were already in the entrant list.');
         } else {
@@ -2224,9 +2140,9 @@ SRLBot.addListener('pm', function (user, message) {
     console.log('SRL PM <' + user + '> ' + message);
 
     // .join (1/2)
-    for (var i = 0; i < playerList.length; i++) { // Go through the player list
+    for (let i = 0; i < playerList.length; i++) { // Go through the player list
         if (user.toLowerCase() === playerList[i].srl && message.match(/^.join .+$/)) {
-            var channelToJoin = '#' + message.match(/^.join (.+)$/)[1];
+            let channelToJoin = '#' + message.match(/^.join (.+)$/)[1];
             channelsToJoin.push(channelToJoin);
             console.log('----- I was told to join SRL channel ' + channelToJoin + ' -----');
             addRace(channelToJoin);
@@ -2240,19 +2156,19 @@ SRLBot.addListener('pm', function (user, message) {
 
     // .tsay
     } else if (user === 'Zamiel' && message.match(/^.tsay .+ .+$/)) {
-        var sayChannel = message.match(/^.tsay (.+?) .+$/)[1];
-        var sayMessage = message.match(/^.tsay .+? (.+)$/)[1];
+        let sayChannel = message.match(/^.tsay (.+?) .+$/)[1];
+        let sayMessage = message.match(/^.tsay .+? (.+)$/)[1];
 
         console.log('----- I was told to say to Twitch ' + sayChannel + ': "' + sayMessage + '" -----');
-        TwitchBot.say('#' + sayChannel, sayMessage)
+        TwitchBot.say('#' + sayChannel, sayMessage);
 
     // .ssay
     } else if (user === 'Zamiel' && message.match(/^.ssay .+ .+$/)) {
-        var sayChannel = message.match(/^.ssay (.+?) .+$/)[1];
-        var sayMessage = message.match(/^.ssay .+? (.+)$/)[1];
+        let sayChannel = message.match(/^.ssay (.+?) .+$/)[1];
+        let sayMessage = message.match(/^.ssay .+? (.+)$/)[1];
 
         console.log('----- I was told to say to SRL ' + sayChannel + ': "' + sayMessage + '" -----');
-        SRLBot.say('#' + sayChannel, sayMessage)
+        SRLBot.say('#' + sayChannel, sayMessage);
     }
 });
 
@@ -2263,17 +2179,17 @@ SRLBot.addListener('names', function(channel, nicks) {
     // If this is a race and we aren't manually joining the channel
     if (channelsToJoin.indexOf(channel) === -1 && channel.match(/^#srl-.+$/)) {
         // Automatically set the goal
-        SRLBot.say(channel, goalList['set']);
+        SRLBot.say(channel, goalList.set);
 
         // Alert the Discord server that a new race has started
-        var currentTime = (new Date).getTime(); // Get the epoch timestamp
+        let currentTime = new Date().getTime(); // Get the epoch timestamp
         console.log('currentTime:', currentTime);
         console.log('DiscordRaceTimer:', DiscordRaceTimer);
         console.log('difference:', currentTime - DiscordRaceTimer);
         if (currentTime - DiscordRaceTimer > 3600000) {
             // Only alert if it has been over an hour since the last alert
             DiscordRaceTimer = currentTime;
-            var datetime = new Date();
+            let datetime = new Date();
             DiscordBot.sendMessage({
                 to: DiscordRacingChatID,
                 message: datetime + ' - A new Isaac race has been started by ' + raceStarter + ' on SRL!',
@@ -2281,7 +2197,7 @@ SRLBot.addListener('names', function(channel, nicks) {
         }
 
         // Alert other race channels that a new race has started
-        for (var race in raceList) {
+        for (let race in raceList) {
             if (!raceList.hasOwnProperty(race)) {
                 continue;
             }
@@ -2297,7 +2213,7 @@ SRLBot.addListener('names', function(channel, nicks) {
     // Joining a race channel late either from a .join comment or a restart
     if (channelsToJoin.indexOf(channel) !== -1 && channel.match(/^#srl-.+$/)) {
         // Populate the entrants by looking to see who is a voice in the channel
-        for (var nick in nicks) {
+        for (let nick in nicks) {
             if (!nicks.hasOwnProperty(nick)) {
                 continue;
             }
@@ -2319,12 +2235,12 @@ SRLBot.addListener('names', function(channel, nicks) {
 
 // Notice is used by RaceBot for various things
 SRLBot.addListener('notice', function(nick, to, text, message) {
-    var datetime = new Date();
+    let datetime = new Date();
     console.log(datetime + ' - SRL Notice <' + nick + '> ' + text);
 
     // Identify
     if (nick === 'NickServ' && text.match(/^If you do not change within 20 seconds, I will change your nick.$/)) {
-        var SRLPassword = fs.readFileSync(botDirectory + '/passwords/SRL.txt', 'utf8').trim();
+        let SRLPassword = fs.readFileSync(botDirectory + '/passwords/SRL.txt', 'utf8').trim();
         SRLBot.say('NickServ', 'IDENTIFY ' + SRLPassword);
     } else if (nick === 'NickServ' && text.match(/^Password accepted - you are now recognized.$/)) {
         identified = true;
@@ -2338,9 +2254,9 @@ SRLBot.addListener('notice', function(nick, to, text, message) {
         text.match(/^\d+\. The Binding of Isaac: Afterbirth\+ - .+ /)
     )) {
         // Parse the race name
-        var m = text.match(/^\d+\. The Binding of Isaac: .+ - .+ \|....(#srl-.....).+\|.+\|.+$/);
+        let m = text.match(/^\d+\. The Binding of Isaac: .+ - .+ \|....(#srl-.....).+\|.+\|.+$/);
         if (m) {
-            var raceChannelName = m[1];
+            let raceChannelName = m[1];
             joinRace(raceChannelName);
         } else {
             error('SRL ERROR: Regex failure when automatically joining open races: ' + text);
@@ -2348,29 +2264,29 @@ SRLBot.addListener('notice', function(nick, to, text, message) {
 
     // Update entrantsLeft for the race that we joined midway through
     } else if (nick === 'RaceBot' && text.match(/.+ \(.+\) \| .+ \(.+\)/)) {
-        var racers = text.split('|');
+        let racers = text.split('|');
 
         // Make a list of all the racers not finished yet
-        var noticePlayers = [];
-        for (var i = 0; i < racers.length; i++) {
-            var m = racers[i].trim().match(/^(.+) \(Ready\)$/);
+        let noticePlayers = [];
+        for (let i = 0; i < racers.length; i++) {
+            let m = racers[i].trim().match(/^(.+) \(Ready\)$/);
             if (m) {
-                var readyRacer = m[1].trim().toLowerCase();
+                let readyRacer = m[1].trim().toLowerCase();
                 noticePlayers.push(readyRacer);
             }
         }
 
         // Find out what race this corresponds to
-        var raceName = false;
-        for (var race in raceList) {
+        let raceName = false;
+        for (let race in raceList) {
             if (!raceList.hasOwnProperty(race)) {
                 continue;
             }
 
             // Count the number of players in the notice who are in this race
-            var playersFound = 0;
-            for (var i = 0; i < noticePlayers.length; i++) {
-                for (var j = 0; j < raceList[race].entrants.length; j++) {
+            let playersFound = 0;
+            for (let i = 0; i < noticePlayers.length; i++) {
+                for (let j = 0; j < raceList[race].entrants.length; j++) {
                     // toLowerCase is needed here because sometimes RaceBot will capitalize people's names in the .entrants message
                     if (noticePlayers[i].toLowerCase() === raceList[race].entrants[j].toLowerCase()) {
                         playersFound++;
@@ -2404,17 +2320,20 @@ SRLBot.addListener('topic', function(channel, topic) {
     }
 
     // Go through the race list
-    var foundRace = false;
-    for (var race in raceList) {
+    let foundRace = false;
+    for (let race in raceList) {
         if (!raceList.hasOwnProperty(race)) {
             continue;
         }
 
         if (race === channel) {
+            // Local variables
+            let m;
+
             // Set the status
-            var m = topic.match(/^Status: (.+?) \| Game:/);
+            m = topic.match(/^Status: (.+?) \| Game:/);
             if (m) {
-                var status = m[1].toLowerCase();
+                let status = m[1].toLowerCase();
                 if (status === 'entry open') {
                     raceList[race].status = 0;
                 } else if (status === 'entry closed') {
@@ -2433,9 +2352,9 @@ SRLBot.addListener('topic', function(channel, topic) {
             }
 
             // Set the goal in the database
-            var m = topic.match(/\| Goal: (.+)$/);
+            m = topic.match(/\| Goal: (.+)$/);
             if (m) {
-                var goal = m[1];
+                let goal = m[1];
                 raceList[channel].goal = goal;
                 console.log('----- Set the goal for channel ' + channel + ' in my database to: ' + goal + ' -----');
             }
@@ -2456,11 +2375,11 @@ SRLBot.addListener('topic', function(channel, topic) {
  */
 
 // Do stuff once we successfully join the Twitch IRC server
-TwitchBot.once('connected', async function() {
+TwitchBot.once('connected', async function() { // jshint ignore:line
     // Join every channel on the player list
-    for (var i = 0; i < playerList.length; i++) {
+    for (let i = 0; i < playerList.length; i++) {
         // Check to see if the bot is a mod in the channel before joining it
-        var modList = await TwitchBot.mods('#' + playerList[i].twitch);
+        let modList = await TwitchBot.mods('#' + playerList[i].twitch); // jshint ignore:line
         if (modList.indexOf('zamielbot') !== -1) {
             console.log('----- Mod check succeeded for ' + playerList[i].twitch + ', joining channel. -----');
             TwitchBot.join('#' + playerList[i].twitch);
@@ -2468,7 +2387,7 @@ TwitchBot.once('connected', async function() {
             error('TWITCH ERROR: ZamielBot is not a mod in the Twitch channel of: ' + playerList[i].twitch);
         }
     }
-});
+}); // jshint ignore:line
 
 // Catch chat messages
 TwitchBot.on('chat', function(channel, user, message, self) {
@@ -2479,7 +2398,7 @@ TwitchBot.on('chat', function(channel, user, message, self) {
     message = message.trim();
 
     // Log all messages
-    var datetime = new Date();
+    let datetime = new Date();
     console.log(datetime + ' - TWITCH [' + channel + '] <' + user + '> ' + message);
 
     /*
@@ -2495,7 +2414,7 @@ TwitchBot.on('chat', function(channel, user, message, self) {
 
     // !join
     if (user === 'zamiell' && message.match(/^!join .+$/)) {
-        var channelName = message.match(/^!join (.+)$/)[1];
+        let channelName = message.match(/^!join (.+)$/)[1];
         console.log('----- I was told to join Twitch channel ' + channelName + ' -----');
         TwitchBot.say(channel, 'Ok, I\'ll join channel \'' + channelName + '\'.');
         TwitchBot.join('#' + channelName);
@@ -2503,14 +2422,14 @@ TwitchBot.on('chat', function(channel, user, message, self) {
 
     // !leave
     if (user === 'zamiell' && message.match(/^!leave .+$/)) {
-        var channelName = message.match(/^!join (.+)$/)[1];
+        let channelName = message.match(/^!join (.+)$/)[1];
         console.log('----- I was told to leave Twitch channel ' + channelName + ' -----');
         TwitchBot.say(channel, 'Ok, I\'ll leave channel \'' + channelName + '\'.');
         TwitchBot.part('#' + channelName);
     }
 
     // Info commands
-    for (var info in infoList) { // Go through the info list
+    for (let info in infoList) { // Go through the info list
         if (!infoList.hasOwnProperty(info)) {
             continue;
         }
@@ -2539,11 +2458,11 @@ TwitchBot.on('chat', function(channel, user, message, self) {
     // Twitch special info commands (that require finding the current race)
     if (message === '!left' || message === '!entrants' || message === '!multitwitch' || message === '!kadgar') {
         // Find the SRL name that corresponds to this Twitch channel
-        var TwitchChannel = channel.match(/^#(.+)$/)[1];
-        var foundSRL = false;
-        for (var i = 0; i < playerList.length; i++) { // Go through the player list
+        let TwitchChannel = channel.match(/^#(.+)$/)[1];
+        let foundSRL = false;
+        for (let i = 0; i < playerList.length; i++) { // Go through the player list
             if (playerList[i].twitch === TwitchChannel) {
-                var SRLName = playerList[i].srl;
+                let SRLName = playerList[i].srl;
                 foundSRL = true;
             }
         }
@@ -2554,8 +2473,8 @@ TwitchBot.on('chat', function(channel, user, message, self) {
         }
 
         // Find the race that corresponds to this SRL name
-        var raceName = false;
-        for (var race in raceList) {
+        let raceName = false;
+        for (let race in raceList) {
             if (!raceList.hasOwnProperty(race)) {
                 continue;
             }
@@ -2566,7 +2485,7 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             }
 
             // Go through the entrants for this race
-            for (var j = 0; j < raceList[race].entrants.length; j++) {
+            for (let j = 0; j < raceList[race].entrants.length; j++) {
                 // We found the race that corresponds with this channel
                 if (raceList[race].entrants[j] === SRLName) {
                     raceName = race;
@@ -2574,7 +2493,7 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             }
         }
         if (raceName === false) {
-            var player = channel.match(/#(.+)/)[1];
+            let player = channel.match(/#(.+)/)[1];
             TwitchBot.say(channel, player + ' is not currently in any races.');
             return;
         }
@@ -2586,9 +2505,9 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             TwitchBot.action(channel, getEntrants(race));
         } else if (message === '!multitwitch' || message === '!kadgar') {
             // Get the racers in this race
-            var racerArray = []; // An array of racers to pass to the async.eachLimit() function
-            var TwitchNameList = {}; // A data structure of Twitch names that will be populated asynchronously
-            for (var i = 0; i < raceList[raceName].entrants.length; i++) {
+            let racerArray = []; // An array of racers to pass to the async.eachLimit() function
+            let TwitchNameList = {}; // A data structure of Twitch names that will be populated asynchronously
+            for (let i = 0; i < raceList[raceName].entrants.length; i++) {
                 // Exclude JOPEBUSTER because he is a bot
                 if (raceList[race].entrants[i] === 'jopebuster') {
                     continue;
@@ -2601,13 +2520,15 @@ TwitchBot.on('chat', function(channel, user, message, self) {
             // For the racers in the race, find out the Twitch names that correspond to their SRL names
             console.log('----- Entering async.eachLimit function with the following racerArray: -----');
             console.log(racerArray);
-            async.eachLimit(racerArray, 1, async function(racer, callback) { // We use a limit of 1 because the SRL API will lock us out
+
+            // We use a limit of 1 because the SRL API will lock us out
+            async.eachLimit(racerArray, 1, async function(racer, callback) { // jshint ignore:line
                 // Get the Twitch channel for this racer using the SRL API
-                var url = 'http://api.speedrunslive.com/stat?player=' + racer;
+                let url = 'http://api.speedrunslive.com/stat?player=' + racer;
                 request(url, function (err, response, body) {
                     if (!err && response.statusCode == 200) {
                         try {
-                            var json = JSON.parse(body);
+                            let json = JSON.parse(body);
                             TwitchNameList[racer] = json.player.channel;
                         } catch(err) {
                             error('TWITCH ERROR: Got error "' + err + '" while parsing the SRL API for ' + racer + ': ' + body);
@@ -2617,14 +2538,14 @@ TwitchBot.on('chat', function(channel, user, message, self) {
                     }
                     callback();
                 });
-            }, function(err) {
+            }, function(err) { // jshint ignore:line
                 if (err) {
                     TwitchBot.say(channel, "Something went wrong when making the MultiTwitch/Kadgar link.");
                     return;
                 }
 
                 // Start to build the MultiTwitch/Kadgar string
-                var watchString = 'Watch everyone in the race at the same time: http://';
+                let watchString = 'Watch everyone in the race at the same time: http://';
                 if (message === '!multitwitch') {
                     watchString += 'multitwitch.tv/';
                 } else if (message === '!kadgar') {
@@ -2632,7 +2553,7 @@ TwitchBot.on('chat', function(channel, user, message, self) {
                 }
 
                 // Add each player to the string
-                for (var SRLName in TwitchNameList) {
+                for (let SRLName in TwitchNameList) {
                     if (!TwitchNameList.hasOwnProperty(SRLName)) {
                         continue;
                     }
@@ -2650,19 +2571,19 @@ TwitchBot.on('chat', function(channel, user, message, self) {
 
                 // Send the message to their Twitch channel
                 TwitchBot.say(channel, watchString);
-            });
+            }); // jshint ignore:line
         }
 
     // Twitch special info commands (that do not require finding the current race)
     } else if (message.match(/^!average/) || message.match(/^!avg/)) {
-        var m = message.match(/^!\w+ (.+)/);
+        let m = message.match(/^!\w+ (.+)/);
         if (m) {
-            var player = m[1];
+            let player = m[1];
         } else {
-            var TwitchChannel = channel.match(/#(.+)/)[1];
-            for (var i = 0; i < playerList.length; i++) { // Go through the player list
+            let TwitchChannel = channel.match(/#(.+)/)[1];
+            for (let i = 0; i < playerList.length; i++) { // Go through the player list
                 if (playerList[i].twitch === TwitchChannel) {
-                    var player = playerList[i].srl;
+                    let player = playerList[i].srl;
                     break;
                 }
             }
@@ -2670,14 +2591,14 @@ TwitchBot.on('chat', function(channel, user, message, self) {
 
         getAverageTimes('Twitch', channel, player, user);
     } else if (message.match(/^!racelist/)) {
-        var m = message.match(/^!racelist (.+)/);
+        let m = message.match(/^!racelist (.+)/);
         if (m) {
-            var player = m[1];
+            let player = m[1];
         } else {
-            var TwitchChannel = channel.match(/#(.+)/)[1];
-            for (var i = 0; i < playerList.length; i++) { // Go through the player list
+            let TwitchChannel = channel.match(/#(.+)/)[1];
+            for (let i = 0; i < playerList.length; i++) { // Go through the player list
                 if (playerList[i].twitch === TwitchChannel) {
-                    var player = playerList[i].srl;
+                    let player = playerList[i].srl;
                     break;
                 }
             }
@@ -2686,25 +2607,25 @@ TwitchBot.on('chat', function(channel, user, message, self) {
         getAverageTimes('Twitch', channel, player, user, true);
     } else if (message === '!leaderboard') {
         getLeaderboard('Twitch', channel, user);
-    } else if (message === '!leaderboardlco') {
-        getLeaderboardLCO('Twitch', channel, user);
+    } else if (message === '!mostraces') {
+        getMostRaces('Twitch', channel, user);
     } else if (message.match(/^!roll/) || message.match(/^!random/)) {
-        var m = message.match(/^!\w+ (\d+) (\d+)$/);
+        let m = message.match(/^!\w+ (\d+) (\d+)$/);
         if (m) {
-            var randomMin = m[1];
-            var randomMax = m[2];
+            let randomMin = m[1];
+            let randomMax = m[2];
         } else {
-            var m = message.match(/^!\w+ (\d+)$/);
+            let m = message.match(/^!\w+ (\d+)$/);
             if (m) {
-                var randomMin = 1;
-                var randomMax = m[1];
+                let randomMin = 1;
+                let randomMax = m[1];
             } else {
                 if (message === '!roll' || message === '!random') {
-                    var randomMin = 1;
-                    var randomMax = 31;
+                    let randomMin = 1;
+                    let randomMax = 31;
                 } else {
-                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
-                    var randomMax = -1;
+                    let randomMin = -1; // Make it invalid so that they get added to the ignore list
+                    let randomMax = -1;
                 }
             }
         }
@@ -2729,13 +2650,13 @@ DiscordBot.on('message', function(user, userID, channelID, message, event) {
     message = message.trim();
 
     // Find out the name of the channel by iterating through all of the servers
-    var channelName = 'unknown';
-    for (var serverID in DiscordBot.servers) {
+    let channelName = 'unknown';
+    for (let serverID in DiscordBot.servers) {
         if (!DiscordBot.servers.hasOwnProperty(serverID)) {
             continue;
         }
 
-        for (var subChannelID in DiscordBot.servers[serverID].channels) {
+        for (let subChannelID in DiscordBot.servers[serverID].channels) {
             if (!DiscordBot.servers[serverID].channels.hasOwnProperty(subChannelID)) {
                 continue;
             }
@@ -2752,7 +2673,7 @@ DiscordBot.on('message', function(user, userID, channelID, message, event) {
     }
 
     // Log all messages
-    var datetime = new Date();
+    let datetime = new Date();
     console.log(datetime + ' - DISCORD [' + channelName + '] <' + user + '#' + event.d.author.discriminator + '> ' + message);
 
     /*
@@ -2762,7 +2683,7 @@ DiscordBot.on('message', function(user, userID, channelID, message, event) {
      */
 
     // Info commands
-    for (var info in infoList) { // Go through the info list
+    for (let info in infoList) { // Go through the info list
         if (!infoList.hasOwnProperty(info)) {
             continue;
         }
@@ -2774,44 +2695,44 @@ DiscordBot.on('message', function(user, userID, channelID, message, event) {
 
     // Discord special info commands
     if (message.match(/^!average/) || message.match(/^!avg/)) {
-        var m = message.match(/^!\w+ (.+)/);
+        let m = message.match(/^!\w+ (.+)/);
         if (m) {
-            var player = m[1];
+            let player = m[1];
         } else {
-            var player = user;
+            let player = user;
         }
 
         getAverageTimes('Discord', channelID, player, user);
     } else if (message.match(/^!racelist/)) {
-        var m = message.match(/^!racelist (.+)/);
+        let m = message.match(/^!racelist (.+)/);
         if (m) {
-            var player = m[1];
+            let player = m[1];
         } else {
-            var player = user;
+            let player = user;
         }
 
         getAverageTimes('Discord', channelID, player, user, true);
     } else if (message === '!leaderboard') {
         getLeaderboard('Discord', channelID, user);
-    } else if (message === '!leaderboardlco') {
-        getLeaderboardLCO('Discord', channelID, user);
+    } else if (message === '!mostraces') {
+        getMostRaces('Discord', channelID, user);
     } else if (message.match(/^!roll/) || message.match(/^!random/)) {
-        var m = message.match(/^!\w+ (\d+) (\d+)$/);
+        let m = message.match(/^!\w+ (\d+) (\d+)$/);
         if (m) {
-            var randomMin = m[1];
-            var randomMax = m[2];
+            let randomMin = m[1];
+            let randomMax = m[2];
         } else {
-            var m = message.match(/^!\w+ (\d+)$/);
+            let m = message.match(/^!\w+ (\d+)$/);
             if (m) {
-                var randomMin = 1;
-                var randomMax = m[1];
+                let randomMin = 1;
+                let randomMax = m[1];
             } else {
                 if (message === '!roll' || message === '!random') {
-                    var randomMin = 1;
-                    var randomMax = 31;
+                    let randomMin = 1;
+                    let randomMax = 31;
                 } else {
-                    var randomMin = -1; // Make it invalid so that they get added to the ignore list
-                    var randomMax = -1;
+                    let randomMin = -1; // Make it invalid so that they get added to the ignore list
+                    let randomMax = -1;
                 }
             }
         }
