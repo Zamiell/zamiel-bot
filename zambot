@@ -1,17 +1,20 @@
 #!/bin/bash
 
+# Install it with:
+# ln -s /root/zamiel-bot/zambot /usr/local/bin/zambot
+
 # Configuration
-BOT_DIRECTORY=/root/zamiel-bot
+BOT_DIRECTORY="/root/zamiel-bot"
 
 # Exit on errors
 set -e
 
 # Transpile the ES7 into ES5
-$BOT_DIRECTORY/node_modules/.bin/babel $BOT_DIRECTORY/zamiel-bot.js --compact=false > $BOT_DIRECTORY/zamiel-bot-babel.js
+"$BOT_DIRECTORY/node_modules/.bin/babel" "$BOT_DIRECTORY/zamiel-bot.js" --compact=false > "$BOT_DIRECTORY/zamiel-bot-babel.js"
 
 # Reboot the bot so that the changes take effect
 pm2 restart zamiel-bot
 
 # Check for errors
 sleep 1
-ls -l /root/.pm2/logs/
+ls -l /root/.pm2/logs/*error*
