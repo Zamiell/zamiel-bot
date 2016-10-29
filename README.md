@@ -4,7 +4,7 @@ Install
 -------
 
 * `npm install`
-* (Install MongoDB)[https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/]
+* [Install MongoDB](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)
 * Get all of the races: `wget --no-verbose -O all-races.json 'http://api.speedrunslive.com/pastraces?game=isaacafterbirth&pageSize=8192'`
 * `vim all-races.json`
   * Remove the header so that it is a plain JSON array.
