@@ -2,7 +2,6 @@
 
 # Configuration
 use constant DB_HOST        => "127.0.0.1:27017";
-use constant DB_USERNAME    => "zamiel";
 use constant DB_NAME        => "isaac";
 use constant DB_COLLECTION  => "races";
 use constant DIRECTORY_PATH => "/root/zamiel-bot/update-races";
@@ -20,12 +19,8 @@ use DateTime;
 # Welcome
 print "Updating the races collection on \"" . DB_HOST . "\"...\n";
 
-# Get the password
-my $command = "cat '" . DIRECTORY_PATH . "/../passwords/MongoDB.txt'";
-my $DBPassword = `$command`;
-
 # Find out the most recent race that is in the database
-my $client = MongoDB::MongoClient->new(host => "mongodb://" . DB_USERNAME . ":$DBPassword\@" . DB_HOST . "/" . DB_NAME);
+my $client = MongoDB::MongoClient->new(host => "mongodb://" . DB_HOST . "/" . DB_NAME);
 my $db = $client->get_database(DB_NAME);
 my $races = $db->get_collection(DB_COLLECTION);
 my $allRaces = $races->find;
@@ -82,4 +77,4 @@ if (`cat '$directoryPath/$newJsonFile' | wc -l` =~ /^3$/) {
 }
 
 # Import the new races
-system "mongoimport --host '" . DB_HOST . "' --username '" . DB_USERNAME . "' --password '$DBPassword' --db '" . DB_NAME . "' --collection '" . DB_COLLECTION . "' '$directoryPath/$newJsonFile' --jsonArray";
+system "mongoimport --host '" . DB_HOST . "' --db '" . DB_NAME . "' --collection '" . DB_COLLECTION . "' '$directoryPath/$newJsonFile' --jsonArray";
