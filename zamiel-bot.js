@@ -22,11 +22,11 @@ const goalSetDelay          = 2000; // 2 seconds
 
 // Import big lists from configuration files
 const configGoals = require(botDirectory + '/config/goals');
-const goalList = goalsConfig.goalList;
+const goalList = configGoals.goalList;
 const configInfo = require(botDirectory + '/config/info');
-const infoList = infoConfig.infoList;
+const infoList = configInfo.infoList;
 const configUsers = require(botDirectory + '/config/users');
-const userList = usersConfig.userList;
+const userList = configUsers.userList;
 
 // Set up the 3 servers
 const SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
@@ -48,7 +48,7 @@ const TwitchBot = new tmi.client({
         username: 'ZamielBot',
         password: TwitchOAuth,
     },
-    channels: ['#battle_of_kings'],
+    //channels: ['#battle_of_kings'], // Extra channels to join
 });
 const DiscordOAuth = fs.readFileSync(botDirectory + '/passwords/Discord.txt', 'utf8').trim();
 const DiscordBot = new discord.Client({
@@ -56,7 +56,6 @@ const DiscordBot = new discord.Client({
     autorun: false,
 });
 const DiscordServerID = '83214009964171264'; // This is the ID of the "Isaac Speedrunning & Racing" server
-const DiscordRacingChatID = '188083642948386816'; // This is room ID for the "currently-racing" chat room
 
 // Global constants
 const PastebinDevKey = fs.readFileSync(botDirectory + '/passwords/Pastebin-Dev.txt', 'utf8').trim();
@@ -276,8 +275,7 @@ function debug() {
     console.log('##### CHANNELSTOJOIN LIST #####');
     console.log(channelsToJoin);
     //console.log('##### DISCORD DEBUG ####');
-    //console.log(DiscordBot.servers[DiscordServerID].channels[DiscordRacingChatID].name);
-    //DiscordBot.sendMessage({ to: DiscordRacingChatID, message: 'test' });
+    //console.log(DiscordBot.servers[DiscordServerID].channels);
 }
 
 function sendTwitch(type, channel, message) {
@@ -671,7 +669,7 @@ function getLeaderboard(IRC, channel, requester) {
                 leaderboardString += '(requested by ' + requester + ')\n\n';
                 leaderboardString += '- Only the last ' + numAverageRacesToUse + ' races are used for players with over ' + numAverageRacesToUse + ' races.\n';
                 leaderboardString += '- Players with under 20 races are not included in the leaderboard.\n';
-                leaderboardString += '- A time-based penalty is added for each forfeit according to:\n';
+                leaderboardString += '- A penalty is added to the average time based on:\n';
                 leaderboardString += '    (average time * number of forfeits / number of races)\n';
                 leaderboardString += '- This means that it is only advantageous to forfeit if your finishing time will be more than double your current average.\n';
                 leaderboardString += '- This formula is derived from risk assessment (https://en.wikipedia.org/wiki/Risk_assessment).\n\n\n\n';
@@ -1992,21 +1990,6 @@ SRLBot.addListener('names', function(channel, nicks) {
             SRLBot.say(channel, goalList.set);
         }, goalSetDelay);
 
-        // Alert the Discord server that a new race has started
-        let currentTime = new Date().getTime(); // Get the epoch timestamp
-        console.log('currentTime:', currentTime);
-        console.log('DiscordRaceTimer:', DiscordRaceTimer);
-        console.log('difference:', currentTime - DiscordRaceTimer);
-        if (currentTime - DiscordRaceTimer > 3600000) {
-            // Only alert if it has been over an hour since the last alert
-            DiscordRaceTimer = currentTime;
-            let datetime = new Date();
-            DiscordBot.sendMessage({
-                to: DiscordRacingChatID,
-                message: datetime + ' - A new Isaac race has been started by ' + raceStarter + ' on SRL!',
-            });
-        }
-
         // Alert other race channels that a new race has started
         for (let race in raceList) {
             if (!raceList.hasOwnProperty(race)) {
@@ -2190,13 +2173,16 @@ TwitchBot.once('connected', async function() { // jshint ignore:line
     // Join every channel on the player list
     for (let i = 0; i < userList.length; i++) {
         // Check to see if the bot is a mod in the channel before joining it
-        let modList = await TwitchBot.mods('#' + userList[i].twitch); // jshint ignore:line
+        /*let modList = await TwitchBot.mods('#' + userList[i].twitch); // jshint ignore:line
         if (modList.indexOf('zamielbot') !== -1) {
             console.log('----- Mod check succeeded for ' + userList[i].twitch + ', joining channel. -----');
             TwitchBot.join('#' + userList[i].twitch);
         } else {
             error('TWITCH ERROR: ZamielBot is not a mod in the Twitch channel of: ' + userList[i].twitch);
-        }
+        }*/
+
+        // Assume everyone is a mod (TODO, look in log for "Bots not allowed endpoint")
+        TwitchBot.join('#' + userList[i].twitch);
     }
 }); // jshint ignore:line
 

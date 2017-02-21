@@ -180,6 +180,14 @@ const userList = [
         'srl': 'Norbro86',
         'twitch': 'NorBro86',
     },
+    {
+        'srl': 'Birdie0',
+        'twitch': 'birdie0',
+    },
+    {
+        'srl': 'Shootthemoose',
+        'twitch': 'ShoottheMoose',
+    },
 ];
 
 exports.userList = userList;
