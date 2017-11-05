@@ -1,9 +1,0 @@
-{
-    "esversion": 7,
-
-    "devel":   true,
-    "node":    true,
-
-    "globals": {
-    }
-}

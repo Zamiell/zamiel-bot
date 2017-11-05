@@ -13,5 +13,4 @@ const goalList = {
     'setdiv':    '.setgoal Beat The Chest with Cain (Diversity Mod ' + modsVersion + ', "BLCK CNDL" easter egg, seed #####)',
     'setlco':    '.setgoal Beat The Dark Room with Judas\' Shadow (Jud6s Mod ' + jud6sVersion + ', "BLCK CNDL" easter egg)',
 };
-
 exports.goalList = goalList;
