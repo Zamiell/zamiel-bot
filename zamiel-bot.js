@@ -2425,13 +2425,12 @@ DiscordBot.on('message', (message) => {
         let randomMin;
         let randomMax;
         if (m) {
-            randomMin = m['1'];
-            randomMax = m['2'];
+              [, randomMin, randomMax] = m;
         } else {
             const m2 = msg.match(/^!\w+ (\d+)$/);
             if (m2) {
                 randomMin = 1;
-                randomMax = m['1'];
+                [, randomMax] = m;
             } else if (msg === '!roll' || msg === '!rand' || msg === '!random') {
                 randomMin = 1;
                 randomMax = 31;
