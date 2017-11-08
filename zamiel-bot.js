@@ -6,7 +6,7 @@
 const irc = require('irc'); // The SRL side uses the node-irc library
 const tmi = require('tmi.js'); // The Twitch side uses the tmi-js library
 const discord = require('discord.js'); // The Discord side uses the discord.js library
-const exec = require('child_process').exec; // For running other various scripts
+const { exec } = require('child_process'); // For running other various scripts
 const async = require('async'); // For performing API calls asynchronously
 const request = require('request'); // For talking to the SRL API
 const mongodb = require('mongodb'); // For talking to the MongoDB database
@@ -27,9 +27,9 @@ const configGoals = require('./config/goals');
 const configInfo = require('./config/info');
 const configUsers = require('./config/users');
 
-const goalList = configGoals.goalList;
-const infoList = configInfo.infoList;
-const userList = configUsers.userList;
+const { goalList } = configGoals;
+const { infoList } = configInfo;
+const { userList } = configUsers;
 
 const races = new Map();
 const rblacklist = [];
@@ -565,7 +565,7 @@ function getLeaderboard(IRC, channel, requester) {
                     const player = race.results[i].player.toLowerCase();
                     const raceTime = race.results[i].time;
                     const version = race.goal.match(/Beat The Chest with Judas \(Jud6s Mod (v1\.\d+),/)[1];
-                    const date = race.date;
+                    const { date } = race;
 
                     // If the time is worthy of being in the top ten times, add it
                     if (raceTime !== -1 && raceTime !== -2) {
@@ -578,9 +578,7 @@ function getLeaderboard(IRC, channel, requester) {
                             });
 
                             // Sort the top ten times by race time
-                            topTenTimes = topTenTimes.sort(
-                                (a, b) => a.raceTime - b.raceTime,
-                            );
+                            topTenTimes = topTenTimes.sort((a, b) => a.raceTime - b.raceTime);
                         } else if (topTenTimes[9].raceTime > raceTime) {
                             // The last element will be the worst time, so replace it if necessary
                             topTenTimes.pop(); // Remove the worst time
@@ -592,9 +590,7 @@ function getLeaderboard(IRC, channel, requester) {
                             });
 
                             // Sort the top ten times by race time
-                            topTenTimes = topTenTimes.sort(
-                                (a, b) => a.raceTime - b.raceTime,
-                            );
+                            topTenTimes = topTenTimes.sort((a, b) => a.raceTime - b.raceTime);
                         }
                     }
 
@@ -669,9 +665,7 @@ function getLeaderboard(IRC, channel, requester) {
                 }
 
                 // Sort the leaderboard by adjusted average times (which takes into account a forfeit penalty)
-                leaderboardArray = leaderboardArray.sort(
-                    (a, b) => a.adjustedAverage - b.adjustedAverage,
-                );
+                leaderboardArray = leaderboardArray.sort((a, b) => a.adjustedAverage - b.adjustedAverage);
 
                 // Start to construct the leaderboard string
                 let leaderboardString = 'The Binding of Isaac: Afterbirth\n';
@@ -795,9 +789,7 @@ function getLeaderboard(IRC, channel, requester) {
                 leaderboardString += '\n\n\nMost Unseeded Jud6s Races Played\n\n';
 
                 // Resort the leaderboardArray based on allRacesCount
-                leaderboardArray = leaderboardArray.sort(
-                    (a, b) => b.allRacesCount - a.allRacesCount,
-                );
+                leaderboardArray = leaderboardArray.sort((a, b) => b.allRacesCount - a.allRacesCount);
                 for (let i = 0; i < 10; i++) {
                     // Create the header for the player
                     const place = i + 1;
@@ -888,9 +880,7 @@ function getMostRaces(IRC, channel, requester) {
                 }
 
                 // Sort the leaderboard by who has the most races
-                leaderboardArray = leaderboardArray.sort(
-                    (a, b) => b.allRacesCount - a.allRacesCount,
-                );
+                leaderboardArray = leaderboardArray.sort((a, b) => b.allRacesCount - a.allRacesCount);
 
                 // Start to construct the leaderboard string
                 let leaderboardString = 'The Binding of Isaac: Afterbirth\n';
@@ -1010,13 +1000,13 @@ function getAllRaces(IRC, channel, rawPlayer, requester) {
                 let foundPlayer = false;
                 let raceTime;
                 let comment;
-                let goal;
                 let j;
+                let goal;
                 for (j = 0; j < race.results.length; j++) {
                     if (race.results[j].player.toLowerCase() === player.toLowerCase()) {
                         raceTime = race.results[j].time;
                         comment = race.results[j].message;
-                        goal = race.goal;
+                        ({ goal } = race);
                         foundPlayer = true;
                         break;
                     }
@@ -1390,7 +1380,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
             const m2 = goalList.setdiv.match(/\.setgoal (.+?, seed ).+/);
             let matchString;
             if (m2) {
-                matchString = m[1];
+                [, matchString] = m;
             } else {
                 logger.error('SRL ERROR: When announcing the items for a Diversity Mod race, I failed to parse the .setdiv goal.');
                 return;
@@ -1405,7 +1395,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
                 const m3 = raceList[channel].goal.match(re3);
                 let seed;
                 if (m3) {
-                    seed = m[1];
+                    [, seed] = m;
                 } else {
                     logger.error('SRL ERROR: When announcing the items for a Diversity Mod race, I failed to parse the the seed.');
                     return;
@@ -1426,7 +1416,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
             const m2 = goalList.setdiv.match(/\.setgoal (.+?, seed ).+/);
             let matchString;
             if (m2) {
-                matchString = m[1];
+                [, matchString] = m;
             } else {
                 logger.error('SRL ERROR: When looking to see if the rematch is a Diversity Mod goal, I failed to parse the .setdiv goal.');
                 return;
@@ -1439,7 +1429,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
                 const m3 = raceList[channel].goal.match(re);
                 let seed;
                 if (m3) {
-                    seed = m[1];
+                    [, seed] = m;
                 } else {
                     logger.error('SRL ERROR: When setting a Diversity Mod rematch goal, I failed to parse the the seed.');
                     return;
@@ -1455,7 +1445,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
                     m4 = seed.match(/^(.+)\d$/);
                     let seedBeginning;
                     if (m4) {
-                        seedBeginning = m[1];
+                        [, seedBeginning] = m;
                     } else {
                         logger.error(`SRL ERROR: When setting a Diversity Mod rematch goal, I failed to parse the beginning of the seed: ${seed}`);
                         return;
@@ -1463,7 +1453,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
                     m4 = seed.match(/^.+(\d)$/);
                     let finalDigit;
                     if (m4) {
-                        finalDigit = m[1];
+                        [, finalDigit] = m;
                     } else {
                         logger.error(`SRL ERROR: When setting a Diversity Mod rematch goal, I failed to parse the end of the seed: ${seed}`);
                         return;
@@ -1486,7 +1476,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
             // Trim the preceding 0's, if present
             const m2 = place.match(/00:(.+)/);
             if (m2) {
-                place = m2[1];
+                [, place] = m2;
             }
 
             // Remove the racer from the entrants list
@@ -1836,7 +1826,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
         const m = message.match(/^[.!]\w+ (.+)/);
         let player;
         if (m) {
-            player = m[1];
+            [, player] = m;
         } else {
             player = user;
         }
@@ -1846,7 +1836,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
         const m = message.match(/^[.!]racelistall (.+)/);
         let player;
         if (m) {
-            player = m[1];
+            [, player] = m;
         } else {
             player = user;
         }
@@ -1856,7 +1846,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
         const m = message.match(/^[.!]racelist (.+)/);
         let player;
         if (m) {
-            player = m[1];
+            [, player] = m;
         } else {
             player = user;
         }
@@ -1871,13 +1861,12 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
         let randomMin;
         let randomMax;
         if (m) {
-            randomMin = m[1];
-            randomMax = m[2];
+            [, randomMin, randomMax] = m;
         } else {
             const m2 = message.match(/^[.!]\w+ (\d+)$/);
             if (m2) {
                 randomMin = 1;
-                randomMax = m[1];
+                [, randomMax] = m;
             } else if (
                 message === '!roll' ||
                 message === '.roll' ||
@@ -2321,7 +2310,7 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
         const m = message.match(/^!\w+ (.+)/);
         let player;
         if (m) {
-            player = m[1];
+            [, player] = m;
         } else {
             const TwitchChannel = channel.match(/#(.+)/)[1];
             for (let i = 0; i < userList.length; i++) { // Go through the user list
@@ -2337,7 +2326,7 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
         const m = message.match(/^!racelist (.+)/);
         let player;
         if (m) {
-            player = m[1];
+            [, player] = m;
         } else {
             const TwitchChannel = channel.match(/#(.+)/)[1];
             for (let i = 0; i < userList.length; i++) { // Go through the user list
@@ -2358,13 +2347,12 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
         let randomMin;
         let randomMax;
         if (m) {
-            randomMin = m[1];
-            randomMax = m[2];
+            [, randomMin, randomMax] = m;
         } else {
             const m2 = message.match(/^!\w+ (\d+)$/);
             if (m2) {
                 randomMin = 1;
-                randomMax = m[1];
+                [, randomMax] = m;
             } else if (message === '!roll' || message === '!rand' || message === '!random') {
                 randomMin = 1;
                 randomMax = 31;
@@ -2405,11 +2393,11 @@ DiscordBot.on('message', (message) => {
 
     for (const info of Object.keys(infoList)) { // Go through the info list
         // Discord specific exclusions
-        if (content === '!iotr') {
+        if (msg === '!iotr') {
             break;
         }
 
-        if (content === `!${info}`) {
+        if (msg === `!${info}`) {
             message.channel.send(infoList[info]);
         }
     }
@@ -2425,7 +2413,7 @@ DiscordBot.on('message', (message) => {
         let randomMin;
         let randomMax;
         if (m) {
-              [, randomMin, randomMax] = m;
+            [, randomMin, randomMax] = m;
         } else {
             const m2 = msg.match(/^!\w+ (\d+)$/);
             if (m2) {
