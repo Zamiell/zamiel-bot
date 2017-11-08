@@ -2571,12 +2571,6 @@ DiscordBot.on('message', (message) => {
         }
         break;
     }
-    /* case 'say': {
-        if (user !== 'Alvy#9276') { break; }
-        const tmsg = args.length > 1 ? args.join(' ') : args[0];
-        chan.send(tmsg);
-        break;
-    } */
     default:
         break;
     }
