@@ -31,6 +31,51 @@ const goalList = configGoals.goalList;
 const infoList = configInfo.infoList;
 const userList = configUsers.userList;
 
+const races = new Map();
+const rblacklist = [];
+
+function RemBlackList(user) {
+    rblacklist.splice(rblacklist.indexOf(user), 1);
+    logger.info(`Removed ${user} from blacklist. -> ${rblacklist}`);
+}
+
+function genRaceChar(race, ignored = false) {
+    // Get the random number
+    const minNumber = 0;
+    const maxNumber = characterArray.length - 1;
+
+    // Get a random number between minNumber and maxNumber
+    const min = parseInt(minNumber, 10);
+    const max = parseInt(maxNumber, 10);
+    let randomNum = Math.floor(Math.random() * (max - min + 1) + min);
+    while (race.banChars.indexOf(characterArray[randomNum].toLowerCase()) > -1) {
+        randomNum = Math.floor(Math.random() * (max - min + 1) + min);
+    }
+    if (!ignored) { race.banChars.push(characterArray[randomNum].toLowerCase()); }
+    return characterArray[randomNum];
+}
+
+function genRaceStarter(race, ignored = false) {
+    // Get the random number
+    const minNumber = 0;
+    const maxNumber = instantStartArray.length - 1;
+
+    // Get a random number between minNumber and maxNumber
+    const min = parseInt(minNumber, 10);
+    const max = parseInt(maxNumber, 10);
+    let randomNum = Math.floor(Math.random() * (max - min + 1) + min);
+    while (race.banBuilds.indexOf(instantStartArray[randomNum].toLowerCase()) > -1) {
+        randomNum = Math.floor(Math.random() * (max - min + 1) + min);
+    }
+    if (!ignored) { race.banBuilds.push(instantStartArray[randomNum].toLowerCase()); }
+    return instantStartArray[randomNum];
+}
+
+function EndRace(race, reason) {
+    race.channel.delete(`${reason}`);
+    races.delete(race);
+}
+
 // Import the environment variables defined in the ".env" file
 require('dotenv').config();
 
@@ -76,40 +121,39 @@ const characterArray = [
     'Samael', // 14
 ];
 const instantStartArray = [
-    'NULL', // 0
-    '20/20', // 1
-    'Chocolate Milk', // 2
-    'Cricket\'s Body', // 3
-    'Cricket\'s Head', // 4
-    'Dead Eye', // 5
-    'Death\'s Touch', // 6
-    'Dr. Fetus', // 7
-    'Epic Fetus', // 8
-    'Ipecac', // 9
-    'Jacob\'s Ladder', // 10
-    'Judas\' Shadow', // 11
-    'Lil\' Brimstone', // 12
-    'Magic Mushroom', // 13
-    'Mom\'s Knife', // 14
-    'Monstro\'s Lung', // 15
-    'Polyphemus', // 16
-    'Proptosis', // 17
-    'Sacrificial Dagger', // 18
-    'Tech.5', // 19
-    'Tech X', // 20
-    'Brimstone', // 21
-    'Incubus', // 22
-    'Maw of the Void', // 23
-    'Crown of Light', // 24
-    'Godhead', // 25
-    'Sacred Heart', // 26
-    'Mutant Spider + The Inner Eye', // 27
-    'Technology + A Lump of Coal', // 28
-    'The Ludovico Technique + The Parasite', // 29
-    'Fire Mind + 13 luck', // 30
-    'Technology Zero + Pop! + Cupid\'s Arrow', // 31
-    'Kamikaze! + Host Hat', // 32
-    'Mega Blast + Habit + The Battery', // 33
+    '20/20', // 0
+    'Chocolate Milk', // 1
+    'Cricket\'s Body', // 2
+    'Cricket\'s Head', // 3
+    'Dead Eye', // 4
+    'Death\'s Touch', // 5
+    'Dr. Fetus', // 6
+    'Epic Fetus', // 7
+    'Ipecac', // 8
+    'Jacob\'s Ladder', // 9
+    'Judas\' Shadow', // 10
+    'Lil\' Brimstone', // 11
+    'Magic Mushroom', // 12
+    'Mom\'s Knife', // 13
+    'Monstro\'s Lung', // 14
+    'Polyphemus', // 15
+    'Proptosis', // 16
+    'Sacrificial Dagger', // 17
+    'Tech.5', // 18
+    'Tech X', // 19
+    'Brimstone', // 20
+    'Incubus', // 21
+    'Maw of the Void', // 22
+    'Crown of Light', // 23
+    'Godhead', // 24
+    'Sacred Heart', // 25
+    'Mutant Spider + The Inner Eye', // 26
+    'Technology + A Lump of Coal', // 27
+    'The Ludovico Technique + The Parasite', // 28
+    'Fire Mind + 13 luck', // 29
+    'Technology Zero + Pop! + Cupid\'s Arrow', // 30
+    'Kamikaze! + Host Hat', // 31
+    'Mega Blast + Habit + The Battery', // 32
 ];
 
 // Global variables
@@ -2349,15 +2393,16 @@ DiscordBot.on('ready', () => {
 });
 
 DiscordBot.on('message', (message) => {
+    if (message.author.bot) { return; }
+    if (message.channel.type !== 'text') { return; }
     // Local variables
-    const channel = message.channel;
+    const chan = message.channel;
     const user = `${message.author.username}#${message.author.discriminator}`;
-    const content = message.content;
+    const msg = message.content;
 
     // Log all messages
-    logger.info(`DISCORD [${message.channel.name}] <${user}> ${content}`);
+    logger.info(`DISCORD [${chan.name}] <${user}> ${msg}`);
 
-    // Info commands
     for (const info of Object.keys(infoList)) { // Go through the info list
         // Discord specific exclusions
         if (content === '!iotr') {
@@ -2369,48 +2414,169 @@ DiscordBot.on('message', (message) => {
         }
     }
 
-    // Discord special info commands
-    if (content.match(/^!roll\b/) || content.match(/^!rand\b/) || content.match(/^!random\b/)) {
-        const m = content.match(/^!\w+ (\d+) (\d+)$/);
+    const args = message.content.slice(1).trim().split(/ +/g);
+    const command = args.shift().toLowerCase();
+
+    switch (command) {
+    case 'roll':
+    case 'rand':
+    case 'random': {
+        const m = msg.match(/^!\w+ (\d+) (\d+)$/);
         let randomMin;
         let randomMax;
         if (m) {
-            randomMin = m[1];
-            randomMax = m[2];
+              [, randomMin, randomMax] = m;
         } else {
-            const m2 = content.match(/^!\w+ (\d+)$/);
+            const m2 = msg.match(/^!\w+ (\d+)$/);
             if (m2) {
                 randomMin = 1;
-                randomMax = m[1];
-            } else if (content === '!roll' || content === '!rand' || content === '!random') {
+                [, randomMax] = m;
+            } else if (msg === '!roll' || msg === '!rand' || msg === '!random') {
                 randomMin = 1;
                 randomMax = 31;
             } else {
-                // Make it invalid so that they get added to the ignore list
+            // Make it invalid so that they get added to the ignore list
                 randomMin = -1;
                 randomMax = -1;
             }
         }
-        getRandomNumber('Discord', channel, user, randomMin, randomMax);
-    } else if (content === '!d20') {
-        getRandomNumber('Discord', channel, user, 1, 20);
-    } else if (content === '!randitem' || content === '!build' || content === '!randbuild') {
-        getRandomBuild('Discord', channel, user);
-    } else if (content === '!randchar' || content === '!char') {
-        getRandomCharacter('Discord', channel, user);
-    } else if (content === '!iotr') {
-        // Assume they want a random build
-        if (instantStartRandomArray.length === 0) {
-            refillInstantStartRandomArray();
+        getRandomNumber('Discord', chan, user, randomMin, randomMax);
+        break;
+    }
+    case 'd20':
+        getRandomNumber('Discord', chan, user, 1, 20);
+        break;
+    case 'randitem':
+    case 'build':
+    case 'randbuild':
+        getRandomBuild('Discord', chan, user);
+        break;
+    case 'randchar':
+    case 'char':
+        getRandomCharacter('Discord', chan, user);
+        break;
+    case 'race':
+    case 'match':
+    case 'startrace':
+    case 'startmatch':
+        if (chan.name.match(/^boi-[\w]{5}$/) !== null) { break; }
+        if (rblacklist.findIndex(e => e.toString() === message.author.toString()) > -1) { break; }
+        if (message.mentions.members.size < 2) {
+            chan.send(`[SYNTAX] ${command} requires at least 2 players as mention with discordtag e.x !${command} @Player1#1234 @Player2#5678`);
+        } else {
+            const racers = [];
+            for (const v of message.mentions.members.values()) {
+                racers.push(v);
+            }
+            let rChan = `boi-${Math.random().toString(36).substr(2, 5)}`;
+            while (races.has(rChan)) {
+                rChan = `boi-${Math.random().toString(36).substr(2, 5)}`;
+            }
+            message.guild.createChannel(rChan, 'text')
+                .then((v) => {
+                    logger.info(`[${message.guild.name}] New race channel ${v.name}`);
+                    const tcount = Math.floor(Math.random() * racers.length) + 1 - 1;
+                    const rSettings = {
+                        server: message.guild,
+                        channel: v,
+                        players: racers,
+                        state: 0,
+                        counter: tcount,
+                        banChars: [],
+                        banBuilds: [],
+                        timestamp: new Date(),
+                    };
+                    races.set(rChan, rSettings);
+                    chan.send(`[BOI] Race channel created at ${v}. Racers: ${racers[0]} ${racers[1]}`);
+                    v.send(`Tournament race between ${racers[0]} and ${racers[1]}`);
+                    v.send(`\`\`\`-- CHARACTER BAN PHASE -- Use !ban command to ban 6 characters, one per player at a time. List: ${characterArray.toString()}\`\`\``);
+                    v.send(`${racers[tcount]}, you start! (randomly decided)`);
+                    const modRole = message.guild.roles.find('name', 'Volunteer');
+                    if (!message.member.roles.has(modRole.id)) {
+                        rblacklist.push(message.author);
+                        setTimeout(() => { RemBlackList(message.author); }, 1000 * 60 * 10);
+                    }
+                })
+                .catch((error) => {
+                    logger.info(`[${message.guild.name}] Error creating channel - ${error}`);
+                    chan.send(`[ERR] An error occured while creating the race -- ${error}`);
+                });
         }
-        const build = instantStartRandomArray.pop();
-        const sayString = `Build: ${build}\n`;
-        channel.send(sayString);
+        break;
+    case 'ban': {
+        if (chan.name.match(/^boi-[\w]{5}$/) == null) { break; }
+        if (!races.has(chan.name)) { chan.send('No DB race found for this channel, wut iz goin on !!!11!!'); break; }
+        const rSettings = races.get(chan.name);
+        if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) { break; }
+        if (rSettings.state >= 2) { break; }
+        if (rSettings.counter !== rSettings.players.findIndex(e => e.toString() === message.author.toString())) { chan.send('Wait your turn'); break; }
+        if (rSettings.state === 0) {
+            if (args.length < 1) { chan.send('Syntax: !ban character'); break; }
+            const char = args.length > 1 ? args.join(' ').toLowerCase() : args[0].toLowerCase();
+            if (characterArray.findIndex(e => e.toLowerCase() === char) < 0) { chan.send('Character doesn\'t exist'); break; }
+            if (rSettings.banChars.findIndex(e => e === char) >= 0) { chan.send(`Character already banned - ${char}`); break; }
+            rSettings.banChars.push(char);
+            logger.info(`added ${char} to ${rSettings.banChars}`);
+            if (rSettings.counter >= rSettings.players.length - 1) { rSettings.counter = 0; } else { rSettings.counter += 1; }
+            if (6 - rSettings.banChars.length > 0) {
+                chan.send(`Banned character ${char}, ${6 - rSettings.banChars.length} characters left to ban. ${rSettings.players[rSettings.counter]}, you're next!`);
+            } else {
+                chan.send(`Banned character ${char}, ${6 - rSettings.banChars.length} characters left to ban.`);
+                chan.send(`\`\`\`-- STARTER BAN PHASE -- Use !ban command to ban 6 starting builds, one per player at a time. List: ${instantStartArray.toString()}\`\`\``);
+                rSettings.state = 1;
+                chan.send(`${rSettings.players[rSettings.counter]}, you start!`);
+            }
+        } else if (rSettings.state === 1) {
+            if (args.length < 1) { chan.send('Syntax: !ban starter'); break; }
+            const starter = args.length > 1 ? args.join(' ').toLowerCase() : args[0].toLowerCase();
+            if (instantStartArray.findIndex(e => e.toLowerCase() === starter) < 0) { chan.send('Starter doesn\'t exist'); break; }
+            if (rSettings.banBuilds.findIndex(e => e === starter) >= 0) { chan.send(`Starter already banned - ${starter}`); break; }
+            rSettings.banBuilds.push(starter);
+            logger.info(`added ${starter} to ${rSettings.banBuilds}`);
+            if (rSettings.counter >= rSettings.players.length - 1) { rSettings.counter = 0; } else { rSettings.counter += 1; }
+            if (6 - rSettings.banBuilds.length > 0) {
+                chan.send(`Banned starter ${starter}, ${6 - rSettings.banBuilds.length} starter left to ban. ${rSettings.players[rSettings.counter]}, you're next!`);
+            } else {
+                chan.send(`Banned starter ${starter}, ${6 - rSettings.banBuilds.length} starter left to ban.`);
+                chan.send(`\`\`\`-- ALL DONE -- Here are your race presets. Remember round 1 upper bracket is still best of 3.\n\nMatch 1: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\nMatch 2: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\nMatch 3: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\nMatch 4: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\nMatch 5: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\`\`\``);
+                chan.send('If I somehow messed up you can use !randchar and !randbuild to manually generate stuff. When you\'re done with the race please use !end command');
+                rSettings.state = 2;
+            }
+        }
+        break;
+    }
+    case 'end': {
+        if (chan.name.match(/^boi-[\w]{5}$/) == null) { break; }
+        if (!races.has(chan.name)) { chan.send('No DB race found for this channel, wut iz goin on !!!11!!'); break; }
+        const rSettings = races.get(chan.name);
+        if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) { break; }
+        if (rSettings.state === 3) { break; }
+        rSettings.state = 3;
+        setTimeout(() => { EndRace(rSettings, `!end command used by ${user}`); }, 1000 * 60 * 5);
+        chan.send('Race ended, channel will be destroyed in 5 minutes.');
+        break;
+    }
+    case 'cleanup': {
+        const modRole = message.guild.roles.find('name', 'Volunteer');
+        if (!message.member.roles.has(modRole.id)) { break; }
+        for (const [k, v] of message.guild.channels) {
+            if (v.name.match(/^boi-[\w]{5}$/)) {
+                v.delete('races cleanup')
+                    .then(channel => logger.info(`Cleanup channel ${channel.name}`))
+                    .catch(error => logger.info(error));
+                chan.send(`[DEBUG] Found ${v.name} [${k}] -- deleted`);
+                races.delete(v.name);
+            }
+        }
+        break;
+    }
+    default:
+        break;
     }
 });
 
 // Automatically reconnect if the bot disconnects due to inactivity
 DiscordBot.on('disconnect', (erMsg, code) => {
     logger.warn(`DISCORD WARNING: Disconnected with code ${code} for reason ${erMsg}. Attempting to reconnect...`);
-    DiscordBot.connect();
+    DiscordBot.login(process.env.DISCORD_TOKEN);
 });
