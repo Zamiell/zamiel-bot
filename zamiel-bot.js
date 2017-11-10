@@ -21,19 +21,22 @@ const numAverageRacesToUse = 50;
 const numRacesToAdvert = 999999;
 const advertMessage = 'Sign up for Isaac events. See the list/schedule here: http://pastebin.com/q9Y3MRdT';
 const goalSetDelay = 2000; // 2 seconds
+const discordChannelPrefix = 'race';
+const discordRoleName = 'Volunteer';
 
 // Import big lists from configuration files
 const goalList = require('./config/goals');
 const infoList = require('./config/info');
 const userList = require('./config/users');
+const characterArray = require('./config/characters');
 const builds = require('./config/builds');
 
 const races = new Map();
-const blackList = [];
+const blacklist = [];
 
-function RemBlackList(user) {
-    blackList.splice(blackList.indexOf(user), 1);
-    logger.info(`Removed ${user} from blacklist. -> ${blackList}`);
+function Remblacklist(user) {
+    blacklist.splice(blacklist.indexOf(user), 1);
+    logger.info(`Removed ${user} from blacklist. -> ${blacklist}`);
 }
 
 function genRaceChar(race, ignored = false) {
@@ -104,23 +107,6 @@ const DiscordBot = new discord.Client();
 // Global constants
 const PastebinUserKey = process.env.PASTEBIN_USER;
 const PastebinDevKey = process.env.PASTEBIN_DEV;
-const characterArray = [
-    'Isaac', // 0
-    'Magdalene', // 1
-    'Cain', // 2
-    'Judas', // 3
-    'Blue Baby', // 4
-    'Eve', // 5
-    'Samson', // 6
-    'Azazel', // 7
-    'Lazarus', // 8
-    'Eden', // 9
-    'The Lost', // 10
-    'Lilith', // 11
-    'Keeper', // 12
-    'Apollyon', // 13
-    'Samael', // 14
-];
 const instantStartArray = [
     '20/20', // 0
     'Chocolate Milk', // 1
@@ -2416,8 +2402,9 @@ DiscordBot.on('message', (message) => {
         return;
     }
     msg = msg.substr(1); // Chop off the "!""
+    msg = msg.trim(); // Remove whitespace from both sides of the string
 
-    // Go through the info list
+    // Check for "info" commands
     for (const info of Object.keys(infoList)) {
         // Discord specific exclusions
         if (msg === 'iotr') {
@@ -2430,8 +2417,10 @@ DiscordBot.on('message', (message) => {
         }
     }
 
-    const args = message.content.slice(1).trim().split(/ +/g);
-    const command = args.shift().toLowerCase();
+    // Check for other commands
+    const args = msg.split(/ +/g); // Detect more than one space in between words
+    let command = args.shift(); // Now args contains only the actual arguments, if any
+    command = command.toLowerCase(); // Convert everything to lowercase for simplicity and to cast a wider net
 
     switch (command) {
     case 'roll':
@@ -2463,6 +2452,9 @@ DiscordBot.on('message', (message) => {
         getRandomNumber('Discord', chan, user, randomMin, randomMax);
         break;
     }
+    case 'd6':
+        getRandomNumber('Discord', chan, user, 1, 6);
+        break;
     case 'd20':
         getRandomNumber('Discord', chan, user, 1, 20);
         break;
@@ -2475,68 +2467,86 @@ DiscordBot.on('message', (message) => {
     case 'char':
         getRandomCharacter('Discord', chan, user);
         break;
-    case 'race':
-    case 'match':
-    case 'startrace':
-    case 'startmatch':
-        if (chan.name.match(/^boi-[\w]{5}$/) !== null) {
+    case 'race': {
+        // Don't allow users to start new races while already in a race channel
+        if (chan.name.startsWith(`${discordChannelPrefix}-`)) {
             break;
         }
-        if (blackList.findIndex(e => e.toString() === message.author.toString()) > -1) {
+
+        // Don't allow users on the blacklist to start new races
+        if (blacklist.findIndex(e => e.toString() === message.author.toString()) > -1) {
             break;
         }
+
+        // Validate that they mentioned at least 2 unique people
         if (message.mentions.members.size < 2) {
-            chan.send(`[SYNTAX] ${command} requires at least 2 players as mention with discordtag e.x !${command} @Player1#1234 @Player2#5678`);
-        } else {
-            const racers = [];
-            for (const v of message.mentions.members.values()) {
-                racers.push(v);
-            }
-            let rChan = `boi-${Math.random().toString(36).substr(2, 5)}`;
-            while (races.has(rChan)) {
-                rChan = `boi-${Math.random().toString(36).substr(2, 5)}`;
-            }
-            message.guild.createChannel(rChan, 'text')
-                .then((v) => {
-                    logger.info(`[${message.guild.name}] New race channel ${v.name}`);
-                    const tcount = Math.floor(Math.random() * racers.length) + 1 - 1;
-                    const rSettings = {
-                        server: message.guild,
-                        channel: v,
-                        players: racers,
-                        state: 0,
-                        counter: tcount,
-                        banChars: [],
-                        banBuilds: [],
-                        timestamp: new Date(),
-                    };
-                    races.set(rChan, rSettings);
-                    chan.send(`[BOI] Race channel created at ${v}. Racers: ${racers[0]} ${racers[1]}`);
-                    v.send(`Tournament race between ${racers[0]} and ${racers[1]}`);
-                    v.send(`\`\`\`-- CHARACTER BAN PHASE -- Use !ban command to ban 6 characters, one per player at a time. List: ${characterArray.toString()}\`\`\``);
-                    v.send(`${racers[tcount]}, you start! (randomly decided)`);
-                    const modRole = message.guild.roles.find('name', 'Volunteer');
-                    if (!message.member.roles.has(modRole.id)) {
-                        blackList.push(message.author);
-                        setTimeout(() => {
-                            RemBlackList(message.author);
-                        }, 1000 * 60 * 10);
-                    }
-                })
-                .catch((error) => {
-                    logger.info(`[${message.guild.name}] Error creating channel - ${error}`);
-                    chan.send(`[ERR] An error occured while creating the race -- ${error}`);
-                });
+            chan.send(`[SYNTAX] The "${command}" command has a syntax of: \`!race @player1 @player2\``);
+            break;
         }
+
+        const racers = [];
+        for (const v of message.mentions.members.values()) {
+            racers.push(v);
+        }
+        let rChan = `${discordChannelPrefix}-${Math.random().toString(36).substr(2, 5)}`;
+        while (races.has(rChan)) {
+            rChan = `${discordChannelPrefix}-${Math.random().toString(36).substr(2, 5)}`;
+        }
+        message.guild.createChannel(rChan, 'text')
+            .then((v) => {
+                logger.info(`[${message.guild.name}] Created new race channel: ${v.name}`);
+                const tcount = Math.floor(Math.random() * racers.length) + 1 - 1;
+                const rSettings = {
+                    server: message.guild,
+                    channel: v,
+                    players: racers,
+                    state: 0,
+                    counter: tcount,
+                    banChars: [],
+                    banBuilds: [],
+                    timestamp: new Date(),
+                };
+                races.set(rChan, rSettings);
+                chan.send(`[Race] Race channel ${v} created for racers ${racers[0]} and ${racers[1]}.`);
+                v.send(`Starting a tournament race between ${racers[0]} and ${racers[1]}.`);
+                v.send(`\`\`\`\n
+                    -- CHARACTER BAN PHASE --\n
+                    Each player gets to ban 3 characters.\n
+                    Use the "!ban" command to select a character.\n
+                \`\`\``);
+                v.send(`${racers[tcount]}, you start! (randomly decided)`);
+                v.send(getRemainingCharacters());
+                const modRole = message.guild.roles.find('name', discordRoleName);
+                if (!Object.prototype.hasOwnProperty.call(modRole, 'id')) {
+                    logger.info(`[${message.guild.name}] The role of "${discordRoleName}" does not exist on this Discord server.`);
+                    chan.send(`[ERR] The role of "${discordRoleName}" does not exist on this Discord server.`);
+                    return;
+                }
+                if (!message.member.roles.has(modRole.id)) {
+                    blacklist.push(message.author);
+                    setTimeout(() => {
+                        Remblacklist(message.author);
+                    }, 1000 * 60 * 10);
+                }
+            })
+            .catch((error) => {
+                logger.info(`[${message.guild.name}] Error creating a new Discord channel: ${error}`);
+                chan.send(`[ERR] An error occured while creating the race channel: ${error}`);
+            });
         break;
+    }
     case 'ban': {
-        if (chan.name.match(/^boi-[\w]{5}$/) === null) {
+        // Ignore all non-race channels
+        if (!chan.name.startsWith(`${discordChannelPrefix}-`)) {
             break;
         }
+
+        // Do a sanity check to ensure that we know about this particular race
         if (!races.has(chan.name)) {
-            chan.send('No DB race found for this channel, wut iz goin on !!!11!!');
+            chan.send('[ERR] The race corresponding to this channel was not found in the database.');
             break;
         }
+
         const rSettings = races.get(chan.name);
         if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) {
             break;
@@ -2608,13 +2618,17 @@ DiscordBot.on('message', (message) => {
         break;
     }
     case 'end': {
-        if (chan.name.match(/^boi-[\w]{5}$/) == null) {
+        // Ignore all non-race channels
+        if (!chan.name.startsWith(`${discordChannelPrefix}-`)) {
             break;
         }
+
+        // Do a sanity check to ensure that we know about this particular race
         if (!races.has(chan.name)) {
-            chan.send('No DB race found for this channel, wut iz goin on !!!11!!');
+            chan.send('[ERR] The race corresponding to this channel was not found in the database.');
             break;
         }
+
         const rSettings = races.get(chan.name);
         if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) {
             break;
@@ -2630,12 +2644,20 @@ DiscordBot.on('message', (message) => {
         break;
     }
     case 'cleanup': {
-        const modRole = message.guild.roles.find('name', 'Volunteer');
+        // Only administrators can do a cleanup command
+        const modRole = message.guild.roles.find('name', discordRoleName);
+        if (!Object.prototype.hasOwnProperty.call(modRole, 'id')) {
+            logger.info(`[${message.guild.name}] The role of "${discordRoleName}" does not exist on this Discord server.`);
+            chan.send(`[ERR] The role of "${discordRoleName}" does not exist on this Discord server.`);
+            return;
+        }
         if (!message.member.roles.has(modRole.id)) {
             break;
         }
+
+        // Look for race channels
         for (const [k, v] of message.guild.channels) {
-            if (v.name.match(/^boi-[\w]{5}$/)) {
+            if (v.name.startsWith(`${discordChannelPrefix}-`)) {
                 v.delete('races cleanup')
                     .then(channel => logger.info(`Cleanup channel ${channel.name}`))
                     .catch(error => logger.info(error));
@@ -2655,3 +2677,6 @@ DiscordBot.on('disconnect', (erMsg, code) => {
     logger.warn(`DISCORD WARNING: Disconnected with code ${code} for reason ${erMsg}. Attempting to reconnect...`);
     DiscordBot.login(process.env.DISCORD_TOKEN);
 });
+
+function getRemainingCharacters() {
+}
