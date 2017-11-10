@@ -23,20 +23,17 @@ const advertMessage = 'Sign up for Isaac events. See the list/schedule here: htt
 const goalSetDelay = 2000; // 2 seconds
 
 // Import big lists from configuration files
-const configGoals = require('./config/goals');
-const configInfo = require('./config/info');
-const configUsers = require('./config/users');
-
-const { goalList } = configGoals;
-const { infoList } = configInfo;
-const { userList } = configUsers;
+const goalList = require('./config/goals');
+const infoList = require('./config/info');
+const userList = require('./config/users');
+const builds = require('./config/builds');
 
 const races = new Map();
-const rblacklist = [];
+const blackList = [];
 
 function RemBlackList(user) {
-    rblacklist.splice(rblacklist.indexOf(user), 1);
-    logger.info(`Removed ${user} from blacklist. -> ${rblacklist}`);
+    blackList.splice(blackList.indexOf(user), 1);
+    logger.info(`Removed ${user} from blacklist. -> ${blackList}`);
 }
 
 function genRaceChar(race, ignored = false) {
@@ -51,7 +48,9 @@ function genRaceChar(race, ignored = false) {
     while (race.banChars.indexOf(characterArray[randomNum].toLowerCase()) > -1) {
         randomNum = Math.floor(Math.random() * (max - min + 1) + min);
     }
-    if (!ignored) { race.banChars.push(characterArray[randomNum].toLowerCase()); }
+    if (!ignored) {
+        race.banChars.push(characterArray[randomNum].toLowerCase());
+    }
     return characterArray[randomNum];
 }
 
@@ -67,7 +66,9 @@ function genRaceStarter(race, ignored = false) {
     while (race.banBuilds.indexOf(instantStartArray[randomNum].toLowerCase()) > -1) {
         randomNum = Math.floor(Math.random() * (max - min + 1) + min);
     }
-    if (!ignored) { race.banBuilds.push(instantStartArray[randomNum].toLowerCase()); }
+    if (!ignored) {
+        race.banBuilds.push(instantStartArray[randomNum].toLowerCase());
+    }
     return instantStartArray[randomNum];
 }
 
@@ -168,7 +169,7 @@ const ignoreList = [];
 let raceStarter;
 
 // Initialize the user list
-for (let i = 0; i < userList.length; i++) { // Go through the user list
+for (let i = 0; i < userList.length; i++) {
     // Set their name to be lower case
     userList[i].srl = userList[i].srl.toLowerCase();
     userList[i].twitch = userList[i].twitch.toLowerCase();
@@ -357,7 +358,7 @@ function getAverageTimes(IRC, channel, rawPlayer, requester, listAll = false) {
     let player = rawPlayer.trim();
 
     // If the user is requesting a player's Twitch name instead of their SRL name, maybe we can fix the mistake automatically
-    for (let i = 0; i < userList.length; i++) { // Go through the player list
+    for (let i = 0; i < userList.length; i++) {
         if (userList[i].twitch === player.toLowerCase()) {
             player = userList[i].srl;
             break;
@@ -402,7 +403,11 @@ function getAverageTimes(IRC, channel, rawPlayer, requester, listAll = false) {
                 };
             }
             const stream = collection.find({
-                results: { $elemMatch: { player: re } },
+                results: {
+                    $elemMatch: {
+                        player: re,
+                    },
+                },
                 goal: /Beat The Chest with Judas \(Jud6s Mod v1\.\d+, &quot;BLCK CNDL&quot; easter egg\)/,
             }, options).stream();
 
@@ -614,9 +619,11 @@ function getLeaderboard(IRC, channel, requester) {
 
                     // Increment their stats
                     leaderboard[player].numRaces += 1;
-                    if (raceTime === -1 || raceTime === -2) { // They quit or were disqualified
+                    if (raceTime === -1 || raceTime === -2) {
+                        // They quit or were disqualified
                         leaderboard[player].numForfeits += 1;
-                    } else { // They finished the race
+                    } else {
+                        // They finished the race
                         leaderboard[player].totalTime += raceTime;
                     }
                 }
@@ -935,7 +942,7 @@ function getAllRaces(IRC, channel, rawPlayer, requester) {
     let player = rawPlayer.trim();
 
     // If the user is requesting a player's Twitch name instead of their SRL name, maybe we can fix the mistake automatically
-    for (let i = 0; i < userList.length; i++) { // Go through the player list
+    for (let i = 0; i < userList.length; i++) {
         if (userList[i].twitch === player.toLowerCase()) {
             player = userList[i].srl;
             break;
@@ -970,7 +977,11 @@ function getAllRaces(IRC, channel, rawPlayer, requester) {
                 sort: [['id', 'desc']], // Get every race that they have ever done, with the most recent being at the top
             };
             const stream = collection.find({
-                results: { $elemMatch: { player: re } },
+                results: {
+                    $elemMatch: {
+                        player: re,
+                    },
+                },
             }, options).stream();
 
             // For each race
@@ -1312,7 +1323,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
             }
 
             // Announce that the racer has joined the race in their Twitch chat
-            for (let i = 0; i < userList.length; i++) { // Go through the user list
+            for (let i = 0; i < userList.length; i++) {
                 if (userList[i].srl === racer) {
                     // Compile the message
                     const twitchChannel = `#${userList[i].twitch}`;
@@ -1338,7 +1349,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
             }
 
             // Announce that the racer has left the race in their Twitch chat
-            for (let i = 0; i < userList.length; i++) { // Go through the user list
+            for (let i = 0; i < userList.length; i++) {
                 if (userList[i].srl === racer) {
                     // Compile the message
                     const twitchChannel = `#${userList[i].twitch}`;
@@ -1353,8 +1364,9 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
         }
 
         // Look for a race starting in 10/5/0 seconds
-        for (let i = 0; i < userList.length; i++) { // Go through the user list
-            for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+        for (let i = 0; i < userList.length; i++) {
+            // Go through the entrants for this race
+            for (let j = 0; j < raceList[channel].entrants.length; j++) {
                 if (userList[i].srl === raceList[channel].entrants[j]) {
                     if (message.match(/^.4.The race will begin in 10 seconds!..$/)) {
                         // Compile the message
@@ -1490,8 +1502,9 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
             SRLBot.action(channel, getPeopleLeft(channel));
 
             // Announce that someone finished in Twitch chat
-            for (let i = 0; i < userList.length; i++) { // Go through the user list
-                for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+            for (let i = 0; i < userList.length; i++) {
+                // Go through the entrants for this race
+                for (let j = 0; j < raceList[channel].entrants.length; j++) {
                     if (userList[i].srl === raceList[channel].entrants[j]) {
                         // Compile the message
                         const twitchChannel = `#${userList[i].twitch}`;
@@ -1527,8 +1540,9 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
             SRLBot.action(channel, getPeopleLeft(channel));
 
             // Announce that someone quit in Twitch chat
-            for (let i = 0; i < userList.length; i++) { // Go through the player list
-                for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+            for (let i = 0; i < userList.length; i++) {
+                // Go through the entrants for this race
+                for (let j = 0; j < raceList[channel].entrants.length; j++) {
                     if (userList[i].srl === raceList[channel].entrants[j]) {
                         // Announce it
                         const twitchChannel = `#${userList[i].twitch}`;
@@ -1562,8 +1576,9 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
             SRLBot.action(channel, getPeopleLeft(channel));
 
             // Announce that someone did a ".undone" in Twitch chat
-            for (let i = 0; i < userList.length; i++) { // Go through the user list
-                for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+            for (let i = 0; i < userList.length; i++) {
+                // Go through the entrants for this race
+                for (let j = 0; j < raceList[channel].entrants.length; j++) {
                     if (userList[i].srl === raceList[channel].entrants[j]) {
                         // Announce it
                         const twitchChannel = `#${userList[i].twitch}`;
@@ -1590,7 +1605,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
 
         // Check to see if the person commenting is actually participating in the race
         let foundRacer = false;
-        for (let i = 0; i < raceList[channel].entrants.length; i++) { // Go through the entrants for this race
+        for (let i = 0; i < raceList[channel].entrants.length; i++) {
             if (user.toLowerCase() === raceList[channel].entrants[i]) {
                 foundRacer = true;
             }
@@ -1612,8 +1627,9 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
         raceList[channel].commentedList.push(user.toLowerCase());
 
         // Announce the comment to Twitch
-        for (let i = 0; i < userList.length; i++) { // Go through the user list
-            for (let j = 0; j < raceList[channel].entrants.length; j++) { // Go through the entrants for this race
+        for (let i = 0; i < userList.length; i++) {
+            // Go through the entrants for this race
+            for (let j = 0; j < raceList[channel].entrants.length; j++) {
                 if (userList[i].srl === raceList[channel].entrants[j]) {
                     // Announce it
                     if (userList[i].echoComments === true) {
@@ -1637,7 +1653,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
         SRLBot.say(channel, 'Use the "!goals" command to see my goal-related commands.');
     } else if (message === '!goals') {
         SRLBot.say(channel, 'I\'m programmed to accept the following goal-related commands:');
-        for (const goal of Object.keys(goalList)) { // Go through the goal list
+        for (const goal of Object.keys(goalList)) {
             let goalMessage = `  .${goal}`;
             const spacing = 13 - goal.length; // Pad with spaces so that it is properly aligned
             for (let i = 0; i < spacing; i++) {
@@ -1791,7 +1807,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
 
         // A non-special ".set" command
         } else {
-            for (const goal of Object.keys(goalList)) { // Go through the goal list
+            for (const goal of Object.keys(goalList)) {
                 if (message === `.${goal}`) {
                     SRLBot.say(channel, goalList[goal]);
                 }
@@ -1800,7 +1816,7 @@ SRLBot.addListener('message', (user, channel, rawMessage) => {
     }
 
     // Info commands
-    for (const info of Object.keys(infoList)) { // Go through the info list
+    for (const info of Object.keys(infoList)) {
         // These commands are already used on #speedrunslive
         if ((message === '.help' || message === '!help' ||
              message === '.faq' || message === '!faq' ||
@@ -1915,7 +1931,7 @@ SRLBot.addListener('pm', (user, message) => {
     logger.info(`SRL PM <${user}> ${message}`);
 
     // .join (1/2)
-    for (let i = 0; i < userList.length; i++) { // Go through the user list
+    for (let i = 0; i < userList.length; i++) {
         if (user.toLowerCase() === userList[i].srl && message.match(/^.join .+$/)) {
             const channelToJoin = `#${message.match(/^.join (.+)$/)[1]}`;
             channelsToJoin.push(channelToJoin);
@@ -2170,7 +2186,7 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
     }
 
     // Info commands
-    for (const info of Object.keys(infoList)) { // Go through the info list
+    for (const info of Object.keys(infoList)) {
         if (message === `!${info}`) {
             TwitchBot.say(channel, infoList[info]);
         }
@@ -2198,7 +2214,7 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
         const TwitchChannel = channel.match(/^#(.+)$/)[1];
         let foundSRL = false;
         let SRLName;
-        for (let i = 0; i < userList.length; i++) { // Go through the player list
+        for (let i = 0; i < userList.length; i++) {
             if (userList[i].twitch === TwitchChannel) {
                 SRLName = userList[i].srl;
                 foundSRL = true;
@@ -2313,7 +2329,7 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
             [, player] = m;
         } else {
             const TwitchChannel = channel.match(/#(.+)/)[1];
-            for (let i = 0; i < userList.length; i++) { // Go through the user list
+            for (let i = 0; i < userList.length; i++) {
                 if (userList[i].twitch === TwitchChannel) {
                     player = userList[i].srl;
                     break;
@@ -2329,7 +2345,7 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
             [, player] = m;
         } else {
             const TwitchChannel = channel.match(/#(.+)/)[1];
-            for (let i = 0; i < userList.length; i++) { // Go through the user list
+            for (let i = 0; i < userList.length; i++) {
                 if (userList[i].twitch === TwitchChannel) {
                     player = userList[i].srl;
                     break;
@@ -2381,24 +2397,36 @@ DiscordBot.on('ready', () => {
 });
 
 DiscordBot.on('message', (message) => {
-    if (message.author.bot) { return; }
-    if (message.channel.type !== 'text') { return; }
+    if (message.author.bot) {
+        return;
+    }
+    if (message.channel.type !== 'text') {
+        return;
+    }
     // Local variables
     const chan = message.channel;
     const user = `${message.author.username}#${message.author.discriminator}`;
-    const msg = message.content;
+    let msg = message.content;
 
     // Log all messages
     logger.info(`DISCORD [${chan.name}] <${user}> ${msg}`);
 
-    for (const info of Object.keys(infoList)) { // Go through the info list
+    // A "!" at the beginning of the message indicates a command
+    if (msg[0] !== '!') {
+        return;
+    }
+    msg = msg.substr(1); // Chop off the "!""
+
+    // Go through the info list
+    for (const info of Object.keys(infoList)) {
         // Discord specific exclusions
-        if (msg === '!iotr') {
-            break;
+        if (msg === 'iotr') {
+            return;
         }
 
-        if (msg === `!${info}`) {
+        if (msg === info) {
             message.channel.send(infoList[info]);
+            return;
         }
     }
 
@@ -2419,11 +2447,15 @@ DiscordBot.on('message', (message) => {
             if (m2) {
                 randomMin = 1;
                 [, randomMax] = m;
-            } else if (msg === '!roll' || msg === '!rand' || msg === '!random') {
+            } else if (
+                msg === '!roll' ||
+                msg === '!rand' ||
+                msg === '!random'
+            ) {
                 randomMin = 1;
                 randomMax = 31;
             } else {
-            // Make it invalid so that they get added to the ignore list
+                // Make it invalid so that they get added to the ignore list
                 randomMin = -1;
                 randomMax = -1;
             }
@@ -2447,8 +2479,12 @@ DiscordBot.on('message', (message) => {
     case 'match':
     case 'startrace':
     case 'startmatch':
-        if (chan.name.match(/^boi-[\w]{5}$/) !== null) { break; }
-        if (rblacklist.findIndex(e => e.toString() === message.author.toString()) > -1) { break; }
+        if (chan.name.match(/^boi-[\w]{5}$/) !== null) {
+            break;
+        }
+        if (blackList.findIndex(e => e.toString() === message.author.toString()) > -1) {
+            break;
+        }
         if (message.mentions.members.size < 2) {
             chan.send(`[SYNTAX] ${command} requires at least 2 players as mention with discordtag e.x !${command} @Player1#1234 @Player2#5678`);
         } else {
@@ -2481,8 +2517,10 @@ DiscordBot.on('message', (message) => {
                     v.send(`${racers[tcount]}, you start! (randomly decided)`);
                     const modRole = message.guild.roles.find('name', 'Volunteer');
                     if (!message.member.roles.has(modRole.id)) {
-                        rblacklist.push(message.author);
-                        setTimeout(() => { RemBlackList(message.author); }, 1000 * 60 * 10);
+                        blackList.push(message.author);
+                        setTimeout(() => {
+                            RemBlackList(message.author);
+                        }, 1000 * 60 * 10);
                     }
                 })
                 .catch((error) => {
@@ -2492,20 +2530,43 @@ DiscordBot.on('message', (message) => {
         }
         break;
     case 'ban': {
-        if (chan.name.match(/^boi-[\w]{5}$/) == null) { break; }
-        if (!races.has(chan.name)) { chan.send('No DB race found for this channel, wut iz goin on !!!11!!'); break; }
+        if (chan.name.match(/^boi-[\w]{5}$/) === null) {
+            break;
+        }
+        if (!races.has(chan.name)) {
+            chan.send('No DB race found for this channel, wut iz goin on !!!11!!');
+            break;
+        }
         const rSettings = races.get(chan.name);
-        if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) { break; }
-        if (rSettings.state >= 2) { break; }
-        if (rSettings.counter !== rSettings.players.findIndex(e => e.toString() === message.author.toString())) { chan.send('Wait your turn'); break; }
+        if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) {
+            break;
+        }
+        if (rSettings.state >= 2) {
+            break;
+        }
+        if (rSettings.counter !== rSettings.players.findIndex(e => e.toString() === message.author.toString())) {
+            chan.send('Wait your turn'); break;
+        }
         if (rSettings.state === 0) {
-            if (args.length < 1) { chan.send('Syntax: !ban character'); break; }
+            if (args.length < 1) {
+                chan.send('Syntax: !ban character'); break;
+            }
             const char = args.length > 1 ? args.join(' ').toLowerCase() : args[0].toLowerCase();
-            if (characterArray.findIndex(e => e.toLowerCase() === char) < 0) { chan.send('Character doesn\'t exist'); break; }
-            if (rSettings.banChars.findIndex(e => e === char) >= 0) { chan.send(`Character already banned - ${char}`); break; }
+            if (characterArray.findIndex(e => e.toLowerCase() === char) < 0) {
+                chan.send('Character doesn\'t exist');
+                break;
+            }
+            if (rSettings.banChars.findIndex(e => e === char) >= 0) {
+                chan.send(`Character already banned - ${char}`);
+                break;
+            }
             rSettings.banChars.push(char);
             logger.info(`added ${char} to ${rSettings.banChars}`);
-            if (rSettings.counter >= rSettings.players.length - 1) { rSettings.counter = 0; } else { rSettings.counter += 1; }
+            if (rSettings.counter >= rSettings.players.length - 1) {
+                rSettings.counter = 0;
+            } else {
+                rSettings.counter += 1;
+            }
             if (6 - rSettings.banChars.length > 0) {
                 chan.send(`Banned character ${char}, ${6 - rSettings.banChars.length} characters left to ban. ${rSettings.players[rSettings.counter]}, you're next!`);
             } else {
@@ -2515,13 +2576,26 @@ DiscordBot.on('message', (message) => {
                 chan.send(`${rSettings.players[rSettings.counter]}, you start!`);
             }
         } else if (rSettings.state === 1) {
-            if (args.length < 1) { chan.send('Syntax: !ban starter'); break; }
+            if (args.length < 1) {
+                chan.send('Syntax: !ban starter');
+                break;
+            }
             const starter = args.length > 1 ? args.join(' ').toLowerCase() : args[0].toLowerCase();
-            if (instantStartArray.findIndex(e => e.toLowerCase() === starter) < 0) { chan.send('Starter doesn\'t exist'); break; }
-            if (rSettings.banBuilds.findIndex(e => e === starter) >= 0) { chan.send(`Starter already banned - ${starter}`); break; }
+            if (instantStartArray.findIndex(e => e.toLowerCase() === starter) < 0) {
+                chan.send('Starter doesn\'t exist');
+                break;
+            }
+            if (rSettings.banBuilds.findIndex(e => e === starter) >= 0) {
+                chan.send(`Starter already banned - ${starter}`);
+                break;
+            }
             rSettings.banBuilds.push(starter);
             logger.info(`added ${starter} to ${rSettings.banBuilds}`);
-            if (rSettings.counter >= rSettings.players.length - 1) { rSettings.counter = 0; } else { rSettings.counter += 1; }
+            if (rSettings.counter >= rSettings.players.length - 1) {
+                rSettings.counter = 0;
+            } else {
+                rSettings.counter += 1;
+            }
             if (6 - rSettings.banBuilds.length > 0) {
                 chan.send(`Banned starter ${starter}, ${6 - rSettings.banBuilds.length} starter left to ban. ${rSettings.players[rSettings.counter]}, you're next!`);
             } else {
@@ -2534,19 +2608,32 @@ DiscordBot.on('message', (message) => {
         break;
     }
     case 'end': {
-        if (chan.name.match(/^boi-[\w]{5}$/) == null) { break; }
-        if (!races.has(chan.name)) { chan.send('No DB race found for this channel, wut iz goin on !!!11!!'); break; }
+        if (chan.name.match(/^boi-[\w]{5}$/) == null) {
+            break;
+        }
+        if (!races.has(chan.name)) {
+            chan.send('No DB race found for this channel, wut iz goin on !!!11!!');
+            break;
+        }
         const rSettings = races.get(chan.name);
-        if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) { break; }
-        if (rSettings.state === 3) { break; }
+        if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) {
+            break;
+        }
+        if (rSettings.state === 3) {
+            break;
+        }
         rSettings.state = 3;
-        setTimeout(() => { EndRace(rSettings, `!end command used by ${user}`); }, 1000 * 60 * 5);
+        setTimeout(() => {
+            EndRace(rSettings, `!end command used by ${user}`);
+        }, 1000 * 60 * 5);
         chan.send('Race ended, channel will be destroyed in 5 minutes.');
         break;
     }
     case 'cleanup': {
         const modRole = message.guild.roles.find('name', 'Volunteer');
-        if (!message.member.roles.has(modRole.id)) { break; }
+        if (!message.member.roles.has(modRole.id)) {
+            break;
+        }
         for (const [k, v] of message.guild.channels) {
             if (v.name.match(/^boi-[\w]{5}$/)) {
                 v.delete('races cleanup')

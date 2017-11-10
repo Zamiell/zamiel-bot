@@ -1,4 +1,4 @@
-const userList = [
+module.exports = [
     {
         srl: 'Zamiel',
         twitch: 'Zamiell',
@@ -177,4 +177,3 @@ const userList = [
         twitch: 'ShoottheMoose',
     },
 ];
-exports.userList = userList;
