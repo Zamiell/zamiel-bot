@@ -2489,11 +2489,11 @@ DiscordBot.on('message', (message) => {
                 // Announce the new phase
                 let sayString = `Starting a tournament race between ${racers[0]} and ${racers[1]}.\n\n`;
                 sayString += '```-- CHARACTER BAN PHASE --\n\n';
-                sayString += 'Each player gets to ban 3 characters.\n';
-                sayString += 'Use the `!ban` command to select a character.\n';
-                sayString += 'e.g. `!ban 3` (to ban the 3rd character in the list)```\n\n';
+                sayString += '- Each player gets to ban 3 characters.\n';
+                sayString += '- Use the "!ban" command to select a character.\n';
+                sayString += '  e.g. "!ban 3" (to ban the 3rd character in the list)```\n\n';
                 sayString += `${racers[startingPlayer]}, you start! (randomly decided)\n\n`;
-                sayString += getRemainingCharacters(rSettings);
+                sayString += getRemaining('characters', rSettings);
                 v.send(sayString);
 
                 // Prevent this person from creating another race for 10 minutes
@@ -2593,15 +2593,15 @@ DiscordBot.on('message', (message) => {
             const bansLeft = rSettings.characters.length - characters.length + discordNumBans;
             if (bansLeft > 0) {
                 sayString += `${rSettings.players[rSettings.counter]}, you're next!\n\n`;
-                sayString += getRemainingCharacters(rSettings);
+                sayString += getRemaining('characters', rSettings);
                 chan.send(sayString);
             } else {
                 sayString += '\n```-- STARTING BUILD BAN PHASE --\n\n';
-                sayString += 'Each player gets to ban 3 starting builds.\n';
-                sayString += 'Use the `!ban` command to select a build.\n';
-                sayString += 'e.g. `"!ban 3` (to ban the 3rd build in the list)```\n\n';
+                sayString += '- Each player gets to ban 3 starting builds.\n';
+                sayString += '- Use the "!ban" command to select a build.\n';
+                sayString += '  e.g. "!ban 3" (to ban the 3rd build in the list)```\n\n';
                 sayString += `${rSettings.players[rSettings.counter]}, you're next!\n\n`;
-                sayString += getRemainingBuilds(rSettings);
+                sayString += getRemaining('builds', rSettings);
                 chan.send(sayString);
                 rSettings.state = 1;
             }
@@ -2615,7 +2615,7 @@ DiscordBot.on('message', (message) => {
             let sayString = `Banned **${buildName}**.\n`;
             if (bansLeft > 0) {
                 sayString += `${rSettings.players[rSettings.counter]}, you're next!\n\n`;
-                sayString += getRemainingBuilds(rSettings);
+                sayString += getRemaining('builds', rSettings);
                 chan.send(sayString);
             } else {
                 sayString += '\n```-- MATCH DETAILS --\n\n';
@@ -2708,34 +2708,47 @@ DiscordBot.on('disconnect', (erMsg, code) => {
     Functions for Discord bot race management
 */
 
-function getRemainingCharacters(rSettings) {
-    const bansLeft = rSettings.characters.length - characters.length + discordNumBans;
-    let sayString = `**${bansLeft} ban`; // In Discord, double asterisks indicate bold text
-    if (bansLeft > 0) {
-        sayString += 's';
+function getRemaining(type, rSettings) {
+    // Build column 1
+    const lines = [];
+    let column1length = 0;
+    for (let i = 1; i <= Math.floor(rSettings[type].length / 2); i++) {
+        const thing = rSettings[type][i];
+        const line = `${i} - ${(type === 'builds' ? getBuildName(thing) : thing)}`;
+        lines.push(line);
+        if (line.length > column1length) {
+            column1length = line.length;
+        }
     }
-    sayString += ' to go.**\n';
-    sayString += 'Current characters remaining:\n\n';
-    sayString += '```\n';
-    for (let i = 1; i < rSettings.characters.length; i++) {
-        sayString += `${i} - ${rSettings.characters[i]}\n`;
-    }
-    sayString += '```';
-    return sayString;
-}
 
-function getRemainingBuilds(rSettings) {
-    const bansLeft = rSettings.builds.length - builds.length + discordNumBans;
+    // Add padding to column 1
+    column1length += 6; // A minimum of 6 spaces in between columns
+    for (let i = 0; i < lines.length; i++) {
+        while (lines[i].length < column1length) {
+            lines[i] += ' ';
+        }
+    }
+
+    // Build column 2
+    let lineCounter = 0;
+    for (let i = Math.floor(rSettings[type].length / 2) + 1; i < rSettings[type].length; i++) {
+        const thing = rSettings[type][i];
+        const line = `${i} - ${(type === 'builds' ? getBuildName(thing) : thing)}`;
+        lines[lineCounter] += line;
+        lineCounter += 1;
+    }
+
+    // Make the string
+    const bansLeft = rSettings[type].length - (type === 'builds' ? builds.length : characters.length) + discordNumBans;
     let sayString = `**${bansLeft} ban`; // In Discord, double asterisks indicate bold text
     if (bansLeft > 0) {
         sayString += 's';
     }
     sayString += ' to go.**\n';
-    sayString += 'Current builds remaining:\n\n';
+    sayString += `Current ${type} remaining:\n\n`;
     sayString += '```\n';
-    for (let i = 1; i < rSettings.builds.length; i++) {
-        const build = rSettings.builds[i];
-        sayString += `${i} - ${getBuildName(build)}\n`;
+    for (const line of lines) {
+        sayString += `${line}\n`;
     }
     sayString += '```';
     return sayString;

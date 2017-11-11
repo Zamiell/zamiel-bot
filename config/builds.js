@@ -49,22 +49,19 @@ module.exports = [
     [{ id: 68,  name: "Technology" },             // 28
      { id: 132, name: "A Lump of Coal" }],
 
-    [{ id: 329, name: "The Ludovico Technique" }, // 29
+    [{ id: 329, name: "Ludovico" }, // 29
      { id: 104, name: "The Parasite" }],
 
     [{ id: 257, name: "Fire Mind" },              // 30
      { id: 600, name: "13 luck" }],
 
      [{ id: 524, name: "Technology Zero" },       // 31
-      { id: 529, name: "Pop!" },
-      { id: 48,  name: "Cupid's Arrow" }],
+      { id: 529, name: "more" }],
 
     // Custom starts (with an active item)
     [{ id: 40,  name: "Kamikaze!" },              // 32
      { id: 375, name: "Host Hat" }],
 
     [{ id: 441, name: "Mega Blast" },             // 33
-     { id: 63,  name: "The Battery" },
-     { id: 156, name: "Habit" },
-     { id: 205, name: "Sharp Plug" }],
+     { id: 63,  name: "more" }],
 ];
