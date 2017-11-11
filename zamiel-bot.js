@@ -24,7 +24,7 @@ const goalSetDelay = 2000; // 2 seconds
 
 // Discord configuration
 const discordChannelPrefix = 'race-';
-const discordRoleName = 'Volunteer';
+const discordRoleName = 'Volunteers';
 const discordNumBans = 6;
 
 // Import big lists from configuration files
@@ -2618,11 +2618,11 @@ DiscordBot.on('message', (message) => {
                 sayString += getRemainingBuilds(rSettings);
                 chan.send(sayString);
             } else {
-                sayString += '\n```-- ALL DONE --\n\n';
+                sayString += '\n```-- MATCH DETAILS --\n\n';
                 for (let i = 1; i <= 3; i++) {
-                    sayString += `Match ${i}:\n`;
+                    sayString += `Round ${i}:\n`;
                     sayString += `\tCharacter: ${genRaceCharacter(rSettings)}\n`;
-                    sayString += `\tBuild: ${genRaceBuild(rSettings)}\n`;
+                    sayString += `\tBuild:     ${genRaceBuild(rSettings)}\n\n`;
                 }
                 sayString += '```\n\n';
                 sayString += 'If I made a mistake somehow, you can use `!randchar` and `!randbuild` to manually choose characters and builds.\n\n';
