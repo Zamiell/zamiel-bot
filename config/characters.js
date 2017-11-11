@@ -1,17 +1,18 @@
 module.exports = [
-    'Isaac', // 0
-    'Magdalene', // 1
-    'Cain', // 2
-    'Judas', // 3
-    'Blue Baby', // 4
-    'Eve', // 5
-    'Samson', // 6
-    'Azazel', // 7
-    'Lazarus', // 8
-    'Eden', // 9
-    'The Lost', // 10
-    'Lilith', // 11
-    'Keeper', // 12
-    'Apollyon', // 13
-    'Samael', // 14
+    null, // We want the array to start at element 1
+    'Isaac', // 1
+    'Magdalene', // 2
+    'Cain', // 3
+    'Judas', // 4
+    'Blue Baby', // 5
+    'Eve', // 6
+    'Samson', // 7
+    'Azazel', // 8
+    'Lazarus', // 9
+    'Eden', // 10
+    'The Lost', // 11
+    'Lilith', // 12
+    'Keeper', // 13
+    'Apollyon', // 14
+    'Samael', // 15
 ];

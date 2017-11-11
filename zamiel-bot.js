@@ -21,78 +21,35 @@ const numAverageRacesToUse = 50;
 const numRacesToAdvert = 999999;
 const advertMessage = 'Sign up for Isaac events. See the list/schedule here: http://pastebin.com/q9Y3MRdT';
 const goalSetDelay = 2000; // 2 seconds
-const discordChannelPrefix = 'race';
+
+// Discord configuration
+const discordChannelPrefix = 'race-';
 const discordRoleName = 'Volunteer';
+const discordNumBans = 6;
 
 // Import big lists from configuration files
 const goalList = require('./config/goals');
 const infoList = require('./config/info');
 const userList = require('./config/users');
-const characterArray = require('./config/characters');
+const characters = require('./config/characters');
 const builds = require('./config/builds');
 
 const races = new Map();
 const blacklist = [];
-
-function Remblacklist(user) {
-    blacklist.splice(blacklist.indexOf(user), 1);
-    logger.info(`Removed ${user} from blacklist. -> ${blacklist}`);
-}
-
-function genRaceChar(race, ignored = false) {
-    // Get the random number
-    const minNumber = 0;
-    const maxNumber = characterArray.length - 1;
-
-    // Get a random number between minNumber and maxNumber
-    const min = parseInt(minNumber, 10);
-    const max = parseInt(maxNumber, 10);
-    let randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-    while (race.banChars.indexOf(characterArray[randomNum].toLowerCase()) > -1) {
-        randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-    }
-    if (!ignored) {
-        race.banChars.push(characterArray[randomNum].toLowerCase());
-    }
-    return characterArray[randomNum];
-}
-
-function genRaceStarter(race, ignored = false) {
-    // Get the random number
-    const minNumber = 0;
-    const maxNumber = instantStartArray.length - 1;
-
-    // Get a random number between minNumber and maxNumber
-    const min = parseInt(minNumber, 10);
-    const max = parseInt(maxNumber, 10);
-    let randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-    while (race.banBuilds.indexOf(instantStartArray[randomNum].toLowerCase()) > -1) {
-        randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-    }
-    if (!ignored) {
-        race.banBuilds.push(instantStartArray[randomNum].toLowerCase());
-    }
-    return instantStartArray[randomNum];
-}
-
-function EndRace(race, reason) {
-    race.channel.delete(`${reason}`);
-    races.delete(race);
-}
 
 // Import the environment variables defined in the ".env" file
 require('dotenv').config();
 
 // Set up the 3 servers
 const SRLBot = new irc.Client('irc.speedrunslive.com', 'ZamielBot', {
-    debug: true,
+    debug: false,
     showErrors: true,
     channels: ['#speedrunslive', '#lemonparty', '#isaac'],
     autoConnect: false,
 });
 const TwitchBot = new tmi.client({ // eslint-disable-line new-cap
     options: {
-        debug: true,
+        debug: false,
     },
     connection: {
         reconnect: true,
@@ -1160,7 +1117,7 @@ function getRandomCharacter(IRC, channel, rawUser) {
 
     // Get the random number
     const minNumber = 0;
-    const maxNumber = characterArray.length - 1;
+    const maxNumber = characters.length - 1;
 
     // Get a random number between minNumber and maxNumber
     const min = parseInt(minNumber, 10);
@@ -1168,7 +1125,7 @@ function getRandomCharacter(IRC, channel, rawUser) {
     const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
 
     // Announce it
-    const sayString = `Random character: ${characterArray[randomNum]}`;
+    const sayString = `Random character: ${characters[randomNum]}`;
     if (IRC === 'SRL') {
         SRLBot.say(channel, sayString);
     } else if (IRC === 'Twitch') {
@@ -1211,8 +1168,8 @@ function refillInstantStartRandomArray() {
 
 function refillCharacterRandomArray() {
     // Add all the characters to the array
-    for (let i = 0; i < characterArray.length; i++) {
-        characterRandomArray.push(characterArray[i]);
+    for (let i = 0; i < characters.length; i++) {
+        characterRandomArray.push(characters[i]);
     }
 
     // Randomize it
@@ -2392,17 +2349,16 @@ DiscordBot.on('message', (message) => {
     // Local variables
     const chan = message.channel;
     const user = `${message.author.username}#${message.author.discriminator}`;
-    let msg = message.content;
+    let msg = message.content.trim(); // Remove whitespace from both sides of the string
 
     // Log all messages
     logger.info(`DISCORD [${chan.name}] <${user}> ${msg}`);
 
     // A "!" at the beginning of the message indicates a command
-    if (msg[0] !== '!') {
+    if (!msg.startsWith('!')) {
         return;
     }
     msg = msg.substr(1); // Chop off the "!""
-    msg = msg.trim(); // Remove whitespace from both sides of the string
 
     // Check for "info" commands
     for (const info of Object.keys(infoList)) {
@@ -2423,6 +2379,22 @@ DiscordBot.on('message', (message) => {
     command = command.toLowerCase(); // Convert everything to lowercase for simplicity and to cast a wider net
 
     switch (command) {
+    case 'say': {
+        // Restrict this command to administrators only
+        const modRole = message.guild.roles.find('name', discordRoleName);
+        if (!modRole) {
+            logger.info(`[${message.guild.name}] The role of "${discordRoleName}" does not exist on this Discord server.`);
+            chan.send(`[ERR] The role of "${discordRoleName}" does not exist on this Discord server.`);
+            return;
+        } else if (!message.member.roles.has(modRole.id)) {
+            chan.send(`[ERR] Only "${discordRoleName}" can perform that command.`);
+            break;
+        }
+
+        // Echoing is used for test commands
+        chan.send(args.join(' '));
+        break;
+    }
     case 'roll':
     case 'rand':
     case 'random': {
@@ -2469,7 +2441,7 @@ DiscordBot.on('message', (message) => {
         break;
     case 'race': {
         // Don't allow users to start new races while already in a race channel
-        if (chan.name.startsWith(`${discordChannelPrefix}-`)) {
+        if (chan.name.startsWith(discordChannelPrefix)) {
             break;
         }
 
@@ -2480,7 +2452,7 @@ DiscordBot.on('message', (message) => {
 
         // Validate that they mentioned at least 2 unique people
         if (message.mentions.members.size < 2) {
-            chan.send(`[SYNTAX] The "${command}" command has a syntax of: \`!race @player1 @player2\``);
+            chan.send('[SYNTAX] This command has a format of: `!race @player1 @player2`');
             break;
         }
 
@@ -2488,45 +2460,53 @@ DiscordBot.on('message', (message) => {
         for (const v of message.mentions.members.values()) {
             racers.push(v);
         }
-        let rChan = `${discordChannelPrefix}-${Math.random().toString(36).substr(2, 5)}`;
-        while (races.has(rChan)) {
-            rChan = `${discordChannelPrefix}-${Math.random().toString(36).substr(2, 5)}`;
-        }
+        let rChan;
+        do {
+            const randCharacters = Math.random().toString(36).substr(2, 5);
+            rChan = `${discordChannelPrefix}${randCharacters}`;
+        } while (races.has(rChan));
         message.guild.createChannel(rChan, 'text')
             .then((v) => {
                 logger.info(`[${message.guild.name}] Created new race channel: ${v.name}`);
-                const tcount = Math.floor(Math.random() * racers.length) + 1 - 1;
+                const startingPlayer = Math.floor(Math.random() * racers.length) + 1 - 1;
                 const rSettings = {
                     server: message.guild,
                     channel: v,
                     players: racers,
                     state: 0,
-                    counter: tcount,
-                    banChars: [],
-                    banBuilds: [],
+                    // 0 is banning characters
+                    // 1 is banning starting builds
+                    // 2 is race ongoing
+                    // 3 is race ended
+                    counter: startingPlayer,
+                    characters: characters.slice(), // Make a copy of the "characters" array
+                    builds: builds.slice(), // Make a copy of the "builds" array
                     timestamp: new Date(),
                 };
                 races.set(rChan, rSettings);
                 chan.send(`[Race] Race channel ${v} created for racers ${racers[0]} and ${racers[1]}.`);
-                v.send(`Starting a tournament race between ${racers[0]} and ${racers[1]}.`);
-                v.send(`\`\`\`\n
-                    -- CHARACTER BAN PHASE --\n
-                    Each player gets to ban 3 characters.\n
-                    Use the "!ban" command to select a character.\n
-                \`\`\``);
-                v.send(`${racers[tcount]}, you start! (randomly decided)`);
-                v.send(getRemainingCharacters());
+
+                // Announce the new phase
+                let sayString = `Starting a tournament race between ${racers[0]} and ${racers[1]}.\n\n`;
+                sayString += '```-- CHARACTER BAN PHASE --\n\n';
+                sayString += 'Each player gets to ban 3 characters.\n';
+                sayString += 'Use the `!ban` command to select a character.\n';
+                sayString += 'e.g. `!ban 3` (to ban the 3rd character in the list)```\n\n';
+                sayString += `${racers[startingPlayer]}, you start! (randomly decided)\n\n`;
+                sayString += getRemainingCharacters(rSettings);
+                v.send(sayString);
+
+                // Prevent this person from creating another race for 10 minutes
+                // (unless they are an administrator)
                 const modRole = message.guild.roles.find('name', discordRoleName);
-                if (!Object.prototype.hasOwnProperty.call(modRole, 'id')) {
+                if (!modRole) {
                     logger.info(`[${message.guild.name}] The role of "${discordRoleName}" does not exist on this Discord server.`);
                     chan.send(`[ERR] The role of "${discordRoleName}" does not exist on this Discord server.`);
-                    return;
-                }
-                if (!message.member.roles.has(modRole.id)) {
+                } else if (!message.member.roles.has(modRole.id)) {
                     blacklist.push(message.author);
                     setTimeout(() => {
-                        Remblacklist(message.author);
-                    }, 1000 * 60 * 10);
+                        blacklistRemove(message.author);
+                    }, 1000 * 60 * 10); // 10 minutes
                 }
             })
             .catch((error) => {
@@ -2537,7 +2517,7 @@ DiscordBot.on('message', (message) => {
     }
     case 'ban': {
         // Ignore all non-race channels
-        if (!chan.name.startsWith(`${discordChannelPrefix}-`)) {
+        if (!chan.name.startsWith(discordChannelPrefix)) {
             break;
         }
 
@@ -2547,71 +2527,108 @@ DiscordBot.on('message', (message) => {
             break;
         }
 
+        // Ignore players who are not in this race
         const rSettings = races.get(chan.name);
         if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) {
+            chan.send(`[ERR] ${message.author.username} is not in this race.`);
             break;
         }
+
+        // Don't do anything if we are not in a banning phase
         if (rSettings.state >= 2) {
+            chan.send('[ERR] We have already banned the characters and items.');
             break;
         }
+
+        // Check to see if it is their turn
         if (rSettings.counter !== rSettings.players.findIndex(e => e.toString() === message.author.toString())) {
-            chan.send('Wait your turn'); break;
+            chan.send(`[ERR] ${message.author.username}, it is not your turn.`);
+            break;
         }
+
+        // Check to see if they provided an argument
+        if (args.length !== 1) {
+            chan.send('[ERR] The format of the ban command is: `!ban #`');
+            break;
+        }
+        const banNum = parseInt(args[0], 10);
+
+        // Check to see if it is a number
+        if (isNaN(banNum)) {
+            chan.send(`[ERR] "${args[0]}" is not a number.`);
+            break;
+        }
+
+        // Check to see if the number is in the correct range
+        const minNum = 1;
+        let maxNum;
         if (rSettings.state === 0) {
-            if (args.length < 1) {
-                chan.send('Syntax: !ban character'); break;
-            }
-            const char = args.length > 1 ? args.join(' ').toLowerCase() : args[0].toLowerCase();
-            if (characterArray.findIndex(e => e.toLowerCase() === char) < 0) {
-                chan.send('Character doesn\'t exist');
-                break;
-            }
-            if (rSettings.banChars.findIndex(e => e === char) >= 0) {
-                chan.send(`Character already banned - ${char}`);
-                break;
-            }
-            rSettings.banChars.push(char);
-            logger.info(`added ${char} to ${rSettings.banChars}`);
-            if (rSettings.counter >= rSettings.players.length - 1) {
-                rSettings.counter = 0;
+            maxNum = rSettings.characters.length - 1;
+        } else if (rSettings.state === 1) {
+            logger.info('rSettings.builds.length:', rSettings.builds.length);
+            logger.info('typeof rSettings.builds.length:', typeof rSettings.builds.length);
+            maxNum = rSettings.builds.length - 1;
+            logger.info('maxNum:', maxNum);
+            logger.info('typeof maxNum:', typeof maxNum);
+        }
+        if (banNum < minNum || banNum > maxNum) {
+            chan.send(`[ERR] The number "${banNum}" is not within the correct range (${minNum}-${maxNum}).`);
+            logger.info('GETTING HERE');
+            break;
+        }
+
+        // Increment the counter
+        rSettings.counter += 1;
+        if (rSettings.counter >= rSettings.players.length) {
+            rSettings.counter = 0;
+        }
+
+        if (rSettings.state === 0) {
+            // Delete it from the array
+            const charName = rSettings.characters[banNum];
+            rSettings.characters.splice(banNum, 1);
+            logger.info(`[${rSettings.channel}] Deleted "${charName}" (${banNum}).`);
+            let sayString = `Banned **${charName}**.\n`;
+
+            const bansLeft = rSettings.characters.length - characters.length + discordNumBans;
+            if (bansLeft > 0) {
+                sayString += `${rSettings.players[rSettings.counter]}, you're next!\n\n`;
+                sayString += getRemainingCharacters(rSettings);
+                chan.send(sayString);
             } else {
-                rSettings.counter += 1;
-            }
-            if (6 - rSettings.banChars.length > 0) {
-                chan.send(`Banned character ${char}, ${6 - rSettings.banChars.length} characters left to ban. ${rSettings.players[rSettings.counter]}, you're next!`);
-            } else {
-                chan.send(`Banned character ${char}, ${6 - rSettings.banChars.length} characters left to ban.`);
-                chan.send(`\`\`\`-- STARTER BAN PHASE -- Use !ban command to ban 6 starting builds, one per player at a time. List: ${instantStartArray.toString()}\`\`\``);
+                sayString += '\n```-- STARTING BUILD BAN PHASE --\n\n';
+                sayString += 'Each player gets to ban 3 starting builds.\n';
+                sayString += 'Use the `!ban` command to select a build.\n';
+                sayString += 'e.g. `"!ban 3` (to ban the 3rd build in the list)```\n\n';
+                sayString += `${rSettings.players[rSettings.counter]}, you're next!\n\n`;
+                sayString += getRemainingBuilds(rSettings);
+                chan.send(sayString);
                 rSettings.state = 1;
-                chan.send(`${rSettings.players[rSettings.counter]}, you start!`);
             }
         } else if (rSettings.state === 1) {
-            if (args.length < 1) {
-                chan.send('Syntax: !ban starter');
-                break;
-            }
-            const starter = args.length > 1 ? args.join(' ').toLowerCase() : args[0].toLowerCase();
-            if (instantStartArray.findIndex(e => e.toLowerCase() === starter) < 0) {
-                chan.send('Starter doesn\'t exist');
-                break;
-            }
-            if (rSettings.banBuilds.findIndex(e => e === starter) >= 0) {
-                chan.send(`Starter already banned - ${starter}`);
-                break;
-            }
-            rSettings.banBuilds.push(starter);
-            logger.info(`added ${starter} to ${rSettings.banBuilds}`);
-            if (rSettings.counter >= rSettings.players.length - 1) {
-                rSettings.counter = 0;
+            // Delete it from the array
+            const buildName = getBuildName(rSettings.builds[banNum]);
+            rSettings.builds.splice(banNum, 1);
+            logger.info(`[${rSettings.channel}] Deleted "${buildName}" (${banNum}).`);
+
+            const bansLeft = rSettings.builds.length - builds.length + discordNumBans;
+            let sayString = `Banned **${buildName}**.\n`;
+            if (bansLeft > 0) {
+                sayString += `${rSettings.players[rSettings.counter]}, you're next!\n\n`;
+                sayString += getRemainingBuilds(rSettings);
+                chan.send(sayString);
             } else {
-                rSettings.counter += 1;
-            }
-            if (6 - rSettings.banBuilds.length > 0) {
-                chan.send(`Banned starter ${starter}, ${6 - rSettings.banBuilds.length} starter left to ban. ${rSettings.players[rSettings.counter]}, you're next!`);
-            } else {
-                chan.send(`Banned starter ${starter}, ${6 - rSettings.banBuilds.length} starter left to ban.`);
-                chan.send(`\`\`\`-- ALL DONE -- Here are your race presets. Remember round 1 upper bracket is still best of 3.\n\nMatch 1: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\nMatch 2: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\nMatch 3: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\nMatch 4: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\nMatch 5: ${genRaceChar(rSettings)} | ${genRaceStarter(rSettings)}\`\`\``);
-                chan.send('If I somehow messed up you can use !randchar and !randbuild to manually generate stuff. When you\'re done with the race please use !end command');
+                sayString += '\n```-- ALL DONE --\n\n';
+                for (let i = 1; i <= 3; i++) {
+                    sayString += `Match ${i}:\n`;
+                    sayString += `\tCharacter: ${genRaceCharacter(rSettings)}\n`;
+                    sayString += `\tBuild: ${genRaceBuild(rSettings)}\n`;
+                }
+                sayString += '```\n\n';
+                sayString += 'If I made a mistake somehow, you can use `!randchar` and `!randbuild` to manually choose characters and builds.\n\n';
+                sayString += 'When the race is over, please use the `!end` command to delete the channel.';
+
+                chan.send(sayString);
                 rSettings.state = 2;
             }
         }
@@ -2619,7 +2636,7 @@ DiscordBot.on('message', (message) => {
     }
     case 'end': {
         // Ignore all non-race channels
-        if (!chan.name.startsWith(`${discordChannelPrefix}-`)) {
+        if (!chan.name.startsWith(discordChannelPrefix)) {
             break;
         }
 
@@ -2629,35 +2646,42 @@ DiscordBot.on('message', (message) => {
             break;
         }
 
+        // Ignore players who are not in this race
         const rSettings = races.get(chan.name);
         if (rSettings.players.findIndex(e => e.toString() === message.author.toString()) < 0) {
+            chan.send(`[ERR] ${message.author.username} is not in this race.`);
             break;
         }
+
+        // Check to see that the race is not ended already
         if (rSettings.state === 3) {
+            chan.send('[ERR] This race is already ended.');
             break;
         }
+
+        // End the race
         rSettings.state = 3;
         setTimeout(() => {
-            EndRace(rSettings, `!end command used by ${user}`);
-        }, 1000 * 60 * 5);
+            endRace(rSettings, `!end command used by ${user}`);
+        }, 1000 * 60 * 5); // 5 minutes
         chan.send('Race ended, channel will be destroyed in 5 minutes.');
         break;
     }
     case 'cleanup': {
-        // Only administrators can do a cleanup command
+        // Restrict this command to administrators only
         const modRole = message.guild.roles.find('name', discordRoleName);
-        if (!Object.prototype.hasOwnProperty.call(modRole, 'id')) {
+        if (!modRole) {
             logger.info(`[${message.guild.name}] The role of "${discordRoleName}" does not exist on this Discord server.`);
             chan.send(`[ERR] The role of "${discordRoleName}" does not exist on this Discord server.`);
             return;
-        }
-        if (!message.member.roles.has(modRole.id)) {
+        } else if (!message.member.roles.has(modRole.id)) {
+            chan.send(`[ERR] Only "${discordRoleName}" can perform that command.`);
             break;
         }
 
         // Look for race channels
         for (const [k, v] of message.guild.channels) {
-            if (v.name.startsWith(`${discordChannelPrefix}-`)) {
+            if (v.name.startsWith(discordChannelPrefix)) {
                 v.delete('races cleanup')
                     .then(channel => logger.info(`Cleanup channel ${channel.name}`))
                     .catch(error => logger.info(error));
@@ -2665,6 +2689,8 @@ DiscordBot.on('message', (message) => {
                 races.delete(v.name);
             }
         }
+
+        chan.send('Cleanup complete!');
         break;
     }
     default:
@@ -2678,5 +2704,80 @@ DiscordBot.on('disconnect', (erMsg, code) => {
     DiscordBot.login(process.env.DISCORD_TOKEN);
 });
 
-function getRemainingCharacters() {
+/*
+    Functions for Discord bot race management
+*/
+
+function getRemainingCharacters(rSettings) {
+    const bansLeft = rSettings.characters.length - characters.length + discordNumBans;
+    let sayString = `**${bansLeft} ban`; // In Discord, double asterisks indicate bold text
+    if (bansLeft > 0) {
+        sayString += 's';
+    }
+    sayString += ' to go.**\n';
+    sayString += 'Current characters remaining:\n\n';
+    sayString += '```\n';
+    for (let i = 1; i < rSettings.characters.length; i++) {
+        sayString += `${i} - ${rSettings.characters[i]}\n`;
+    }
+    sayString += '```';
+    return sayString;
+}
+
+function getRemainingBuilds(rSettings) {
+    const bansLeft = rSettings.builds.length - builds.length + discordNumBans;
+    let sayString = `**${bansLeft} ban`; // In Discord, double asterisks indicate bold text
+    if (bansLeft > 0) {
+        sayString += 's';
+    }
+    sayString += ' to go.**\n';
+    sayString += 'Current builds remaining:\n\n';
+    sayString += '```\n';
+    for (let i = 1; i < rSettings.builds.length; i++) {
+        const build = rSettings.builds[i];
+        sayString += `${i} - ${getBuildName(build)}\n`;
+    }
+    sayString += '```';
+    return sayString;
+}
+
+function getBuildName(build) {
+    let name = '';
+    for (const item of build) {
+        name += `${item.name} + `;
+    }
+
+    // Chop off the trailing " + "
+    name = name.substring(0, name.length - 3);
+
+    return name;
+}
+
+function blacklistRemove(user) {
+    blacklist.splice(blacklist.indexOf(user), 1);
+    logger.info(`Removed ${user} from blacklist. -> ${blacklist}`);
+}
+
+function genRaceCharacter(rSettings) {
+    const min = 1;
+    const max = rSettings.characters.length - 1;
+    const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
+    const charName = rSettings.characters[randomNum];
+    rSettings.characters.splice(randomNum, 1);
+    return charName;
+}
+
+function genRaceBuild(rSettings) {
+    // Get the random number
+    const min = 1;
+    const max = rSettings.builds.length - 1;
+    const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
+    const buildName = getBuildName(rSettings.builds[randomNum]);
+    rSettings.builds.splice(randomNum, 1);
+    return buildName;
+}
+
+function endRace(race, reason) {
+    race.channel.delete(`${reason}`);
+    races.delete(race);
 }
