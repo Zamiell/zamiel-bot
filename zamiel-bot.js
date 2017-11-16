@@ -2675,7 +2675,7 @@ DiscordBot.on('message', (message) => {
         setTimeout(() => {
             endRace(rSettings, `!end command used by ${user}`);
         }, 1000 * 60 * 5); // 5 minutes
-        chan.send('Race ended, channel will be destroyed in 5 minutes.');
+        chan.send('Race ended. This channel will be deleted in 5 minutes.');
         break;
     }
     case 'cleanup': {
