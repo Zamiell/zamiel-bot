@@ -26,6 +26,7 @@ const goalSetDelay = 2000; // 2 seconds
 const discordChannelPrefix = 'race-';
 const discordRoleName = 'Volunteers';
 const discordNumBans = 6;
+const discordNumRounds = 5;
 
 // Import big lists from configuration files
 const goalList = require('./config/goals');
@@ -2118,6 +2119,7 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
         logger.info(`----- I was told to join Twitch channel ${channelName} -----`);
         TwitchBot.say(channel, `Ok, I'll join channel "${channelName}".`);
         TwitchBot.join(`#${channelName}`);
+        return;
     }
 
     // !leave
@@ -2126,12 +2128,14 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
         logger.info(`----- I was told to leave Twitch channel ${channelName} -----`);
         TwitchBot.say(channel, `Ok, I'll leave channel "${channelName}".`);
         TwitchBot.part(`#${channelName}`);
+        return;
     }
 
     // Info commands
     for (const info of Object.keys(infoList)) {
         if (message === `!${info}`) {
             TwitchBot.say(channel, infoList[info]);
+            return;
         }
     }
 
@@ -2139,15 +2143,10 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
     if (channel === '#zamiell') {
         if (message === '!os') {
             TwitchBot.say(channel, 'Zamiel is using Windows 7 with Aero disabled because it looks much cleaner (and is faster).');
-        }
-    } else if (channel === '#battle_of_kings') {
-        if (message === '!commentator' ||
-            message === '!commentators' ||
-            message === '!caster' ||
-            message === '!casters' ||
-            message === '!host' ||
-            message === '!hosts') {
-            TwitchBot.say(channel, 'The two commentators are NuRelic and Antizoubilamaka.');
+            return;
+        } else if (message === '!charity') {
+            charityReminder(channel);
+            return;
         }
     }
 
@@ -2330,6 +2329,18 @@ TwitchBot.on('chat', (channel, rawUser, rawMessage, self) => {
         getRandomCharacter('Twitch', channel, user);
     }
 });
+
+// Subscriber reminders
+TwitchBot.on('subscription', newSub);
+TwitchBot.on('resub', newSub);
+
+function newSub(channel, username, method, message, userstate) {
+    charityReminder(channel);
+}
+
+function charityReminder(channel) {
+    TwitchBot.say(channel, 'If you are stupid enough to actually waste your money on this channel, it is MANDATORY that you also donate $5 or more to the Against Malaria Foundation. Thanks for your cooperation. https://www.givewell.org/international/top-charities/AMF/donate');
+}
 
 /*
     Discord Stuff
@@ -2619,10 +2630,10 @@ DiscordBot.on('message', (message) => {
                 chan.send(sayString);
             } else {
                 sayString += '\n```-- MATCH DETAILS --\n\n';
-                for (let i = 1; i <= 3; i++) {
+                for (let i = 1; i <= discordNumRounds; i++) {
                     sayString += `Round ${i}:\n`;
-                    sayString += `\tCharacter: ${genRaceCharacter(rSettings)}\n`;
-                    sayString += `\tBuild:     ${genRaceBuild(rSettings)}\n\n`;
+                    sayString += `- Character: ${genRaceCharacter(rSettings)}\n`;
+                    sayString += `- Build:     ${genRaceBuild(rSettings)}\n\n`;
                 }
                 sayString += '```\n\n';
                 sayString += 'If I made a mistake somehow, you can use `!randchar` and `!randbuild` to manually choose characters and builds.\n\n';

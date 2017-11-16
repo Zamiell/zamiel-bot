@@ -44,18 +44,18 @@ module.exports = [
 
     // Custom starts
     [{ id: 153, name: "Mutant Spider" },          // 27
-     { id: 2,   name: "The Inner Eye" }],
+     { id: 2,   name: "Inner Eye" }],
 
     [{ id: 68,  name: "Technology" },             // 28
-     { id: 132, name: "A Lump of Coal" }],
+     { id: 132, name: "Coal" }],
 
     [{ id: 329, name: "Ludovico" }, // 29
-     { id: 104, name: "The Parasite" }],
+     { id: 104, name: "Parasite" }],
 
     [{ id: 257, name: "Fire Mind" },              // 30
      { id: 600, name: "13 luck" }],
 
-     [{ id: 524, name: "Technology Zero" },       // 31
+     [{ id: 524, name: "Tech Zero" },       // 31
       { id: 529, name: "more" }],
 
     // Custom starts (with an active item)
