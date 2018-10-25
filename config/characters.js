@@ -1,5 +1,5 @@
 module.exports = [
-    null, // We want the array to start at element 1
+    null,
     'Isaac', // 1
     'Magdalene', // 2
     'Cain', // 3
@@ -14,5 +14,6 @@ module.exports = [
     'Lilith', // 12
     'Keeper', // 13
     'Apollyon', // 14
-    'Samael', // 15
+    'The Forgotton', // 15
+    'Samael', // 16
 ];

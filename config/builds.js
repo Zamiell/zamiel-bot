@@ -7,8 +7,7 @@
 /* eslint-disable quotes */
 /* eslint-disable indent */
 module.exports = [
-    // Build IDs start at 1, so make a null array for element 0
-    [],                                           // 0
+    [],
 
     // Treasure Room Starts
     [{ id: 245, name: "20/20" }],                 // 1
@@ -49,13 +48,13 @@ module.exports = [
     [{ id: 68,  name: "Technology" },             // 28
      { id: 132, name: "Coal" }],
 
-    [{ id: 329, name: "Ludovico" }, // 29
+    [{ id: 329, name: "Ludovico" },               // 29
      { id: 104, name: "Parasite" }],
 
     [{ id: 257, name: "Fire Mind" },              // 30
      { id: 600, name: "13 luck" }],
 
-     [{ id: 524, name: "Tech Zero" },       // 31
+     [{ id: 524, name: "Tech Zero" },             // 31
       { id: 529, name: "more" }],
 
     // Custom starts (with an active item)

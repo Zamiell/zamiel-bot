@@ -23,50 +23,12 @@ module.exports = [
         echoComments: false,
     },
     {
-        srl: 'Ou_j',
-        twitch: 'Ou_j',
-    },
-    {
-        srl: 'haagiboy88',
-        twitch: 'Haagiboy88',
-        delayTwitchOutput: 30000,
-    },
-    {
-        srl: 'Cmondinger',
-        twitch: 'Cmondinger',
-    },
-    {
-        srl: 'avonis',
-        twitch: 'Avonis',
-    },
-    {
         srl: 'ceehe',
         twitch: 'ceehe',
     },
     {
         srl: 'InvaderTim',
         twitch: 'InvaderTimStreams',
-    },
-    {
-        srl: 'ShinyRiolu21',
-        twitch: 'ShinyRiolu21',
-    },
-    {
-        srl: 'ItsScion',
-        twitch: 'ItsScion',
-        delayTwitchOutput: 10000,
-    },
-    {
-        srl: 'Augo_',
-        twitch: 'Augo48',
-    },
-    {
-        srl: 'tODDlife',
-        twitch: 'tODDlife',
-    },
-    {
-        srl: 'TmuJ',
-        twitch: 'TmuJ',
     },
     {
         srl: 'Erbear',
@@ -82,16 +44,6 @@ module.exports = [
         delayTwitchOutput: 20000,
     },
     {
-        srl: 'Jminman',
-        twitch: 'jminman',
-    },
-    {
-        srl: 'NuRelic',
-        twitch: 'NuRelic',
-        echoComments: false,
-        delayTwitchOutput: 20000,
-    },
-    {
         srl: 'thalen22',
         twitch: 'Thalen22',
     },
@@ -100,36 +52,12 @@ module.exports = [
         twitch: '910dan',
     },
     {
-        srl: 'FireDead659',
-        twitch: 'FireDead659',
-    },
-    {
-        srl: 'mrakuz',
-        twitch: 'mrakuz',
-    },
-    {
-        srl: 'giraffefizzoid',
-        twitch: 'giraffeFizzoid',
-    },
-    {
         srl: 'deejumbles',
         twitch: 'deejumbles',
     },
     {
-        srl: 'TheShadowfiash',
-        twitch: 'TheShadowfiash',
-    },
-    {
-        srl: 'OhMyGoth',
-        twitch: 'Oh_My_Goth_',
-    },
-    {
         srl: 'thisguyisbarry',
         twitch: 'thisguyisbarry',
-    },
-    {
-        srl: 'LexicalPedant',
-        twitch: 'LexicalPedant',
     },
     {
         srl: 'SapphireHX',
@@ -145,10 +73,6 @@ module.exports = [
         delayTwitchOutput: 10000,
     },
     {
-        srl: 'PaulByPaul',
-        twitch: 'PaulByPaul',
-    },
-    {
         srl: 'Warshoty',
         twitch: 'Warshoty',
     },
@@ -161,19 +85,7 @@ module.exports = [
         twitch: 'starg09',
     },
     {
-        srl: 'Ognos',
-        twitch: 'Ognos',
-    },
-    {
         srl: 'Norbro86',
         twitch: 'NorBro86',
-    },
-    {
-        srl: 'Birdie0',
-        twitch: 'birdie0',
-    },
-    {
-        srl: 'Shootthemoose',
-        twitch: 'ShoottheMoose',
     },
 ];

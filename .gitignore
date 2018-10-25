@@ -68,3 +68,6 @@ typings/
 # This is compliled from zamiel-bot.js
 zamiel-bot-babel.js
 get_pastebin_user_key.php
+
+# Other repositories
+single-player-coop-babies

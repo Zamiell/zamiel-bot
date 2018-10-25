@@ -66,7 +66,8 @@ const DiscordBot = new discord.Client();
 const PastebinUserKey = process.env.PASTEBIN_USER;
 const PastebinDevKey = process.env.PASTEBIN_DEV;
 const instantStartArray = [
-    '20/20', // 0
+    null, // 0
+    '20/20', // 1
     'Chocolate Milk', // 1
     'Cricket\'s Body', // 2
     'Cricket\'s Head', // 3
@@ -139,7 +140,7 @@ logger.info('| ZamielBot starting |');
 logger.info('+--------------------+');
 
 // Start the servers
-SRLBot.connect();
+// SRLBot.connect();
 TwitchBot.connect();
 DiscordBot.login(process.env.DISCORD_TOKEN);
 
@@ -1049,8 +1050,11 @@ function getRandomNumber(IRC, channel, rawUser, minNumber, maxNumber) {
     }
 
     // Input validation
+    console.log("minNumber:", minNumber);
+    console.log("maxNumber:", maxNumber);
     if (minNumber > 1000 || maxNumber > 1000 || minNumber < 0 || maxNumber < 0 || minNumber === maxNumber) {
-        const sayString = `Incorrect roll format. ${user} has been added to the ignore list for command abuse.`;
+        // const sayString = `Incorrect roll format. ${user} has been added to the ignore list for command abuse.`;
+        const sayString = 'Incorrect roll format.';
         if (IRC === 'SRL') {
             SRLBot.say(channel, sayString);
         } else if (IRC === 'Twitch') {
@@ -1058,7 +1062,7 @@ function getRandomNumber(IRC, channel, rawUser, minNumber, maxNumber) {
         } else if (IRC === 'Discord') {
             channel.send(sayString);
         }
-        ignoreList.push(user);
+        // ignoreList.push(user);
         return;
     }
 
@@ -1079,6 +1083,7 @@ function getRandomNumber(IRC, channel, rawUser, minNumber, maxNumber) {
 }
 
 function getRandomBuild(IRC, channel, rawUser) {
+    /*
     // Player validation
     const user = rawUser.toLowerCase();
     for (let i = 0; i < ignoreList.length; i++) {
@@ -1086,18 +1091,16 @@ function getRandomBuild(IRC, channel, rawUser) {
             return; // Ignore what they have to say
         }
     }
+    */
 
     // Get the random number
-    const minNumber = 1;
-    const maxNumber = instantStartArray.length - 1;
-
-    // Get a random number between minNumber and maxNumber
-    const max = parseInt(maxNumber, 10);
-    const min = parseInt(minNumber, 10);
+    const min = 1;
+    const max = builds.length - 1;
     const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
 
     // Announce it
-    const sayString = `Random build between 1 and ${maxNumber}: #${randomNum} - ${instantStartArray[randomNum]}`;
+    let sayString = `Random build between ${min} and ${max}:\n`;
+    sayString += `#${randomNum} - ${getBuildName(builds[randomNum])}`;
     if (IRC === 'SRL') {
         SRLBot.say(channel, sayString);
     } else if (IRC === 'Twitch') {
@@ -1108,6 +1111,7 @@ function getRandomBuild(IRC, channel, rawUser) {
 }
 
 function getRandomCharacter(IRC, channel, rawUser) {
+    /*
     // Player validation
     const user = rawUser.toLowerCase();
     for (let i = 0; i < ignoreList.length; i++) {
@@ -1115,18 +1119,16 @@ function getRandomCharacter(IRC, channel, rawUser) {
             return; // Ignore what they have to say
         }
     }
+    */
 
     // Get the random number
-    const minNumber = 0;
-    const maxNumber = characters.length - 1;
-
-    // Get a random number between minNumber and maxNumber
-    const min = parseInt(minNumber, 10);
-    const max = parseInt(maxNumber, 10);
+    const min = 1;
+    const max = characters.length - 1;
     const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
 
     // Announce it
-    const sayString = `Random character: ${characters[randomNum]}`;
+    let sayString = `Random character between ${min} and ${max}:\n`;
+    sayString += `#${randomNum} - ${characters[randomNum]}`;
     if (IRC === 'SRL') {
         SRLBot.say(channel, sayString);
     } else if (IRC === 'Twitch') {
@@ -2335,7 +2337,9 @@ TwitchBot.on('subscription', newSub);
 TwitchBot.on('resub', newSub);
 
 function newSub(channel, username, method, message, userstate) {
-    charityReminder(channel);
+    if (channel === '#zamiell') {
+        charityReminder(channel);
+    }
 }
 
 function charityReminder(channel) {
@@ -2409,24 +2413,29 @@ DiscordBot.on('message', (message) => {
     case 'roll':
     case 'rand':
     case 'random': {
-        const m = msg.match(/^!\w+ (\d+) (\d+)$/);
+        console.log('Random message:', msg);
+        const m = msg.match(/^\w+ (\d+) (\d+)$/);
         let randomMin;
         let randomMax;
         if (m) {
+            console.log('Random situation 1.');
             [, randomMin, randomMax] = m;
         } else {
-            const m2 = msg.match(/^!\w+ (\d+)$/);
+            const m2 = msg.match(/^\w+ (\d+)$/);
             if (m2) {
+                console.log('Random situation 2-1.');
                 randomMin = 1;
-                [, randomMax] = m;
+                [, randomMax] = m2;
             } else if (
-                msg === '!roll' ||
-                msg === '!rand' ||
-                msg === '!random'
+                msg === 'roll' ||
+                msg === 'rand' ||
+                msg === 'random'
             ) {
+                console.log('Random situation 2-2.');
                 randomMin = 1;
                 randomMax = 31;
             } else {
+                console.log('Random situation 2-3.');
                 // Make it invalid so that they get added to the ignore list
                 randomMin = -1;
                 randomMax = -1;
@@ -2440,6 +2449,10 @@ DiscordBot.on('message', (message) => {
         break;
     case 'd20':
         getRandomNumber('Discord', chan, user, 1, 20);
+        break;
+    case 'coin':
+    case 'flip':
+        getRandomNumber('Discord', chan, user, 1, 2);
         break;
     case 'randitem':
     case 'build':
