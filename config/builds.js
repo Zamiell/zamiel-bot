@@ -7,7 +7,7 @@
 /* eslint-disable quotes */
 /* eslint-disable indent */
 module.exports = [
-    [],
+    [], // We want to start at 1 instead of 0
 
     // Treasure Room Starts
     [{ id: 245, name: "20/20" }],                 // 1

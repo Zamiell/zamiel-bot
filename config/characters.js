@@ -1,5 +1,5 @@
 module.exports = [
-    null,
+    null, // We want to start at 1 instead of 0
     'Isaac', // 1
     'Magdalene', // 2
     'Cain', // 3
