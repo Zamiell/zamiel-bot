@@ -3,6 +3,7 @@
 */
 
 // Imports
+const { exec } = require('child_process'); // For running other various scripts
 const tmi = require('tmi.js'); // The Twitch side uses the tmi-js library
 const discord = require('discord.js'); // The Discord side uses the discord.js library
 const winston = require('winston'); // A logging library
@@ -10,14 +11,16 @@ const winston = require('winston'); // A logging library
 // Import big lists from configuration files
 const infoList = require('./config/info');
 const userList = require('./config/users');
-const characters = require('./config/characters');
-const builds = require('./config/builds');
 
 // Import the environment variables defined in the ".env" file
 require('dotenv').config();
 
+// Constants
+const botDirectory = '/root/zamiel-bot';
+const totalBabies = 541;
+
 // Global variables
-const twitchModStatus = {};
+const twitchModStatus = new Map();
 
 // Set up logging
 const logger = winston.createLogger({
@@ -38,14 +41,14 @@ userList.push(process.env.TWITCH_ADMIN_USERNAME);
 const twitchChannels = [];
 for (let i = 0; i < userList.length; i++) {
     // Set their name to be lower case
-    userList[i].twitch = userList[i].twitch.toLowerCase();
+    userList[i] = userList[i].toLowerCase();
 
     // Add their Twitch channel to the channel list
-    twitchChannels.push('#' + userList[i].twitch);
+    twitchChannels.push('#' + userList[i]);
 
-    // Make an entry for them in the "twitchModStatus" object
+    // Make an entry for them in the "twitchModStatus" map
     // (assume that they are a mod by default)
-    twitchModStatus[userList[i].twitch] = true;
+    twitchModStatus.set(userList[i], true);
 }
 
 // Set up the 2 servers
@@ -74,88 +77,6 @@ TwitchBot.connect();
 DiscordBot.login(process.env.DISCORD_TOKEN);
 
 /*
-    Subroutines
-*/
-
-function getRandomNumber(IRC, channel, rawUser, minNumber, maxNumber) {
-    // Input validation
-    if (minNumber > 1000 || maxNumber > 1000 || minNumber < 0 || maxNumber < 0 || minNumber === maxNumber) {
-        const sayString = 'Incorrect roll format.';
-        if (IRC === 'SRL') {
-            SRLBot.say(channel, sayString);
-        } else if (IRC === 'Twitch') {
-            TwitchBot.say(channel, sayString);
-        } else if (IRC === 'Discord') {
-            channel.send(sayString);
-        }
-        return;
-    }
-
-    // Get a random number between minNumber and maxNumber
-    const max = parseInt(maxNumber, 10);
-    const min = parseInt(minNumber, 10);
-    const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-
-    // Announce it
-    const sayString = `Random number from ${minNumber} to ${maxNumber} --> ${randomNum}`;
-    if (IRC === 'SRL') {
-        SRLBot.say(channel, sayString);
-    } else if (IRC === 'Twitch') {
-        TwitchBot.say(channel, sayString);
-    } else if (IRC === 'Discord') {
-        channel.send(sayString);
-    }
-}
-
-function getRandomBuild(IRC, channel, rawUser) {
-    // Get the random number
-    const min = 1;
-    const max = builds.length - 1;
-    const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-
-    // Announce it
-    let sayString = `Random build between ${min} and ${max}:\n`;
-    sayString += `#${randomNum} - ${getBuildName(builds[randomNum])}`;
-    if (IRC === 'SRL') {
-        SRLBot.say(channel, sayString);
-    } else if (IRC === 'Twitch') {
-        TwitchBot.say(channel, sayString);
-    } else if (IRC === 'Discord') {
-        channel.send(sayString);
-    }
-}
-
-function getBuildName(build) {
-    let name = '';
-    for (const item of build) {
-        name += `${item.name} + `;
-    }
-
-    // Chop off the trailing " + "
-    name = name.substring(0, name.length - 3);
-
-    return name;
-}
-
-function getRandomCharacter(IRC, channel, rawUser) {
-    // Get the random number
-    const min = 1;
-    const max = characters.length - 1;
-    const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-
-    // Announce it
-    let sayString = `Random character between ${min} and ${max}:\n`;
-    sayString += `#${randomNum} - ${characters[randomNum]}`;
-    if (IRC === 'SRL') {
-        SRLBot.say(channel, sayString);
-    } else if (IRC === 'Twitch') {
-        TwitchBot.say(channel, sayString);
-    } else if (IRC === 'Discord') {
-        channel.send(sayString);
-    }
-}
-
-/*
     Twitch Stuff
 */
 
@@ -163,13 +84,11 @@ TwitchBot.once('connected', () => {
     logger.info('Connected to Twitch.');
 });
 
-TwitchBot.on('chat', (channel, rawUser, message, self) => {
-    // "rawUser" is an object containing various things
-    // See: https://www.tmijs.org/docs/Events.md#chat
-    const user = rawUser.username;
-
-    // Update the "twitchModStatus" object with the bot's moderator status for this channel
-    twitchModStatus[user] = rawUser.mod;
+// See: https://www.tmijs.org/docs/Events.md#chat
+TwitchBot.on('chat', (channel, userstate, message, self) => {
+    // Local variables
+    const user = userstate.username.toLowerCase();
+    let channelWithoutPrefix = channel.substring(1); // Strip off the # prefix
 
     // Remove whitespace from both sides of the string
     let msg = message.trim();
@@ -177,8 +96,16 @@ TwitchBot.on('chat', (channel, rawUser, message, self) => {
     // Log all messages
     logger.info(`TWITCH [${channel}] <${user}> ${msg}`);
 
-    // Do nothing if they have not made the bot a moderator
-    if (!rawUser.mod) {
+    // Ignore our own messages
+    if (user === process.env.TWITCH_USERNAME.toLowerCase()) {
+        // Update the "twitchModStatus" map with the bot's moderator status for this channel
+        let modStatus = userstate.mod || userstate['user-type'] === 'mod';
+        twitchModStatus.set(channelWithoutPrefix, modStatus);
+        return;
+    }
+
+    // Do nothing if the bot is not a moderator in this channel
+    if (!twitchModStatus.get(channelWithoutPrefix)) {
         return;
     }
 
@@ -213,14 +140,24 @@ TwitchBot.on('chat', (channel, rawUser, message, self) => {
     command = command.toLowerCase(); // Convert everything to lowercase for simplicity and to cast a wider net
 
     if (command === 'baby') {
-        // If they did not specify a baby number, just return the link to the baby list
-        if (args.length !== 1) {
+        // Validate the arguments
+        // By default, return the link to the baby list
+        if (
+            args.length !== 1 ||
+            isNaN(args[0]) ||
+            args[0] < 1 ||
+            args[0] > totalBabies
+        ) {
             TwitchBot.say(channel, infoList.babies);
             return;
         }
 
         // Find the description that corresponds to this baby number
-        // TODO
+        const cmd = `${botDirectory}/get_baby_description.py ${args[0]}`;
+        exec(cmd, (err, stdout, stderr) => {
+            const description = stdout.trim();
+            TwitchBot.say(channel, description);
+        });
     }
 
     // Check for admin commands
