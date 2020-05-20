@@ -1,7 +1,10 @@
 {
   "name": "zamiel-bot",
   "version": "0.0.1",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zamiell/zamiel-bot.git"
+  },
   "scripts": {
     "start": "node zamiel-bot.js"
   },
