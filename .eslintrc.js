@@ -1,34 +1,24 @@
+// This is the configuration file for ESLint, the TypeScript linter
+// https://eslint.org/docs/user-guide/configuring
 module.exports = {
-    // The linter base is the airbnb style guide, located here:
-    // https://github.com/airbnb/javascript
-    'extends': 'airbnb-base',
+  extends: [
+    // The linter base is the shared IsaacScript config
+    // https://github.com/IsaacScript/eslint-config-isaacscript/blob/main/base.js
+    "eslint-config-isaacscript/base",
+  ],
 
-    'env': {
-        'node': true,
-        'es6': true,
-    },
+  // Don't bother linting the compiled output
+  ignorePatterns: ["./dist/**"],
 
-    // We modify the base for some specific things
-    'rules': {
-        // airbnb uses 2 spaces, but it is harder to read block intendation at a glance
-        'indent': ['warn', 4],
+  parserOptions: {
+    // ESLint needs to know about the project's TypeScript settings in order for TypeScript-specific
+    // things to lint correctly
+    // We do not point this at "./tsconfig.json" because certain files (such at this file) should be
+    // linted but not included in the actual project output
+    project: "./tsconfig.eslint.json",
+  },
 
-        // It can be bad to remove unused arguments from a function copied an API example
-        'no-unused-vars': [
-            'warn', {
-                'vars': 'local',
-                'args': 'none',
-            }
-        ],
-
-        // airbnb disallows "++" because it can lead to errors with minified code
-        // We don't have to worry about this in for loops though
-        'no-plusplus': ['error', {'allowForLoopAfterthoughts': true}],
-
-        // Object destructuring can lead to more confusing code, especially for beginners to JavaScript
-        'prefer-destructuring': ['off'],
-
-        // Clean code can arise from for-of statements if used properly
-        'no-restricted-syntax': ['off', 'ForOfStatement'],
-    },
-}
+  rules: {
+    "import/no-cycle": "off",
+  },
+};

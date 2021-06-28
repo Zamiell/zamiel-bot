@@ -7,5 +7,5 @@ set -e # Exit on any errors
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd "$DIR"
-"$DIR/build.sh"
-node "$DIR/dist/zamiel-bot.js"
+npx eslint "$DIR/src"
+echo "Success!"

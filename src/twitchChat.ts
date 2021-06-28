@@ -1,0 +1,205 @@
+import { exec } from "child_process";
+import tmi from "tmi.js";
+import { INFO_COMMAND_MAP } from "./config/infoCommands";
+import { MESSAGE_PREFIX } from "./constants";
+import log from "./log";
+import { parseIntSafe } from "./misc";
+import { joinChannel, leaveChannel, send } from "./twitch";
+import { sendCharityMsg } from "./twitchSubscriptions";
+
+// Constants
+const BOT_DIRECTORY = "/root/zamiel-bot";
+const TOTAL_BABIES = 540;
+
+export function onChat(
+  channel: string,
+  userstate: tmi.ChatUserstate,
+  message: string,
+  self: boolean,
+  twitchModStatus: Map<string, boolean>,
+): void {
+  if (userstate.username === undefined) {
+    return;
+  }
+
+  const user = userstate.username.toLowerCase();
+  let incomingMessage = message.trim();
+
+  log.info(`TWITCH [${channel}] <${user}> ${incomingMessage}`);
+
+  const channelWithoutPrefix = channel.substring(1); // Strip off the # prefix
+
+  if (self) {
+    // Update the "twitchModStatus" map with the bot's moderator status for this channel
+    const amMod = userstate.mod === true || userstate["user-type"] === "mod";
+    twitchModStatus.set(channelWithoutPrefix, amMod);
+
+    // Ignore our own messages
+    return;
+  }
+
+  // Do nothing if the bot is not a moderator in this channel
+  const modStatus = twitchModStatus.get(channelWithoutPrefix);
+  if (modStatus === undefined || !modStatus) {
+    return;
+  }
+
+  if (!incomingMessage.startsWith(MESSAGE_PREFIX)) {
+    return;
+  }
+  incomingMessage = incomingMessage.substr(1); // Chop off the message prefix
+  const args = incomingMessage.split(/ +/g); // Detect more than one space in between words
+  let command = args.shift(); // Now "args" contains only the actual arguments, if any
+  if (command === undefined) {
+    return;
+  }
+
+  // Convert everything to lowercase for simplicity and to cast a wider net
+  command = command.toLowerCase();
+
+  if (checkInfoCommand(command, channel)) {
+    return;
+  }
+
+  if (checkChannelSpecificCommand(command, channel)) {
+    return;
+  }
+
+  if (checkAdminCommand(command, channel, user, args)) {
+    return;
+  }
+
+  if (checkCommand(command, channel, args)) {
+    return;
+  }
+
+  // This is a normal chat message, so do nothing
+  pass();
+}
+
+function checkInfoCommand(command: string, channel: string) {
+  const info = INFO_COMMAND_MAP.get(command);
+  if (info !== undefined) {
+    send(channel, info);
+    return true;
+  }
+
+  return false;
+}
+
+function checkChannelSpecificCommand(command: string, channel: string) {
+  if (channel !== "#zamiell") {
+    return false;
+  }
+
+  switch (command) {
+    case "charity": {
+      send(
+        channel,
+        "Subscribing or donating to anyone on Twitch seems stupid when your money could instead go towards saving a life in the 3rd world. Please consider setting up a recurring donation to the Against Malaria Foundation: https://www.givewell.org/international/top-charities/AMF/donate",
+      );
+      return true;
+    }
+
+    default: {
+      return false;
+    }
+  }
+}
+
+function checkAdminCommand(
+  command: string,
+  channel: string,
+  user: string,
+  args: string[],
+) {
+  const adminUsername = (
+    process.env.TWITCH_ADMIN_USERNAME as string
+  ).toLowerCase();
+  if (user !== adminUsername) {
+    return false;
+  }
+
+  switch (command) {
+    case "join": {
+      if (args.length !== 1) {
+        send(channel, "You need to provide the name of the channel to join.");
+        return true;
+      }
+
+      const channelName = args[0];
+      send(channel, `Ok, I'll join channel "${channelName}".`);
+      joinChannel(channel);
+      return true;
+    }
+
+    case "leave": {
+      if (args.length !== 1) {
+        send(channel, "You need to provide the name of the channel to leave.");
+        return true;
+      }
+
+      const channelName = args[0];
+      send(channel, `Ok, I'll leave channel "${channelName}".`);
+      leaveChannel(channel);
+      return true;
+    }
+
+    default: {
+      return false;
+    }
+  }
+}
+
+function checkCommand(command: string, channel: string, args: string[]) {
+  switch (command) {
+    case "baby": {
+      const babiesMsg = INFO_COMMAND_MAP.get("babies") as string;
+
+      // Validate the arguments
+      if (args.length !== 1) {
+        send(channel, babiesMsg);
+        return true;
+      }
+
+      const babyNumString = args[0];
+      const babyNum = parseIntSafe(babyNumString);
+      if (Number.isNaN(babyNum) || babyNum < 1 || babyNum > TOTAL_BABIES) {
+        send(channel, babiesMsg);
+        return true;
+      }
+
+      // Find the description that corresponds to this baby number
+      const scriptName = "get_baby_description.py";
+      const cmd = `${BOT_DIRECTORY}/${scriptName} ${babyNum}`;
+      exec(cmd, (err, stdout, _stderr) => {
+        if (err !== undefined && err !== null) {
+          log.error(`Failed to run the "${scriptName}" script:`, err);
+          send(channel, "Something went wrong. Try again later.");
+          return;
+        }
+
+        const description = stdout.trim();
+        send(channel, description);
+      });
+
+      return true;
+    }
+
+    case "s1": {
+      send(channel, "Coming soon!");
+      return true;
+    }
+
+    case "sub": {
+      sendCharityMsg(channel);
+      return true;
+    }
+
+    default: {
+      return false;
+    }
+  }
+}
+
+function pass() {}

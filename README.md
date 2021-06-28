@@ -1,9 +1,17 @@
 # zamiel-bot
 
-Install
--------
+`zamiel-bot` is an IRC & Discord bot to facilitate various things.
 
-* `yarn install`
-* `crontab -e`
-  * `# Update the Babies Mod repository every 5 minutes`
-  * `*/5 * * * * /root/zamiel-bot/update_babies.sh`
+<br />
+
+## Install
+
+* `npm install`
+
+<br />
+
+## Run
+
+* `./run.sh`
+
+<br />
