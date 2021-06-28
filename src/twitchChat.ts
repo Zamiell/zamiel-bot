@@ -1,15 +1,9 @@
-import { exec } from "child_process";
 import tmi from "tmi.js";
 import { INFO_COMMAND_MAP } from "./config/infoCommands";
 import { MESSAGE_PREFIX } from "./constants";
 import log from "./log";
-import { parseIntSafe } from "./misc";
 import { joinChannel, leaveChannel, send } from "./twitch";
 import { sendCharityMsg } from "./twitchSubscriptions";
-
-// Constants
-const BOT_DIRECTORY = "/root/zamiel-bot";
-const TOTAL_BABIES = 540;
 
 export function onChat(
   channel: string,
@@ -69,7 +63,7 @@ export function onChat(
     return;
   }
 
-  if (checkCommand(command, channel, args)) {
+  if (checkCommand(command, channel)) {
     return;
   }
 
@@ -151,41 +145,8 @@ function checkAdminCommand(
   }
 }
 
-function checkCommand(command: string, channel: string, args: string[]) {
+function checkCommand(command: string, channel: string) {
   switch (command) {
-    case "baby": {
-      const babiesMsg = INFO_COMMAND_MAP.get("babies") as string;
-
-      // Validate the arguments
-      if (args.length !== 1) {
-        send(channel, babiesMsg);
-        return true;
-      }
-
-      const babyNumString = args[0];
-      const babyNum = parseIntSafe(babyNumString);
-      if (Number.isNaN(babyNum) || babyNum < 1 || babyNum > TOTAL_BABIES) {
-        send(channel, babiesMsg);
-        return true;
-      }
-
-      // Find the description that corresponds to this baby number
-      const scriptName = "get_baby_description.py";
-      const cmd = `${BOT_DIRECTORY}/${scriptName} ${babyNum}`;
-      exec(cmd, (err, stdout, _stderr) => {
-        if (err !== undefined && err !== null) {
-          log.error(`Failed to run the "${scriptName}" script:`, err);
-          send(channel, "Something went wrong. Try again later.");
-          return;
-        }
-
-        const description = stdout.trim();
-        send(channel, description);
-      });
-
-      return true;
-    }
-
     case "s1": {
       send(channel, "Coming soon!");
       return true;
