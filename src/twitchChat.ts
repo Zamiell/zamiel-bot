@@ -40,8 +40,8 @@ export function onChat(
   if (botUserState === undefined) {
     return;
   }
-  const amMod = botUserState.mod;
-  if (amMod !== true) {
+  const amMod = botUserState.mod === true;
+  if (!amMod) {
     return;
   }
 
