@@ -3,10 +3,7 @@
 // (the twitch Admin is specified in the environment variables, which is loaded in the ".env" file)
 export const TWITCH_CHANNELS = [
   "910dan",
-  "AshD0wn",
-  "bmz_loop",
   "ceehe",
-  "CrafterLynx",
   "Dea1h",
   "deejumbles",
   "DKlaww",
@@ -14,11 +11,6 @@ export const TWITCH_CHANNELS = [
   "InvaderTimStreams",
   "IrgendeinMist",
   "Lobsterosity",
-  "MoucheronQuipet",
-  "NeNeSSquick",
-  "NorBro86",
-  "SapphireHX",
-  "SedNegi",
   "SlashSP",
   "starg09",
   "Thalen22",
