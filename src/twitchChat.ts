@@ -37,10 +37,7 @@ export function onChat(
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const botUserState = client.userstate[channel] as UserState; // eslint-disable-line
-  if (botUserState === undefined) {
-    return;
-  }
-  const amMod = botUserState.mod === true;
+  const amMod = botUserState !== undefined && botUserState.mod === true;
   if (!amMod) {
     return;
   }
