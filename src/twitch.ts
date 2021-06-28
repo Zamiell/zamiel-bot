@@ -61,7 +61,7 @@ export function init(): void {
       message: string,
       self: boolean,
     ) => {
-      onChat(channel, userstate, message, self, twitchModStatus);
+      onChat(channel, userstate, message, self, twitchBot);
     },
   );
   twitchBot.on("subscription", onSub);

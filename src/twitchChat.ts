@@ -10,7 +10,7 @@ export function onChat(
   userstate: tmi.ChatUserstate,
   message: string,
   self: boolean,
-  twitchModStatus: Map<string, boolean>,
+  client: tmi.Client,
 ): void {
   if (userstate.username === undefined) {
     return;
@@ -21,20 +21,16 @@ export function onChat(
 
   log.info(`TWITCH [${channel}] <${user}> ${incomingMessage}`);
 
-  const channelWithoutPrefix = channel.substring(1); // Strip off the # prefix
-
+  // Ignore our own messages
   if (self) {
-    // Update the "twitchModStatus" map with the bot's moderator status for this channel
-    const amMod = userstate.mod === true || userstate["user-type"] === "mod";
-    twitchModStatus.set(channelWithoutPrefix, amMod);
-
-    // Ignore our own messages
     return;
   }
 
   // Do nothing if the bot is not a moderator in this channel
-  const modStatus = twitchModStatus.get(channelWithoutPrefix);
-  if (modStatus === undefined || !modStatus) {
+  // @ts-ignore
+  log.info(client.userstate[channel]);
+
+  if (1 === 1) {
     return;
   }
 
