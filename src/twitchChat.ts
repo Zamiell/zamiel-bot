@@ -5,6 +5,10 @@ import log from "./log";
 import { joinChannel, leaveChannel, send } from "./twitch";
 import { sendCharityMsg } from "./twitchSubscriptions";
 
+interface UserState {
+  mod: boolean | undefined;
+}
+
 export function onChat(
   channel: string,
   userstate: tmi.ChatUserstate,
@@ -27,11 +31,17 @@ export function onChat(
   }
 
   // Do nothing if the bot is not a moderator in this channel
+  // The "userstate" object is automatically updated by the client with our moderator status,
+  // badges, and so forth
+  // However, it is not included in the TypeScript definitions for some reason
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const botUserState = client.userstate[channel];
-  log.info(JSON.stringify(botUserState, null, 4));
-
-  if (1 === 1) {
+  const botUserState = client.userstate[channel] as UserState; // eslint-disable-line
+  if (botUserState === undefined) {
+    return;
+  }
+  const amMod = botUserState.mod;
+  if (amMod !== true) {
     return;
   }
 
