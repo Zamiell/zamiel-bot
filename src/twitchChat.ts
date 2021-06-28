@@ -28,7 +28,8 @@ export function onChat(
 
   // Do nothing if the bot is not a moderator in this channel
   // @ts-ignore
-  log.info(client.userstate[channel]);
+  const botUserState = client.userstate[channel];
+  log.info(JSON.stringify(botUserState, null, 4));
 
   if (1 === 1) {
     return;
