@@ -152,7 +152,10 @@ function checkAdminCommand(
 function checkCommand(command: string, channel: string) {
   switch (command) {
     case "s1": {
-      send(channel, "Coming soon!");
+      send(
+        channel,
+        "Season 1 info: https://github.com/Zamiell/racing-plus/blob/main/docs/challenges.md#r7-season-1-normal-vs-tainted",
+      );
       return true;
     }
 
