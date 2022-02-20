@@ -91,11 +91,13 @@ function checkChannelSpecificCommand(command: string, channel: string) {
   }
 
   switch (command) {
+    case "sub": {
+      sendCharityMsg(channel);
+      return true;
+    }
+
     case "charity": {
-      send(
-        channel,
-        "Subscribing or donating to anyone on Twitch seems stupid when your money could instead go towards saving a life in the 3rd world. Please consider setting up a recurring donation to the Against Malaria Foundation: https://www.givewell.org/international/top-charities/AMF/donate",
-      );
+      sendCharityMsg(channel);
       return true;
     }
 
@@ -149,21 +151,8 @@ function checkAdminCommand(
   }
 }
 
-function checkCommand(command: string, channel: string) {
+function checkCommand(command: string, _channel: string) {
   switch (command) {
-    case "s1": {
-      send(
-        channel,
-        "Season 1 info: https://github.com/Zamiell/racing-plus/blob/main/docs/challenges.md#r7-season-1-normal-vs-tainted",
-      );
-      return true;
-    }
-
-    case "sub": {
-      sendCharityMsg(channel);
-      return true;
-    }
-
     default: {
       return false;
     }
