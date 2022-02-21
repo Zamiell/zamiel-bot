@@ -36,6 +36,6 @@ export const INFO_COMMAND_MAP = new Map([
   ],
   [
     "s2",
-    "Season 2 info: https://github.com/Zamiell/racing-plus/blob/main/docs/challenges.md#r7-season-2-beta-instant-start",
+    "Season 2 info: https://github.com/Zamiell/racing-plus/blob/main/docs/challenges.md#r7-season-2-instant-start",
   ],
 ]);
