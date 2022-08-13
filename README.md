@@ -1,17 +1,19 @@
 # zamiel-bot
 
+<!-- markdownlint-disable MD033 -->
+
 `zamiel-bot` is an IRC & Discord bot to facilitate various things.
 
-<br />
+<br>
 
 ## Install
 
-* `npm install`
+- `yarn install`
 
-<br />
+<br>
 
 ## Run
 
-* `./run.sh`
+- `./run.sh`
 
-<br />
+<br>

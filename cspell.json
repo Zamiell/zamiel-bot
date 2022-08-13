@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "files": [
+    "**"
+  ],
+  "enableFiletypes": [
+    "*"
+  ],
+  "enableGlobDot": true,
+  "ignorePaths": [
+    ".git/**",
+    "dist/**",
+    "node_modules/**"
+  ],
+  "words": [
+    "autocrlf",
+    "bffs",
+    "dbaeumer",
+    "esbenp",
+    "haemolacria",
+    "isaacscript",
+    "itemstarts",
+    "itemtracker",
+    "monstro",
+    "platgod",
+    "platinumgod",
+    "pnpm",
+    "resub",
+    "sarisia",
+    "savefile",
+    "speedrunning",
+    "technote",
+    "userstate",
+    "zambot",
+    "zamiel",
+    "zamiell"
+  ]
+}

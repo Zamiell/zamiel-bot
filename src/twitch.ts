@@ -12,20 +12,38 @@ const twitchModStatus = new Map<string, boolean>();
 export function init(): void {
   validateEnvironmentVariables();
 
-  // Prepare the list of Twitch channels to join
-  const userList = [
-    process.env.TWITCH_ADMIN_USERNAME as string,
-    ...TWITCH_CHANNELS,
-  ];
+  const twitchAdminUsername = process.env["TWITCH_ADMIN_USERNAME"];
+  if (twitchAdminUsername === undefined || twitchAdminUsername === "") {
+    throw new Error(
+      'The "TWITCH_ADMIN_USERNAME" environment variable is blank. Make sure it is set in the ".env" file.',
+    );
+  }
+
+  const twitchUsername = process.env["TWITCH_USERNAME"];
+  if (twitchUsername === undefined || twitchUsername === "") {
+    throw new Error(
+      'The "TWITCH_USERNAME" environment variable is blank. Make sure it is set in the ".env" file.',
+    );
+  }
+
+  const twitchOAuth = process.env["TWITCH_OAUTH"];
+  if (twitchOAuth === undefined || twitchOAuth === "") {
+    throw new Error(
+      'The "TWITCH_OAUTH" environment variable is blank. Make sure it is set in the ".env" file.',
+    );
+  }
+
+  // Prepare the list of Twitch channels to join.
+  const userList = [twitchAdminUsername, ...TWITCH_CHANNELS];
   const formattedTwitchChannels: string[] = [];
   for (const user of userList) {
     const lowercaseUser = user.toLowerCase();
 
-    // Add their Twitch channel to the channel list
+    // Add their Twitch channel to the channel list.
     formattedTwitchChannels.push(`#${lowercaseUser}`);
 
-    // Make an entry for this channel in the "twitchModStatus" map
-    // (assume that the bot is a mod by default)
+    // Make an entry for this channel in the "twitchModStatus" map. (Assume that the bot is a mod by
+    // default.)
     twitchModStatus.set(lowercaseUser, true);
   }
 
@@ -38,8 +56,8 @@ export function init(): void {
       reconnect: true,
     },
     identity: {
-      username: process.env.TWITCH_USERNAME,
-      password: process.env.TWITCH_OAUTH,
+      username: twitchUsername,
+      password: twitchOAuth,
     },
     channels: formattedTwitchChannels,
   });

@@ -25,18 +25,18 @@ export function onChat(
 
   log.info(`TWITCH [${channel}] <${user}> ${incomingMessage}`);
 
-  // Ignore our own messages
+  // Ignore our own messages.
   if (self) {
     return;
   }
 
-  // Do nothing if the bot is not a moderator in this channel
-  // The "userstate" object is automatically updated by the client with our moderator status,
-  // badges, and so forth
-  // However, it is not included in the TypeScript definitions for some reason
+  // Do nothing if the bot is not a moderator in this channel. The "userstate" object is
+  // automatically updated by the client with our moderator status, badges, and so forth. However,
+  // it is not included in the TypeScript definitions for some reason.
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
+  // @ts-expect-error
   const botUserState = client.userstate[channel] as UserState; // eslint-disable-line
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const amMod = botUserState !== undefined && botUserState.mod === true;
   if (!amMod) {
     return;
@@ -52,7 +52,7 @@ export function onChat(
     return;
   }
 
-  // Convert everything to lowercase for simplicity and to cast a wider net
+  // Convert everything to lowercase for simplicity and to cast a wider net.
   command = command.toLowerCase();
 
   if (checkInfoCommand(command, channel)) {
@@ -71,7 +71,7 @@ export function onChat(
     return;
   }
 
-  // This is a normal chat message, so do nothing
+  // This is a normal chat message, so do nothing.
   pass();
 }
 
@@ -113,10 +113,14 @@ function checkAdminCommand(
   user: string,
   args: string[],
 ) {
-  const adminUsername = (
-    process.env.TWITCH_ADMIN_USERNAME as string
-  ).toLowerCase();
-  if (user !== adminUsername) {
+  const twitchAdminUsername = process.env["TWITCH_ADMIN_USERNAME"];
+  if (twitchAdminUsername === undefined || twitchAdminUsername === "") {
+    throw new Error(
+      'The "TWITCH_ADMIN_USERNAME" environment variable is blank. Make sure it is set in the ".env" file.',
+    );
+  }
+
+  if (user !== twitchAdminUsername.toLowerCase()) {
     return false;
   }
 

@@ -16,7 +16,7 @@ export function init(): void {
     log.info("Connected to Discord.");
   });
 
-  // Automatically reconnect if the bot disconnects due to inactivity
+  // Automatically reconnect if the bot disconnects due to inactivity.
   discordBot.on("disconnect", (erMsg, code) => {
     log.warn(
       `Discord disconnected with code ${code} for reason "${erMsg}". Attempting to reconnect...`,
@@ -28,7 +28,14 @@ export function init(): void {
 }
 
 function login(discordBot: discord.Client) {
-  discordBot.login(process.env.DISCORD_TOKEN).catch((err) => {
+  const discordToken = process.env["DISCORD_TOKEN"];
+  if (discordToken === undefined || discordToken === "") {
+    throw new Error(
+      'The "DISCORD_TOKEN" environment variable is blank. Make sure it is set in the ".env" file.',
+    );
+  }
+
+  discordBot.login(discordToken).catch((err) => {
     log.error("Failed to login to the Discord server:", err);
     process.exit(1);
   });
@@ -59,20 +66,20 @@ function onMessage(message: discord.Message) {
     return;
   }
 
-  // Convert everything to lowercase for simplicity and to cast a wider net
+  // Convert everything to lowercase for simplicity and to cast a wider net.
   command = command.toLowerCase();
 
-  // Check for "info" commands
+  // Check for "info" commands.
   const info = INFO_COMMAND_MAP.get(command);
   if (info !== undefined) {
     send(message.channel, info);
     return;
   }
 
-  // Check for other commands
+  // Check for other commands.
   switch (command) {
     case "build": {
-      // The builds.json file has an empty array at index 0
+      // The builds.json file has an empty array at index 0.
       const buildIndex = getRandomNumber(1, builds.length - 1);
 
       const build = builds[buildIndex];
