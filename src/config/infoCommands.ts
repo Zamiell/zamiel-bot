@@ -38,4 +38,8 @@ export const INFO_COMMAND_MAP = new Map([
     "s2",
     "Season 2 info: https://github.com/Zamiell/racing-plus/blob/main/docs/challenges.md#r7-season-2-instant-start",
   ],
+  [
+    "s3",
+    "Season 3 info: https://github.com/Zamiell/racing-plus/blob/main/docs/challenges.md#r7-season-3-diversity",
+  ],
 ]);
