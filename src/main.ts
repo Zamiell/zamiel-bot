@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 import path from "path";
 import * as discord from "./discord";
-import log from "./log";
+import { log } from "./log";
 import * as twitch from "./twitch";
 
 main();

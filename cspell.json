@@ -1,18 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "version": "0.2",
-  "files": [
-    "**"
-  ],
-  "enableFiletypes": [
-    "*"
-  ],
+  "files": ["**"],
+  "enableFiletypes": ["*"],
   "enableGlobDot": true,
-  "ignorePaths": [
-    ".git/**",
-    "dist/**",
-    "node_modules/**"
-  ],
+  "ignorePaths": [".git/**", "dist/**", "node_modules/**", ".env"],
   "words": [
     "autocrlf",
     "bffs",

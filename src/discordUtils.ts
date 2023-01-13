@@ -1,5 +1,5 @@
 import discord from "discord.js";
-import log from "./log";
+import { log } from "./log";
 
 export function discordSend(channel: discord.TextChannel, msg: string): void {
   channel.send(msg).catch((err) => {

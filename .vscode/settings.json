@@ -8,6 +8,10 @@
   "editor.rulers": [100],
   "editor.tabSize": 2,
 
+  "files.associations": {
+    ".env*": "shellscript", // e.g. ".env.example" is the same as ".env".
+  },
+
   // Linux line endings are used in this project.
   "files.eol": "\n",
 
@@ -52,6 +56,11 @@
     "editor.tabSize": 2,
   },
   "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+  },
+  "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.tabSize": 2,

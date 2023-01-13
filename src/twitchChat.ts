@@ -1,7 +1,7 @@
 import tmi from "tmi.js";
 import { INFO_COMMAND_MAP } from "./config/infoCommands";
-import { MESSAGE_PREFIX } from "./constants";
-import log from "./log";
+import { COMMAND_PREFIX_TWITCH } from "./constants";
+import { log } from "./log";
 import { joinChannel, leaveChannel, send } from "./twitch";
 import { sendCharityMsg } from "./twitchSubscriptions";
 
@@ -42,7 +42,7 @@ export function onChat(
     return;
   }
 
-  if (!incomingMessage.startsWith(MESSAGE_PREFIX)) {
+  if (!incomingMessage.startsWith(COMMAND_PREFIX_TWITCH)) {
     return;
   }
   incomingMessage = incomingMessage.substr(1); // Chop off the message prefix

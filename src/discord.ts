@@ -1,9 +1,9 @@
 import discord from "discord.js";
 import { INFO_COMMAND_MAP } from "./config/infoCommands";
-import { MESSAGE_PREFIX } from "./constants";
+import { COMMAND_PREFIX_DISCORD } from "./constants";
 import { DISCORD_COMMAND_MAP } from "./discordCommandMap";
 import { discordSend } from "./discordUtils";
-import log from "./log";
+import { log } from "./log";
 import { validateEnvironmentVariable } from "./utils";
 
 export function init(): void {
@@ -56,7 +56,7 @@ function onMessage(message: discord.Message) {
 
   log.info(`DISCORD [${chan.name}] <${user}> ${incomingMessage}`);
 
-  if (!incomingMessage.startsWith(MESSAGE_PREFIX)) {
+  if (!incomingMessage.startsWith(COMMAND_PREFIX_DISCORD)) {
     return;
   }
   incomingMessage = incomingMessage.substr(1); // Chop off the message prefix

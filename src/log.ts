@@ -1,6 +1,6 @@
 import winston from "winston";
 
-const log = winston.createLogger({
+export const log = winston.createLogger({
   transports: [
     new winston.transports.Console({
       format: winston.format.combine(
@@ -17,4 +17,3 @@ const log = winston.createLogger({
     }),
   ],
 });
-export default log;
