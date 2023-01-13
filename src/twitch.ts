@@ -1,9 +1,9 @@
 import tmi from "tmi.js";
 import { TWITCH_CHANNELS } from "./config/twitchChannels";
 import log from "./log";
-import { validateEnvironmentVariable } from "./misc";
 import { onChat } from "./twitchChat";
 import { onResub, onSub } from "./twitchSubscriptions";
+import { validateEnvironmentVariable } from "./utils";
 
 // Variables
 let twitchBot: tmi.Client;

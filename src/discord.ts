@@ -1,10 +1,10 @@
 import discord from "discord.js";
 import { INFO_COMMAND_MAP } from "./config/infoCommands";
 import { MESSAGE_PREFIX } from "./constants";
-import builds from "./data/builds.json";
-import characters from "./data/characters.json";
+import { DISCORD_COMMAND_MAP } from "./discordCommandMap";
+import { discordSend } from "./discordUtils";
 import log from "./log";
-import { getRandomNumber, validateEnvironmentVariable } from "./misc";
+import { validateEnvironmentVariable } from "./utils";
 
 export function init(): void {
   validateEnvironmentVariable("DISCORD_TOKEN");
@@ -72,67 +72,13 @@ function onMessage(message: discord.Message) {
   // Check for "info" commands.
   const info = INFO_COMMAND_MAP.get(command);
   if (info !== undefined) {
-    send(message.channel, info);
+    discordSend(message.channel, info);
     return;
   }
 
   // Check for other commands.
-  switch (command) {
-    case "build": {
-      // The builds.json file has an empty array at index 0.
-      const buildIndex = getRandomNumber(1, builds.length - 1);
-
-      const build = builds[buildIndex];
-      if (build === undefined) {
-        send(message.channel, "Failed to get the build. Try again later.");
-        return;
-      }
-
-      let msg = "";
-      for (const item of build) {
-        msg += `${item.name}, `;
-      }
-      msg = msg.slice(0, -2);
-
-      send(message.channel, `Random build: ${msg}`);
-
-      break;
-    }
-
-    case "char": {
-      const characterIndex = getRandomNumber(0, characters.length - 1);
-
-      const character = characters[characterIndex];
-      if (character === undefined) {
-        send(message.channel, "Failed to get the character. Try again later.");
-        return;
-      }
-
-      send(message.channel, `Random character: ${character}`);
-
-      break;
-    }
-
-    case "help": {
-      let msg = "List of commands:\n";
-      msg += "```\n";
-      msg += "!char  - Get a random character.\n";
-      msg += "!build - Get a random build.\n";
-      msg += "```\n";
-
-      send(message.channel, msg);
-
-      break;
-    }
-
-    default: {
-      break;
-    }
+  const commandFunc = DISCORD_COMMAND_MAP.get(command);
+  if (commandFunc !== undefined) {
+    commandFunc(message);
   }
-}
-
-function send(channel: discord.TextChannel, msg: string) {
-  channel.send(msg).catch((err) => {
-    log.error("Failed to send a message to Discord:", err);
-  });
 }
