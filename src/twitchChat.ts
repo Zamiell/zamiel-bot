@@ -1,9 +1,10 @@
-import tmi from "tmi.js";
-import { INFO_COMMAND_MAP } from "./config/infoCommands";
-import { COMMAND_PREFIX_TWITCH } from "./constants";
-import { log } from "./log";
-import { joinChannel, leaveChannel, send } from "./twitch";
-import { sendCharityMsg } from "./twitchSubscriptions";
+import { todo } from "isaacscript-common-ts";
+import type tmi from "tmi.js";
+import { INFO_COMMAND_MAP } from "./config/infoCommands.js";
+import { COMMAND_PREFIX_TWITCH } from "./constants.js";
+import { logger } from "./logger.js";
+import { joinChannel, leaveChannel, send } from "./twitch.js";
+import { sendCharityMsg } from "./twitchSubscriptions.js";
 
 interface UserState {
   mod: boolean | undefined;
@@ -23,7 +24,7 @@ export function onChat(
   const user = userstate.username.toLowerCase();
   let incomingMessage = message.trim();
 
-  log.info(`TWITCH [${channel}] <${user}> ${incomingMessage}`);
+  logger.info(`TWITCH [${channel}] <${user}> ${incomingMessage}`);
 
   // Ignore our own messages.
   if (self) {
@@ -45,7 +46,7 @@ export function onChat(
   if (!incomingMessage.startsWith(COMMAND_PREFIX_TWITCH)) {
     return;
   }
-  incomingMessage = incomingMessage.substr(1); // Chop off the message prefix
+  incomingMessage = incomingMessage.slice(1); // Chop off the message prefix
   const args = incomingMessage.split(/ +/g); // Detect more than one space in between words
   let command = args.shift(); // Now "args" contains only the actual arguments, if any
   if (command === undefined) {
@@ -72,7 +73,7 @@ export function onChat(
   }
 
   // This is a normal chat message, so do nothing.
-  pass();
+  todo();
 }
 
 function checkInfoCommand(command: string, channel: string) {
@@ -162,5 +163,3 @@ function checkCommand(command: string, _channel: string) {
     }
   }
 }
-
-function pass() {}

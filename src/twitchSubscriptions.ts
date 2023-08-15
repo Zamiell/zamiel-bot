@@ -1,5 +1,5 @@
-import tmi from "tmi.js";
-import { send } from "./twitch";
+import type tmi from "tmi.js";
+import { send } from "./twitch.js";
 
 const CHARITY_MSG =
   "Subscribing to someone on Twitch is silly when your money could instead go towards saving a life in the 3rd world. If you are subbing to me, it is MANDATORY that you donate to the Against Malaria Foundation: https://www.givewell.org/international/top-charities/AMF/donate";

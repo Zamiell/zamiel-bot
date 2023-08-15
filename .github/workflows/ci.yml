@@ -12,9 +12,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          # The default version is 14. The ESLint config requires Node 16 to work properly.
-          node-version: "16"
-          cache: "yarn"
+          node-version: lts/*
+          cache: yarn
 
       - name: Retrieve the cached "node_modules" directory (if present)
         uses: actions/cache@v3
@@ -25,10 +24,7 @@ jobs:
 
       - name: Install dependencies (if the cached directory was not found)
         if: steps.node-cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile
-
-      - name: Install xmllint (which the "lint.sh" script uses)
-        run: sudo apt-get update && sudo apt-get install libxml2-utils -y
+        run: yarn install --immutable
 
       - name: Test to see if the project compiles
         run: bash build.sh
@@ -36,6 +32,7 @@ jobs:
       - name: Perform automated checks
         run: bash lint.sh
 
+  # @template-customization-start
   discord:
     name: Discord Failure Notification
     needs: [build_and_lint]
@@ -49,3 +46,4 @@ jobs:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           status: ${{ env.WORKFLOW_CONCLUSION }}
           title: ""
+  # @template-customization-end

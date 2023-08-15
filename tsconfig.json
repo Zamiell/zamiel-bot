@@ -1,12 +1,20 @@
 // The configuration file for TypeScript.
 {
   // We extend the standard IsaacScript config:
-  // https://github.com/IsaacScript/isaacscript/blob/main/packages/isaacscript-tsconfig/tsconfig.node.json
+  // https://github.com/IsaacScript/isaacscript/blob/main/packages/isaacscript-tsconfig/configs/tsconfig.node.json
   "extends": "isaacscript-tsconfig/tsconfig.node.json",
 
   // https://www.typescriptlang.org/docs/handbook/compiler-options.html
   "compilerOptions": {
     "outDir": "./dist",
+
+    // @template-customization-start
+
+    // "resolveJsonModule" includes modules imported with ".json" extensions. By default, it is
+    // false. We import JSON files in the code base, so this is needed.
+    "resolveJsonModule": true,
+
+    // @template-customization-end
   },
 
   // A list of the TypeScript files to compile.

@@ -1,16 +1,13 @@
-import * as dotenv from "dotenv";
-import path from "path";
-import * as discord from "./discord";
-import { log } from "./log";
-import * as twitch from "./twitch";
+import { discordInit } from "./discord.js";
+import { logger } from "./logger.js";
+import { twitchInit } from "./twitch.js";
 
-main();
+await main();
 
-function main() {
+async function main() {
   welcomeBanner();
-  loadEnvironmentVariables();
-  twitch.init();
-  discord.init();
+  twitchInit();
+  await discordInit();
 }
 
 function welcomeBanner() {
@@ -18,13 +15,7 @@ function welcomeBanner() {
   const welcomeText = `${programName} initialized.`;
   const hyphens = "-".repeat(welcomeText.length);
   const welcomeTextBorder = `+-${hyphens}-+`;
-  log.info(welcomeTextBorder);
-  log.info(`| ${welcomeText} |`);
-  log.info(welcomeTextBorder);
-}
-
-function loadEnvironmentVariables() {
-  const cwd = process.cwd();
-  const envFile = path.join(cwd, ".env");
-  dotenv.config({ path: envFile });
+  logger.info(welcomeTextBorder);
+  logger.info(`| ${welcomeText} |`);
+  logger.info(welcomeTextBorder);
 }

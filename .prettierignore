@@ -1,5 +1,7 @@
-# Ignore compiled output.
+# Compiled output
 dist
 
-# This file is manually formatted.
-builds.json
+# Package manager lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

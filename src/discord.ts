@@ -1,67 +1,63 @@
-import discord from "discord.js";
-import { INFO_COMMAND_MAP } from "./config/infoCommands";
-import { COMMAND_PREFIX_DISCORD } from "./constants";
-import { DISCORD_COMMAND_MAP } from "./discordCommandMap";
-import { discordSend } from "./discordUtils";
-import { log } from "./log";
-import { validateEnvironmentVariable } from "./utils";
+import type { Message } from "discord.js";
+import { ChannelType } from "discord.js";
+import { addExitHandler } from "shutdown-async";
+import { client } from "./client.js";
+import { INFO_COMMAND_MAP } from "./config/infoCommands.js";
+import { COMMAND_PREFIX_DISCORD } from "./constants.js";
+import { DISCORD_COMMAND_MAP } from "./discordCommandMap.js";
+import { discordSend } from "./discordUtils.js";
+import { env } from "./env.js";
+import { logger } from "./logger.js";
 
-export function init(): void {
-  validateEnvironmentVariable("DISCORD_TOKEN");
+export async function discordInit(): Promise<void> {
+  client.on("ready", onReady);
+  client.on("messageCreate", onMessageCreate);
 
-  const discordBot = new discord.Client();
-  login(discordBot);
+  addExitHandler(discordShutdown);
 
-  discordBot.on("ready", () => {
-    log.info("Connected to Discord.");
-  });
-
-  // Automatically reconnect if the bot disconnects due to inactivity.
-  discordBot.on("disconnect", (erMsg, code) => {
-    log.warn(
-      `Discord disconnected with code ${code} for reason "${erMsg}". Attempting to reconnect...`,
-    );
-    login(discordBot);
-  });
-
-  discordBot.on("message", onMessage);
+  logger.info("Logging in to Discord...");
+  await client.login(env.DISCORD_TOKEN);
 }
 
-function login(discordBot: discord.Client) {
-  const discordToken = process.env["DISCORD_TOKEN"];
-  if (discordToken === undefined || discordToken === "") {
-    throw new Error(
-      'The "DISCORD_TOKEN" environment variable is blank. Make sure it is set in the ".env" file.',
-    );
+function onReady() {
+  if (client.user === null) {
+    throw new Error("Failed to connect to Discord.");
   }
 
-  discordBot.login(discordToken).catch((err) => {
-    log.error("Failed to login to the Discord server:", err);
-    process.exit(1);
-  });
+  logger.info(
+    `Connected to Discord with a username of: ${client.user.username}`,
+  );
 }
 
-function onMessage(message: discord.Message) {
+function onMessageCreate(message: Message) {
+  logDiscordTextMessage(message);
+  parseBotCommandFromMessage(message);
+}
+
+function parseBotCommandFromMessage(message: Message) {
+  // Ignore anything not in a text channel.
+  if (message.channel.type !== ChannelType.GuildText) {
+    return;
+  }
+
+  // Ignore our own messages.
+  if (message.author.id === client.user?.id) {
+    return;
+  }
+
+  // Ignore other bot messages.
   if (message.author.bot) {
     return;
   }
 
-  if (message.channel.type !== "text") {
-    return;
-  }
-
-  const chan = message.channel;
-  const user = `${message.author.username}#${message.author.discriminator}`;
+  // Parse any potential bot commands from the message.
   let incomingMessage = message.content.trim();
-
-  log.info(`DISCORD [${chan.name}] <${user}> ${incomingMessage}`);
-
   if (!incomingMessage.startsWith(COMMAND_PREFIX_DISCORD)) {
     return;
   }
-  incomingMessage = incomingMessage.substr(1); // Chop off the message prefix
-  const args = incomingMessage.split(/ +/g); // Detect more than one space in between words
-  let command = args.shift(); // Now "args" contains only the actual arguments, if any
+  incomingMessage = incomingMessage.slice(1); // Chop off the message prefix.
+  const args = incomingMessage.split(/ +/g); // Detect more than one space in between words.
+  let command = args.shift(); // Now "args" contains only the actual arguments, if any.
   if (command === undefined) {
     return;
   }
@@ -81,4 +77,17 @@ function onMessage(message: discord.Message) {
   if (commandFunc !== undefined) {
     commandFunc(message);
   }
+}
+
+function logDiscordTextMessage(message: Message) {
+  const channelName =
+    message.channel.type === ChannelType.DM ? "DM" : `#${message.channel.name}`;
+
+  logger.info(
+    `[${channelName}] <${message.author.username}#${message.author.discriminator}> ${message.content}`,
+  );
+}
+
+async function discordShutdown(): Promise<void> {
+  await client.destroy();
 }

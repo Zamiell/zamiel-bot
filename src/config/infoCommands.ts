@@ -1,3 +1,5 @@
+import { ReadonlyMap } from "isaacscript-common-ts";
+
 const tournaments =
   "List/schedule of Isaac tournaments and events: http://pastebin.com/q9Y3MRdT";
 const itemTracker =
@@ -8,7 +10,7 @@ const platinumGod =
   "Platinum God explains every item in the game: http://platinumgod.co.uk/";
 const itemStarts = "Item starts for racing: http://pastebin.com/mCmrYP8Q";
 
-export const INFO_COMMAND_MAP = new Map([
+export const INFO_COMMAND_MAP = new ReadonlyMap([
   ["tournament", tournaments],
   ["tournaments", tournaments],
   ["tracker", itemTracker],

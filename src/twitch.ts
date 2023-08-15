@@ -1,40 +1,17 @@
 import tmi from "tmi.js";
-import { TWITCH_CHANNELS } from "./config/twitchChannels";
-import { log } from "./log";
-import { onChat } from "./twitchChat";
-import { onResub, onSub } from "./twitchSubscriptions";
-import { validateEnvironmentVariable } from "./utils";
+import { TWITCH_CHANNELS } from "./config/twitchChannels.js";
+import { env } from "./env.js";
+import { logger } from "./logger.js";
+import { onChat } from "./twitchChat.js";
+import { onResub, onSub } from "./twitchSubscriptions.js";
 
 // Variables
 let twitchBot: tmi.Client;
 const twitchModStatus = new Map<string, boolean>();
 
-export function init(): void {
-  validateEnvironmentVariables();
-
-  const twitchAdminUsername = process.env["TWITCH_ADMIN_USERNAME"];
-  if (twitchAdminUsername === undefined || twitchAdminUsername === "") {
-    throw new Error(
-      'The "TWITCH_ADMIN_USERNAME" environment variable is blank. Make sure it is set in the ".env" file.',
-    );
-  }
-
-  const twitchUsername = process.env["TWITCH_USERNAME"];
-  if (twitchUsername === undefined || twitchUsername === "") {
-    throw new Error(
-      'The "TWITCH_USERNAME" environment variable is blank. Make sure it is set in the ".env" file.',
-    );
-  }
-
-  const twitchOAuth = process.env["TWITCH_OAUTH"];
-  if (twitchOAuth === undefined || twitchOAuth === "") {
-    throw new Error(
-      'The "TWITCH_OAUTH" environment variable is blank. Make sure it is set in the ".env" file.',
-    );
-  }
-
+export function twitchInit(): void {
   // Prepare the list of Twitch channels to join.
-  const userList = [twitchAdminUsername, ...TWITCH_CHANNELS];
+  const userList = [env.TWITCH_ADMIN_USERNAME, ...TWITCH_CHANNELS];
   const formattedTwitchChannels: string[] = [];
   for (const user of userList) {
     const lowercaseUser = user.toLowerCase();
@@ -56,19 +33,19 @@ export function init(): void {
       reconnect: true,
     },
     identity: {
-      username: twitchUsername,
-      password: twitchOAuth,
+      username: env.TWITCH_USERNAME,
+      password: env.TWITCH_OAUTH,
     },
     channels: formattedTwitchChannels,
   });
 
-  twitchBot.connect().catch((err) => {
-    log.error("Failed to connect to the Twitch server:", err);
+  twitchBot.connect().catch((error) => {
+    logger.error("Failed to connect to the Twitch server:", error);
     process.exit(1);
   });
 
   twitchBot.once("connected", () => {
-    log.info("Connected to Twitch.");
+    logger.info("Connected to Twitch.");
   });
 
   twitchBot.on(
@@ -86,34 +63,22 @@ export function init(): void {
   twitchBot.on("resub", onResub);
 }
 
-function validateEnvironmentVariables() {
-  const variablesToValidate = [
-    "TWITCH_USERNAME",
-    "TWITCH_OAUTH",
-    "TWITCH_ADMIN_USERNAME",
-  ];
-
-  for (const variable of variablesToValidate) {
-    validateEnvironmentVariable(variable);
-  }
-}
-
 export function send(channel: string, msg: string): void {
-  twitchBot.say(channel, msg).catch((err) => {
-    log.error("Failed to send a message to Twitch:", err);
+  twitchBot.say(channel, msg).catch((error) => {
+    logger.error("Failed to send a message to Twitch:", error);
   });
 }
 
 export function joinChannel(channel: string): void {
   const channelWithHash = `#${channel}`;
-  twitchBot.join(channelWithHash).catch((err) => {
-    log.error(`Failed to join channel "${channel}":`, err);
+  twitchBot.join(channelWithHash).catch((error) => {
+    logger.error(`Failed to join channel "${channel}":`, error);
   });
 }
 
 export function leaveChannel(channel: string): void {
   const channelWithHash = `#${channel}`;
-  twitchBot.part(channelWithHash).catch((err) => {
-    log.error(`Failed to leave channel "${channel}":`, err);
+  twitchBot.part(channelWithHash).catch((error) => {
+    logger.error(`Failed to leave channel "${channel}":`, error);
   });
 }
