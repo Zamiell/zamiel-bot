@@ -1,9 +1,11 @@
 import type discord from "discord.js";
 import { ChannelType } from "discord.js";
-import { BUILDS, CHARACTERS } from "isaac-racing-common";
+import isaacRacingCommon from "isaac-racing-common";
 import { ReadonlyMap, getRandomArrayElement } from "isaacscript-common-ts";
 import { CLIENT_LOBBY_CHANNEL_ID } from "./constants.js";
 import { discordSend } from "./discordUtils.js";
+
+const { BUILDS, CHARACTERS } = isaacRacingCommon;
 
 export const DISCORD_COMMAND_MAP = new ReadonlyMap<
   string,
