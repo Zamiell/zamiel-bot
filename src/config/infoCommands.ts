@@ -48,4 +48,8 @@ export const INFO_COMMAND_MAP = new ReadonlyMap([
     "s4",
     "Season 4 info: https://github.com/Zamiell/racing-plus/blob/main/docs/challenges.md#r7-season-4-storage",
   ],
+  [
+    "randomizer",
+    "Achievement Randomizer info: https://github.com/Zamiell/isaac-achievement-randomizer/blob/main/docs/about.md",
+  ],
 ]);
