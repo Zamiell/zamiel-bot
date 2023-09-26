@@ -41,7 +41,7 @@ npx cspell-check-unused-words
 
 # @template-customization-start
 # Check for base file updates.
-npx isaacscript check-ts --ignore "publish.sh"
+npx isaacscript check-ts --ignore "build.sh,publish.sh"
 # @template-customization-end
 
 echo "Successfully linted $REPO_NAME in $SECONDS seconds."

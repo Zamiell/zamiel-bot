@@ -21,6 +21,7 @@ const config = {
 
   rules: {
     // Insert changed or disabled rules here, if necessary.
+    "isaacscript/require-variadic-function-argument": "off",
   },
 };
 
