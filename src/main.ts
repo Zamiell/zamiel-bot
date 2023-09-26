@@ -1,8 +1,11 @@
+import { PROJECT_NAME } from "./constants.js";
 import { discordInit } from "./discord.js";
 import { logger } from "./logger.js";
 import { twitchInit } from "./twitch.js";
 
-await main();
+main().catch((error) => {
+  throw new Error(`${PROJECT_NAME} failed: ${error}`);
+});
 
 async function main() {
   welcomeBanner();

@@ -1,4 +1,4 @@
-import { ReadonlyMap } from "isaacscript-common-ts";
+import { ReadonlyMap } from "../isaacscriptCommonTS.js";
 
 const tournaments =
   "List/schedule of Isaac tournaments and events: http://pastebin.com/q9Y3MRdT";

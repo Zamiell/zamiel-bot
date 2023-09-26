@@ -4423,7 +4423,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isaacscript-common-ts@npm:^11.2.0, isaacscript-common-ts@npm:^11.3.0":
+"isaacscript-common-ts@npm:^11.2.0":
   version: 11.3.0
   resolution: "isaacscript-common-ts@npm:11.3.0"
   checksum: b85d8c38c64efda42e3e9505bad539da47d62cb65cc247cd3ee9426ab9c07b014fd7e3a0e26db32bf6f925f71cc91d92de53e32a7b3c16aa3b9c2450719b3158
@@ -7465,7 +7465,6 @@ __metadata:
     dotenv: ^16.3.1
     isaac-racing-common: ^1.0.11
     isaacscript: ^3.11.1
-    isaacscript-common-ts: ^11.3.0
     isaacscript-lint: ^5.11.0
     isaacscript-tsconfig: ^4.0.0
     shutdown-async: ^1.2.3

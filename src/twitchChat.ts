@@ -1,7 +1,7 @@
-import { todo } from "isaacscript-common-ts";
 import type tmi from "tmi.js";
 import { INFO_COMMAND_MAP } from "./config/infoCommands.js";
 import { COMMAND_PREFIX_TWITCH } from "./constants.js";
+import { todo } from "./isaacscriptCommonTS.js";
 import { logger } from "./logger.js";
 import { joinChannel, leaveChannel, send } from "./twitch.js";
 import { sendCharityMsg } from "./twitchSubscriptions.js";
