@@ -18,24 +18,24 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@t3-oss/env-core": "^0.6.0",
-    "discord.js": "^14.12.1",
+    "@t3-oss/env-core": "^0.6.1",
+    "discord.js": "^14.13.0",
     "dotenv": "^16.3.1",
     "isaac-racing-common": "^1.0.11",
-    "isaacscript": "^3.7.2",
-    "isaacscript-common-ts": "^10.2.0",
+    "isaacscript": "^3.11.1",
+    "isaacscript-common-ts": "^11.3.0",
     "shutdown-async": "^1.2.3",
     "tmi.js": "^1.8.5",
     "winston": "^3.10.0",
-    "zod": "^3.22.0"
+    "zod": "^3.22.2"
   },
   "devDependencies": {
-    "@types/node": "^20.5.0",
-    "@types/tmi.js": "^1.8.3",
-    "isaacscript-lint": "^5.2.3",
+    "@types/node": "^20.7.0",
+    "@types/tmi.js": "^1.8.4",
+    "isaacscript-lint": "^5.11.0",
     "isaacscript-tsconfig": "^4.0.0",
-    "tsx": "^3.12.7",
-    "typescript": "^5.1.6"
+    "tsx": "^3.13.0",
+    "typescript": "^5.2.2"
   },
-  "packageManager": "yarn@3.6.1"
+  "packageManager": "yarn@3.6.3"
 }
