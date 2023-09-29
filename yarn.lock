@@ -1376,10 +1376,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.7.0":
-  version: 20.7.0
-  resolution: "@types/node@npm:20.7.0"
-  checksum: 1b2919925c213f4d2039ada7a8354c998e144f7291db8d719ef58ea9924ab636c113690073b0ec3b82ba62907385f7e0f51e9d1583c1a818776daa5156d3a590
+"@types/node@npm:^20.7.2":
+  version: 20.7.2
+  resolution: "@types/node@npm:20.7.2"
+  checksum: 5baa09368c8daa50ad1eaa2499b988b2f4c06cacf8b251d1e63f68ad32df97b21d8104f1ac06889481f1d3e84056842732bb848dd1136164d823c1d4a6baf435
   languageName: node
   linkType: hard
 
@@ -4416,10 +4416,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isaac-racing-common@npm:^1.0.11":
-  version: 1.0.11
-  resolution: "isaac-racing-common@npm:1.0.11"
-  checksum: 327d9f60e1e88190b70b1d3c7f7feda73368d4f8a8dc4e7e80b0cfeee06a35e7715ce7784e09b5473b6c780416671310caf8f8b3785a6248db209215c602cbef
+"isaac-racing-common@npm:^1.0.13":
+  version: 1.0.13
+  resolution: "isaac-racing-common@npm:1.0.13"
+  checksum: 1a4e7f566eba4840cb7366cac5fd0005f1cc536f291156c15ae7117dfd5e3864d67b1b4e1ab33e7cdfa57c3c3b6cdc39070e470460b82b2ac2a56aeac4b81771
   languageName: node
   linkType: hard
 
@@ -7459,11 +7459,11 @@ __metadata:
   resolution: "zamiel-bot@workspace:."
   dependencies:
     "@t3-oss/env-core": ^0.6.1
-    "@types/node": ^20.7.0
+    "@types/node": ^20.7.2
     "@types/tmi.js": ^1.8.4
     discord.js: ^14.13.0
     dotenv: ^16.3.1
-    isaac-racing-common: ^1.0.11
+    isaac-racing-common: ^1.0.13
     isaacscript: ^3.11.1
     isaacscript-common-ts: ^11.3.0
     isaacscript-lint: ^5.11.0

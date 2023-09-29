@@ -1,7 +1,7 @@
 import type discord from "discord.js";
 import { ChannelType } from "discord.js";
-import { ReadonlyMap } from "isaacscript-common-ts";
-import { CLIENT_LOBBY_CHANNEL_ID } from "./constants.js";
+import { ReadonlyMap, getRandomArrayElement } from "isaacscript-common-ts";
+import { BUILDS, CHARACTERS, CLIENT_LOBBY_CHANNEL_ID } from "./constants.js";
 import { discordSend } from "./discordUtils.js";
 
 export const DISCORD_COMMAND_MAP = new ReadonlyMap<
@@ -20,12 +20,8 @@ function buildFunc(message: discord.Message) {
     return;
   }
 
-  /*
   const build = getRandomArrayElement(BUILDS);
   discordSend(message.channel, `Random build: ${build.name}`);
-  */
-
-  discordSend(message.channel, "This feature is temporarily unavailable.");
 }
 
 function characterFunc(message: discord.Message) {
@@ -33,12 +29,8 @@ function characterFunc(message: discord.Message) {
     return;
   }
 
-  /*
   const character = getRandomArrayElement(CHARACTERS);
   discordSend(message.channel, `Random character: ${character}`);
-  */
-
-  discordSend(message.channel, "This feature is temporarily unavailable.");
 }
 
 function helpFunc(message: discord.Message) {

@@ -18,6 +18,7 @@ dotenv.config({
 });
 
 // TODO: https://github.com/t3-oss/t3-env/issues/109
+// TODO: https://github.com/t3-oss/t3-env/pull/113
 for (const [key, value] of Object.entries(process.env)) {
   if (value === "") {
     delete process.env[key]; // eslint-disable-line @typescript-eslint/no-dynamic-delete

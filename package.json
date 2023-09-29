@@ -21,7 +21,7 @@
     "@t3-oss/env-core": "^0.6.1",
     "discord.js": "^14.13.0",
     "dotenv": "^16.3.1",
-    "isaac-racing-common": "^1.0.11",
+    "isaac-racing-common": "^1.0.13",
     "isaacscript": "^3.11.1",
     "isaacscript-common-ts": "^11.3.0",
     "shutdown-async": "^1.2.3",
@@ -30,7 +30,7 @@
     "zod": "^3.22.2"
   },
   "devDependencies": {
-    "@types/node": "^20.7.0",
+    "@types/node": "^20.7.2",
     "@types/tmi.js": "^1.8.4",
     "isaacscript-lint": "^5.11.0",
     "isaacscript-tsconfig": "^4.0.0",
