@@ -13,10 +13,11 @@
     "node_modules/**",
     "package-lock.json",
     "pnpm-lock.yaml",
-    "yarn.lock"
+    "yarn.lock",
   ],
   "words": [
     "autocrlf",
+    "corepack",
     "dbaeumer",
     "esbenp",
     "isaacscript",
@@ -34,6 +35,6 @@
     "technote",
     "userstate",
     "zamiel",
-    "zamiell"
-  ]
+    "zamiell",
+  ],
 }

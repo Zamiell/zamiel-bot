@@ -1,8 +1,8 @@
 import isaacRacingCommon from "isaac-racing-common";
+import { dirName } from "isaacscript-common-node";
 import path from "node:path";
-import url from "node:url";
 
-const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const __dirname = dirName();
 
 export const REPO_ROOT = path.join(__dirname, "..");
 export const COMMAND_PREFIX_TWITCH = "!";
