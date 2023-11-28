@@ -11,4 +11,4 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 REPO_NAME="$(basename "$DIR")"
 
 npm run build
-pm2 start $REPO_NAME
+pm2 start "$REPO_NAME"
