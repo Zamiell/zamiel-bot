@@ -28,7 +28,6 @@
     "isaacscript": "^3.23.0",
     "isaacscript-common-node": "^1.2.0",
     "isaacscript-common-ts": "^11.4.0",
-    "shutdown-async": "^1.2.3",
     "tmi.js": "^1.8.5",
     "winston": "^3.11.0",
     "zod": "^3.22.4"

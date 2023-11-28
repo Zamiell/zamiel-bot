@@ -1,6 +1,5 @@
 import type { Message } from "discord.js";
 import { ChannelType } from "discord.js";
-import { addExitHandler } from "shutdown-async";
 import { client } from "./client.js";
 import { INFO_COMMAND_MAP } from "./config/infoCommands.js";
 import { COMMAND_PREFIX_DISCORD } from "./constants.js";
@@ -12,8 +11,6 @@ import { logger } from "./logger.js";
 export async function discordInit(): Promise<void> {
   client.on("ready", onReady);
   client.on("messageCreate", onMessageCreate);
-
-  addExitHandler(discordShutdown);
 
   logger.info("Logging in to Discord...");
   await client.login(env.DISCORD_TOKEN);
@@ -86,8 +83,4 @@ function logDiscordTextMessage(message: Message) {
   logger.info(
     `[${channelName}] <${message.author.username}#${message.author.discriminator}> ${message.content}`,
   );
-}
-
-async function discordShutdown(): Promise<void> {
-  await client.destroy();
 }

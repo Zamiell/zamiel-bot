@@ -6630,13 +6630,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shutdown-async@npm:^1.2.3":
-  version: 1.2.3
-  resolution: "shutdown-async@npm:1.2.3"
-  checksum: b167f5391f1df1d3263ffe31ee1a903c4c7959915680f65e0ebac364bd2ec0a38c398c8c9179a8eb4987ddfec31035261c3a0cece9b9982d71757e7a60d46065
-  languageName: node
-  linkType: hard
-
 "signal-exit@npm:^3.0.2, signal-exit@npm:^3.0.3, signal-exit@npm:^3.0.7":
   version: 3.0.7
   resolution: "signal-exit@npm:3.0.7"
@@ -7726,7 +7719,6 @@ __metadata:
     isaacscript-common-ts: "npm:^11.4.0"
     isaacscript-lint: "npm:^6.4.1"
     isaacscript-tsconfig: "npm:^5.0.0"
-    shutdown-async: "npm:^1.2.3"
     tmi.js: "npm:^1.8.5"
     tsx: "npm:^4.5.0"
     typescript: "npm:^5.3.2"
