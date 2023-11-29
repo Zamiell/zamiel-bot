@@ -1298,19 +1298,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@t3-oss/env-core@npm:^0.7.1":
-  version: 0.7.1
-  resolution: "@t3-oss/env-core@npm:0.7.1"
-  peerDependencies:
-    typescript: ">=4.7.2"
-    zod: ^3.0.0
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: c5ecf883793f92fe2492573971a7f142406739e50cd5bc051935b9f67a54e1199f0ed6e75ce32a9c41374bc60e4d8be99b37f48857747848f1888120d509cb42
-  languageName: node
-  linkType: hard
-
 "@tootallnate/once@npm:2":
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
@@ -1991,6 +1978,16 @@ __metadata:
   version: 1.1.2
   resolution: "buffer-from@npm:1.1.2"
   checksum: 124fff9d66d691a86d3b062eff4663fe437a9d9ee4b47b1b9e97f5a5d14f6d5399345db80f796827be7c95e70a8e765dd404b7c3ff3b3324f98e9b0c8826cc34
+  languageName: node
+  linkType: hard
+
+"bufferutil@npm:^4.0.8":
+  version: 4.0.8
+  resolution: "bufferutil@npm:4.0.8"
+  dependencies:
+    node-gyp: "npm:latest"
+    node-gyp-build: "npm:^4.3.0"
+  checksum: 36cdc5b53a38d9f61f89fdbe62029a2ebcd020599862253fefebe31566155726df9ff961f41b8c97b02b4c12b391ef97faf94e2383392654cf8f0ed68f76e47c
   languageName: node
   linkType: hard
 
@@ -5376,6 +5373,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nan@npm:^2.18.0":
+  version: 2.18.0
+  resolution: "nan@npm:2.18.0"
+  dependencies:
+    node-gyp: "npm:latest"
+  checksum: 9209d80134fdb98c0afe35c1372d2b930a0a8d3c52706cb5e4257a27e9845c375f7a8daedadadec8d6403ca2eebb3b37d362ff5d1ec03249462abf65fef2a148
+  languageName: node
+  linkType: hard
+
 "natural-compare@npm:^1.4.0":
   version: 1.4.0
   resolution: "natural-compare@npm:1.4.0"
@@ -5426,6 +5432,17 @@ __metadata:
     encoding:
       optional: true
   checksum: fcae80f5ac52fbf5012f5e19df2bd3915e67d3b3ad51cb5942943df2238d32ba15890fecabd0e166876a9f98a581ab50f3f10eb942b09405c49ef8da36b826c7
+  languageName: node
+  linkType: hard
+
+"node-gyp-build@npm:^4.3.0":
+  version: 4.7.1
+  resolution: "node-gyp-build@npm:4.7.1"
+  bin:
+    node-gyp-build: bin.js
+    node-gyp-build-optional: optional.js
+    node-gyp-build-test: build-test.js
+  checksum: b8e4a3f889237cd08edde3775e2b4e1e39a0571580584e33e29979f0c532a254ce3c5ec9435bd526254ad0b3f0b4a7e7fe14e53bd400f6ea9445f3bfd88a6b1e
   languageName: node
   linkType: hard
 
@@ -7399,6 +7416,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"utf-8-validate@npm:^6.0.3":
+  version: 6.0.3
+  resolution: "utf-8-validate@npm:6.0.3"
+  dependencies:
+    node-gyp: "npm:latest"
+    node-gyp-build: "npm:^4.3.0"
+  checksum: 2ca08b07f4070540b33ff15f3f0632fa30baaee8a766fff993be47b4829b4fb30fd36fdf1270336324d03f65e0936c4608ee719d862230d75311751dcfe27a83
+  languageName: node
+  linkType: hard
+
 "util-deprecate@npm:^1.0.1":
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
@@ -7708,9 +7735,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "zamiel-bot@workspace:."
   dependencies:
-    "@t3-oss/env-core": "npm:^0.7.1"
     "@types/node": "npm:^20.10.0"
     "@types/tmi.js": "npm:^1.8.6"
+    bufferutil: "npm:^4.0.8"
     discord.js: "npm:^14.14.1"
     dotenv: "npm:^16.3.1"
     isaac-racing-common: "npm:^1.0.13"
@@ -7722,10 +7749,22 @@ __metadata:
     tmi.js: "npm:^1.8.5"
     tsx: "npm:^4.5.0"
     typescript: "npm:^5.3.2"
+    utf-8-validate: "npm:^6.0.3"
     winston: "npm:^3.11.0"
+    zlib-sync: "npm:^0.1.9"
     zod: "npm:^3.22.4"
   languageName: unknown
   linkType: soft
+
+"zlib-sync@npm:^0.1.9":
+  version: 0.1.9
+  resolution: "zlib-sync@npm:0.1.9"
+  dependencies:
+    nan: "npm:^2.18.0"
+    node-gyp: "npm:latest"
+  checksum: 1c05fdc5140f4c9afb931bfca01fc9f26ddfe242eb5c8c06ffc93b53d5103f0a99e8b8048697446001eb4a92c12febd270bcb4cda3fa3de9bf822e6ba0664902
+  languageName: node
+  linkType: hard
 
 "zod-validation-error@npm:1.5.0":
   version: 1.5.0
