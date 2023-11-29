@@ -28,7 +28,7 @@ await lintScript(async () => {
     // @template-customization-start
 
     // Check for base file updates.
-    $`npx isaacscript check-ts`,
+    $`npx isaacscript check-ts --ignore knip.jsonc`,
 
     // @template-customization-end
   );

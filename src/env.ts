@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { isFile } from "isaacscript-common-node";
+import { fatalError, isFile } from "isaacscript-common-node";
 import path from "node:path";
 import { z } from "zod";
 import { REPO_ROOT } from "./constants.js";
@@ -7,8 +7,8 @@ import { REPO_ROOT } from "./constants.js";
 const ENV_PATH = path.join(REPO_ROOT, ".env");
 
 if (!isFile(ENV_PATH)) {
-  throw new Error(
-    `The "${ENV_PATH}" file does not exist. Copy the ".env.example" file to a ".env" file at the root of the repository.`,
+  fatalError(
+    `The "${ENV_PATH}" file does not exist. Copy the ".env.example" file to a ".env" file at the root of the repository and re-run this program.`,
   );
 }
 

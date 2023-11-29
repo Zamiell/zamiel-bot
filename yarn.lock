@@ -19,6 +19,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@arktype/fs@npm:^0.0.4":
+  version: 0.0.4
+  resolution: "@arktype/fs@npm:0.0.4"
+  checksum: 02e794d2e72b82505201945ec22612d92c933910f923f171ea74e6128fa98ac7724e12d3b9b93f5347f888f98aaa7805d908b5ee853d115a0c5d6b611b2dd24f
+  languageName: node
+  linkType: hard
+
 "@babel/code-frame@npm:^7.0.0":
   version: 7.18.6
   resolution: "@babel/code-frame@npm:7.18.6"
@@ -4537,7 +4544,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isaacscript-common-node@npm:^1.1.1, isaacscript-common-node@npm:^1.2.0":
+"isaacscript-common-node@npm:^1.1.1":
   version: 1.2.0
   resolution: "isaacscript-common-node@npm:1.2.0"
   dependencies:
@@ -4553,10 +4560,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isaacscript-common-ts@npm:^11.3.1, isaacscript-common-ts@npm:^11.4.0":
+"isaacscript-common-node@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "isaacscript-common-node@npm:1.3.0"
+  dependencies:
+    "@arktype/fs": "npm:^0.0.4"
+    chalk: "npm:^5.3.0"
+    command-exists: "npm:^1.2.9"
+    diff: "npm:^5.1.0"
+    execa: "npm:^8.0.1"
+    isaacscript-common-ts: "npm:^11.6.0"
+    jsonc-parser: "npm:^3.2.0"
+    npm-check-updates: "npm:^16.14.11"
+  checksum: fbddcf0906c2c86950f30aec2a4a0ae322054184c87a2b7174fc127fd7cf408d4527d871b9efd2381eeacead870d4bf0f4af8d3e4d6c21073d6992d052a7dc77
+  languageName: node
+  linkType: hard
+
+"isaacscript-common-ts@npm:^11.3.1":
   version: 11.4.0
   resolution: "isaacscript-common-ts@npm:11.4.0"
   checksum: d5cac1a88bfe8b570fc45c076d9d898784bd5d20880637ea89532b04a3ea9535c0263cc5edcf15dae7363613d1ae8d66dc89476210777847822fc8e16739cdc0
+  languageName: node
+  linkType: hard
+
+"isaacscript-common-ts@npm:^11.6.0":
+  version: 11.6.0
+  resolution: "isaacscript-common-ts@npm:11.6.0"
+  checksum: af63629d548bad441c79af88d1e64c0826294a78ad326a54257b61fa71f7431a7a70b1d4617a2a1d78afd145835bc46453c274a4d27766e7bf7ca6ff7449b4f9
   languageName: node
   linkType: hard
 
@@ -4602,9 +4632,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isaacscript@npm:^3.23.0":
-  version: 3.23.0
-  resolution: "isaacscript@npm:3.23.0"
+"isaacscript@npm:^3.24.0":
+  version: 3.24.0
+  resolution: "isaacscript@npm:3.24.0"
   dependencies:
     "@commander-js/extra-typings": "npm:^11.1.0"
     "@zamiell/sync-directory": "npm:^6.0.5"
@@ -4613,8 +4643,8 @@ __metadata:
     command-exists: "npm:^1.2.9"
     commander: "npm:^11.1.0"
     figlet: "npm:^1.7.0"
-    isaacscript-common-node: "npm:^1.2.0"
-    isaacscript-common-ts: "npm:^11.4.0"
+    isaacscript-common-node: "npm:^1.3.0"
+    isaacscript-common-ts: "npm:^11.6.0"
     jsonc-parser: "npm:^3.2.0"
     klaw-sync: "npm:^6.0.0"
     moment: "npm:^2.29.4"
@@ -4630,7 +4660,7 @@ __metadata:
       optional: true
   bin:
     isaacscript: dist/main.js
-  checksum: 4e7508e1e3abd201d93cd032bedf862050ec6210c668115591c884b083a63e2c516065613f0ca1b31c2736911887c7aa3adf6de461938a989d929945bdbfa786
+  checksum: cc6e9796322341ee510032b329da1ffa322257e5855c7a71ee414e439ee1de23e8439535042fa0a219941457433cb3b837f9adc5ea2fe887bd7205c1b0745a27
   languageName: node
   linkType: hard
 
@@ -5525,7 +5555,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"npm-check-updates@npm:^16.14.6":
+"npm-check-updates@npm:^16.14.11, npm-check-updates@npm:^16.14.6":
   version: 16.14.11
   resolution: "npm-check-updates@npm:16.14.11"
   dependencies:
@@ -7176,9 +7206,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsx@npm:^4.5.0":
-  version: 4.5.0
-  resolution: "tsx@npm:4.5.0"
+"tsx@npm:^4.6.0":
+  version: 4.6.0
+  resolution: "tsx@npm:4.6.0"
   dependencies:
     esbuild: "npm:~0.18.20"
     fsevents: "npm:~2.3.3"
@@ -7188,7 +7218,7 @@ __metadata:
       optional: true
   bin:
     tsx: dist/cli.mjs
-  checksum: e6ca352894650d6d654b2214a2ccfb98eedd4758f5087fbcf7092d356bf058da5b38dd79976cdb35874b1175fe7c4278413e45be90628c2a1004c55603b46499
+  checksum: e7ce784b93fb98d052670b6cbe79f5c090fc80e6c5b1f2cb31ed65eef92a68dcf4499a68e8fb427074e775d1955ec61f7485b9e893b65c5f1e0ba2898c84b890
   languageName: node
   linkType: hard
 
@@ -7741,13 +7771,13 @@ __metadata:
     discord.js: "npm:^14.14.1"
     dotenv: "npm:^16.3.1"
     isaac-racing-common: "npm:^1.0.13"
-    isaacscript: "npm:^3.23.0"
-    isaacscript-common-node: "npm:^1.2.0"
-    isaacscript-common-ts: "npm:^11.4.0"
+    isaacscript: "npm:^3.24.0"
+    isaacscript-common-node: "npm:^1.3.0"
+    isaacscript-common-ts: "npm:^11.6.0"
     isaacscript-lint: "npm:^6.4.1"
     isaacscript-tsconfig: "npm:^5.0.0"
     tmi.js: "npm:^1.8.5"
-    tsx: "npm:^4.5.0"
+    tsx: "npm:^4.6.0"
     typescript: "npm:^5.3.2"
     utf-8-validate: "npm:^6.0.3"
     winston: "npm:^3.11.0"
