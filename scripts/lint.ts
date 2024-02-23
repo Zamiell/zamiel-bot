@@ -1,12 +1,10 @@
 import { $, lintScript } from "isaacscript-common-node";
 
 await lintScript(async () => {
-  const promises: Array<Promise<unknown>> = [];
-
-  promises.push(
+  const promises = [
     // Use Prettier to check formatting.
     // - "--log-level=warn" makes it only output errors.
-    $`npx prettier --log-level=warn --check .`,
+    $`prettier --log-level=warn --check .`,
 
     // Type-check the code using the TypeScript compiler.
     $`tsc --noEmit`,
@@ -16,22 +14,22 @@ await lintScript(async () => {
     $`eslint --max-warnings 0 .`,
 
     // Check for unused files, dependencies, and exports.
-    $`npx knip`,
+    $`knip --no-progress`,
 
     // Spell check every file using CSpell.
     // - "--no-progress" and "--no-summary" make it only output errors.
-    $`npx cspell --no-progress --no-summary .`,
+    $`cspell --no-progress --no-summary .`,
 
     // Check for unused CSpell words.
-    $`npx cspell-check-unused-words`,
+    $`cspell-check-unused-words`,
 
     // @template-customization-start
 
     // Check for base file updates.
-    $`npx isaacscript check-ts --ignore knip.jsonc`,
+    $`isaacscript check-ts --ignore knip.jsonc`,
 
     // @template-customization-end
-  );
+  ];
 
   await Promise.all(promises);
 });
